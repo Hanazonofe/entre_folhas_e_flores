@@ -173,7 +173,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     intent = detect_intent(msg)
-    query = extract_query(msg)
+    query = normalize_text(msg)
+
+    for w in ["preco", "valor", "quanto", "custa"]:
+        query = query.replace(w, "")
+
+    query = query.strip()
 
     print("DEBUG MSG ORIGINAL:", msg)
     print("DEBUG QUERY FINAL:", query)
@@ -250,6 +255,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
