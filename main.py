@@ -73,17 +73,16 @@ def detect_intent(msg: str) -> str:
     return "GENERAL"
 
 
-def extract_query(msg: str) -> str:
-    # remove palavras comuns, fica com “o nome provável”
-    m = normalize_text(msg)
-    stop = [
-        "quanto", "preco", "preço", "valor", "custa", "ta", "tá",
-        "tem", "estoque", "disponivel", "disponível",
-        "como", "cuidar", "cuidados", "me", "indica", "sugere", "recomenda",
-        "uma", "um", "de", "da", "do", "pra", "para", "no", "na"
+def extract_query(text: str) -> str:
+    text = normalize_text(text)
+
+    stopwords = [
+        "preco", "valor", "quanto", "custa", "tem", "do", "da", "de", "o", "a"
     ]
-    tokens = [t for t in m.split() if t not in stop]
-    return " ".join(tokens).strip()
+
+    words = [w for w in text.split() if w not in stopwords]
+
+    return " ".join(words)
 
 
 def find_product(df: pd.DataFrame, query: str):
@@ -248,6 +247,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
