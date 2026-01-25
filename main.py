@@ -23,6 +23,11 @@ def normalize_text(s: str) -> str:
 
 
 def load_catalog() -> pd.DataFrame:
+    print("DEBUG QUERY:", query)
+    print("DEBUG PRIMEIROS NOMES:")
+    for i in range(min(5, len(df))):
+        print(repr(df.iloc[i]["nome_popular"]))
+
     now = time.time()
     if CATALOG_CACHE["df"] is not None and (now - CATALOG_CACHE["ts"] < CACHE_TTL_SECONDS):
         return CATALOG_CACHE["df"]
@@ -235,6 +240,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
