@@ -100,34 +100,13 @@ def find_product(df: pd.DataFrame, query: str):
 
 
 def format_product_answer(prod: pd.Series, intent: str) -> str:
-    nome = prod.get("nome_popular", "")
-    preco = prod.get("preco", "")
-    estoque = prod.get("estoque", "")
-    vaso = prod.get("vaso", "")
-    luz = prod.get("luz", "")
-    rega = prod.get("rega", "")
-    pets = prod.get("pets", "")
+    nome = str(prod.get("nome_popular", "")).strip()
+    preco = str(prod.get("preco", "")).strip()
 
-    head = f"Beleza 🙂 Achei aqui no catálogo:\n\n🌿 **{nome}**"
-
-    lines = []
-    if preco:
-        lines.append(f"💰 **Preço:** {preco}")
-    if estoque:
-        lines.append(f"📦 **Estoque:** {estoque}")
-    if vaso:
-        lines.append(f"🪴 **Vaso:** {vaso}")
-    if luz:
-        lines.append(f"☀️ **Luz:** {luz}")
-    if rega:
-        lines.append(f"💧 **Rega:** {rega}")
-    if pets:
-        lines.append(f"🐾 **Pets:** {pets}")
-
-    frase = f'🗣️ *Frase pro cliente:* "{nome} prefere {luz or "boa claridade"} e rega {rega or "moderada"}."'
-
-    return head + "\n" + "\n".join(lines) + "\n\n" + frase + "\n\nSe quiser, posso sugerir parecidas 😉"
-
+    if preco and preco.lower() != "nan":
+        return f"🌿 **{nome}**\n💰 **Preço:** {preco}"
+    else:
+        return f"🌿 **{nome}**\n💰 Preço não cadastrado"
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message.text if update.message else ""
@@ -178,4 +157,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
