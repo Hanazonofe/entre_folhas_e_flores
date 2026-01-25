@@ -90,14 +90,24 @@ def find_product(df: pd.DataFrame, query: str):
     if not q:
         return None, []
 
+    # 1) tenta match EXATO primeiro
+    exact = df[df["__search"].str.contains(rf"\b{re.escape(q)}\b", regex=True, na=False)]
+    if len(exact) == 1:
+        return exact.iloc[0], [(exact.iloc[0], 100)]
+
+    # 2) fallback para fuzzy
     choices = df["__search"].tolist()
     match = process.extract(
         q, choices, scorer=fuzz.WRatio, limit=5
     )
 
-    # match: [(choice, score, idx), ...]
     top = [(df.iloc[idx], score) for (_, score, idx) in match if score >= 70]
-    return (top[0][0] if top else None), top
+
+    if len(top) == 1:
+        return top[0][0], top
+
+    return None, top
+
 
 
 def format_product_answer(prod: pd.Series, intent: str) -> str:
@@ -222,3 +232,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
