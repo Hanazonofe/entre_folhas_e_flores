@@ -91,16 +91,22 @@ def find_product(df: pd.DataFrame, query: str):
     if not q:
         return None, []
 
-    # 1) prioridade: nome começa com query
-    starts = df[df["nome_popular"].astype(str).apply(lambda x: normalize_text(x).startswith(q))]
+    tokens = q.split()
 
-    if len(starts) == 1:
-        return starts.iloc[0], [(starts.iloc[0], 100)]
+    def match_tokens(name):
+        name = normalize_text(name)
+        return all(t in name for t in tokens)
 
-    if len(starts) > 1:
-        return None, [(row, 90) for _, row in starts.iterrows()]
+    # 1) filtro por tokens obrigatórios
+    filtered = df[df["nome_popular"].astype(str).apply(match_tokens)]
 
-    # 2) fallback fuzzy (nome + apelido)
+    if len(filtered) == 1:
+        return filtered.iloc[0], [(filtered.iloc[0], 100)]
+
+    if len(filtered) > 1:
+        return None, [(row, 90) for _, row in filtered.iterrows()]
+
+    # 2) fallback fuzzy
     choices = df["__search"].tolist()
     matches = process.extract(q, choices, scorer=fuzz.WRatio, limit=5)
 
@@ -242,6 +248,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
