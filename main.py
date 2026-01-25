@@ -140,6 +140,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for w in ["preco", "valor", "quanto", "custa"]:
         query = query.replace(w, "")
     query = query.strip()
+    query = " ".join(w for w in query.split() if w not in ["da", "de", "do", "das", "dos"])
 
     df = load_catalog()
 
@@ -177,3 +178,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
