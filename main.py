@@ -94,7 +94,7 @@ def find_product(df: pd.DataFrame, query: str):
 
     def match_tokens(name):
         name = normalize_text(name)
-        return all(t in name for t in tokens)
+        return all(t.rstrip("s") in name for t in tokens)
 
     # 1) filtro por tokens obrigatórios
     filtered = df[df["nome_popular"].astype(str).apply(match_tokens)]
@@ -255,6 +255,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
