@@ -23,10 +23,6 @@ def normalize_text(s: str) -> str:
 
 
 def load_catalog() -> pd.DataFrame:
-    print("DEBUG QUERY:", query)
-    print("DEBUG PRIMEIROS NOMES:")
-    for i in range(min(5, len(df))):
-        print(repr(df.iloc[i]["nome_popular"]))
 
     now = time.time()
     if CATALOG_CACHE["df"] is not None and (now - CATALOG_CACHE["ts"] < CACHE_TTL_SECONDS):
@@ -166,6 +162,12 @@ def format_product_answer(prod: pd.Series, intent: str) -> str:
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    print("DEBUG QUERY:", query)
+    print("DEBUG PRIMEIROS NOMES:")
+    for i in range(min(5, len(df))):
+        print(repr(df.iloc[i]["nome_popular"]))
+        
     msg = update.message.text if update.message else ""
     if not msg:
         return
@@ -240,6 +242,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
