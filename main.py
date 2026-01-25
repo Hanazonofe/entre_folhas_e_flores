@@ -175,6 +175,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     intent = detect_intent(msg)
     query = extract_query(msg)
 
+    print("DEBUG MSG ORIGINAL:", msg)
+    print("DEBUG QUERY FINAL:", query)
+
     df = load_catalog()
 
     print("DEBUG QUERY:", query)
@@ -247,6 +250,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
