@@ -162,11 +162,6 @@ def format_product_answer(prod: pd.Series, intent: str) -> str:
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    print("DEBUG QUERY:", query)
-    print("DEBUG PRIMEIROS NOMES:")
-    for i in range(min(5, len(df))):
-        print(repr(df.iloc[i]["nome_popular"]))
         
     msg = update.message.text if update.message else ""
     if not msg:
@@ -176,6 +171,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = extract_query(msg)
 
     df = load_catalog()
+
+    print("DEBUG QUERY:", query)
+    print("DEBUG PRIMEIROS NOMES:")
+    for i in range(min(5, len(df))):
+        print(repr(df.iloc[i]["nome_popular"]))
 
     # sugestão simples por ambiente/luz (MVP)
     if intent == "SUGGEST":
@@ -242,6 +242,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
