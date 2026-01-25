@@ -90,20 +90,20 @@ def find_product(df: pd.DataFrame, query: str):
     if not q:
         return None, []
 
-    # 1) match exato por contenção (ex: "vaso adri 20" dentro de "vaso adri 20 ceramica")
-    contains = df[df["__search"].str.contains(q, na=False)]
+    # 1) prioridade: nome começa com query
+    starts = df[df["nome_popular"].astype(str).apply(lambda x: normalize_text(x).startswith(q))]
 
-    if len(contains) == 1:
-        return contains.iloc[0], [(contains.iloc[0], 100)]
+    if len(starts) == 1:
+        return starts.iloc[0], [(starts.iloc[0], 100)]
 
-    if len(contains) > 1:
-        return None, [(row, 90) for _, row in contains.iterrows()]
+    if len(starts) > 1:
+        return None, [(row, 90) for _, row in starts.iterrows()]
 
-    # 2) fallback fuzzy
+    # 2) fallback fuzzy (nome + apelido)
     choices = df["__search"].tolist()
     matches = process.extract(q, choices, scorer=fuzz.WRatio, limit=5)
 
-    top = [(df.iloc[idx], score) for (_, score, idx) in matches if score >= 70]
+    top = [(df.iloc[idx], score) for (_, score, idx) in matches if score >= 75]
 
     if len(top) == 1:
         return top[0][0], top
@@ -112,7 +112,6 @@ def find_product(df: pd.DataFrame, query: str):
         return None, top
 
     return None, []
-
 
 def format_product_answer(prod: pd.Series, intent: str) -> str:
     nome = str(prod.get("nome_popular", "")).strip()
@@ -236,5 +235,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
