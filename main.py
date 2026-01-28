@@ -103,8 +103,17 @@ def format_product_answer(prod: pd.Series, intent: str) -> str:
     nome = str(prod.get("nome_popular", "")).strip()
     preco = str(prod.get("preco", "")).strip()
 
+    preco_formatado = ""
+
+    try:
+        # troca vírgula por ponto se vier assim
+        valor = float(preco.replace(",", "."))
+        preco_formatado = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        preco_formatado = ""
+
     if preco and preco.lower() != "nan":
-        return f"🌿 **{nome}**\n💰 **Preço:** {preco}"
+        return f"🌿 **{nome}**\n💰 **Preço:** {preco_formatado}"
     else:
         return f"🌿 **{nome}**\n💰 Preço não cadastrado"
 
@@ -157,5 +166,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
