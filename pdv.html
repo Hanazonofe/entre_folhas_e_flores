@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDV | Entre Folhas e Flores</title>
+  <style>
+    :root {
+      --bg: #f5f7f2;
+      --card: #ffffff;
+      --primary: #2f6b45;
+      --primary-dark: #245538;
+      --accent: #d9ead7;
+      --text: #1f2a23;
+      --muted: #68756d;
+      --danger: #b83232;
+      --border: #dbe3dc;
+      --shadow: 0 18px 50px rgba(31, 42, 35, 0.11);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #e8f3e6, transparent 38%), var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 28px clamp(16px, 4vw, 48px) 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--primary-dark);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+    }
+
+    .brand span {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--accent);
+      box-shadow: inset 0 0 0 1px #c8dec6;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(300px, 1.1fr) minmax(340px, 0.9fr);
+      gap: 24px;
+      padding: 16px clamp(16px, 4vw, 48px) 42px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(219, 227, 220, 0.9);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: clamp(18px, 3vw, 28px);
+    }
+
+    h1, h2 { margin: 0; letter-spacing: -0.04em; }
+    h1 { font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.95; max-width: 760px; }
+    h2 { font-size: 1.35rem; }
+    p { color: var(--muted); line-height: 1.55; }
+
+    .search-area { margin-top: 26px; position: relative; }
+
+    label { display: block; font-weight: 700; margin-bottom: 8px; }
+
+    input, select, button {
+      font: inherit;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 14px 16px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(47, 107, 69, 0.12); }
+
+    .search-line { display: flex; gap: 10px; }
+    .search-line input { font-size: 1.05rem; }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      padding: 12px 16px;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    button.secondary { background: #eef4ee; color: var(--primary-dark); border: 1px solid #cfe0cf; }
+    button.danger { background: #fff0f0; color: var(--danger); border: 1px solid #f0c8c8; }
+    button.icon { width: 38px; height: 38px; padding: 0; border-radius: 12px; }
+
+    .suggestions {
+      position: absolute;
+      inset-inline: 0;
+      top: calc(100% + 8px);
+      z-index: 5;
+      display: none;
+      max-height: 320px;
+      overflow: auto;
+      padding: 8px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 16px 34px rgba(31, 42, 35, 0.16);
+    }
+
+    .suggestions.show { display: block; }
+
+    .suggestion {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .suggestion:hover, .suggestion.active { background: var(--accent); }
+    .suggestion strong { display: block; }
+    .suggestion small { color: var(--muted); }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .product-card {
+      display: grid;
+      gap: 10px;
+      align-content: space-between;
+      min-height: 144px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: #fff;
+    }
+
+    .cart-list { display: grid; gap: 12px; margin: 20px 0; }
+
+    .cart-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      background: #fbfcfb;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+
+    .qty-controls { display: flex; align-items: center; gap: 8px; }
+    .qty { min-width: 28px; text-align: center; font-weight: 800; }
+
+    .empty {
+      padding: 28px;
+      border: 1px dashed #bac8bd;
+      border-radius: 18px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .totals {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .total-final { font-size: 1.5rem; font-weight: 900; color: var(--primary-dark); }
+    .payment { display: grid; gap: 14px; margin-top: 22px; }
+    .cash-field { display: none; }
+    .cash-field.show { display: block; }
+    .notice { min-height: 24px; font-weight: 700; color: var(--primary-dark); }
+
+    @media (max-width: 920px) {
+      main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span>🌿</span> Entre Folhas e Flores</div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h1>Venda rápida no PDV</h1>
+      <p>Leia um código de barras ou digite parte do nome. A busca encontra produtos aproximados e, ao repetir um item, aumenta a quantidade no carrinho automaticamente.</p>
+
+      <div class="search-area">
+        <label for="productSearch">Buscar produto ou código de barras</label>
+        <div class="search-line">
+          <input id="productSearch" type="search" placeholder="Ex.: suculenta, rosa, 789000000001..." autocomplete="off" autofocus />
+          <button id="addFirstResult" type="button">Adicionar</button>
+        </div>
+        <div id="suggestions" class="suggestions" role="listbox" aria-label="Sugestões de produtos"></div>
+      </div>
+
+      <div class="catalog-grid" id="catalogGrid" aria-label="Produtos em destaque"></div>
+    </section>
+
+    <aside class="card">
+      <h2>Carrinho</h2>
+      <div id="cartList" class="cart-list"></div>
+
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><strong id="subtotal">R$ 0,00</strong></div>
+        <label for="discount">Desconto em R$</label>
+        <input id="discount" type="number" min="0" step="0.01" value="0" />
+        <div class="row total-final"><span>Total final</span><span id="finalTotal">R$ 0,00</span></div>
+      </div>
+
+      <div class="payment">
+        <label for="paymentMethod">Método de pagamento</label>
+        <select id="paymentMethod">
+          <option value="credit">Cartão de crédito</option>
+          <option value="debit">Débito</option>
+          <option value="pix">Pix</option>
+          <option value="cash">Dinheiro</option>
+        </select>
+
+        <div id="cashField" class="cash-field">
+          <label for="cashReceived">Valor recebido em dinheiro</label>
+          <input id="cashReceived" type="number" min="0" step="0.01" placeholder="Ex.: 100,00" />
+          <p class="notice" id="changeNotice"></p>
+        </div>
+
+        <button id="finishSale" type="button">Fechar venda</button>
+        <p class="notice" id="saleNotice"></p>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const products = [
+      { id: 1, barcode: "789000000001", name: "Suculenta Echeveria", price: 18.90 },
+      { id: 2, barcode: "789000000002", name: "Rosa do Deserto", price: 49.90 },
+      { id: 3, barcode: "789000000003", name: "Orquídea Phalaenopsis", price: 89.90 },
+      { id: 4, barcode: "789000000004", name: "Samambaia Americana", price: 34.50 },
+      { id: 5, barcode: "789000000005", name: "Vaso de Cerâmica Verde", price: 42.00 },
+      { id: 6, barcode: "789000000006", name: "Terra Vegetal 2kg", price: 12.90 },
+      { id: 7, barcode: "789000000007", name: "Adubo Orgânico", price: 16.00 },
+      { id: 8, barcode: "789000000008", name: "Buquê de Girassóis", price: 75.00 }
+    ];
+
+    const cart = new Map();
+    const formatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+    const productSearch = document.querySelector("#productSearch");
+    const suggestions = document.querySelector("#suggestions");
+    const catalogGrid = document.querySelector("#catalogGrid");
+    const cartList = document.querySelector("#cartList");
+    const subtotalEl = document.querySelector("#subtotal");
+    const finalTotalEl = document.querySelector("#finalTotal");
+    const discountEl = document.querySelector("#discount");
+    const paymentMethod = document.querySelector("#paymentMethod");
+    const cashField = document.querySelector("#cashField");
+    const cashReceived = document.querySelector("#cashReceived");
+    const changeNotice = document.querySelector("#changeNotice");
+    const saleNotice = document.querySelector("#saleNotice");
+
+    function normalize(value) {
+      return String(value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+    }
+
+    function similarity(query, text) {
+      const q = normalize(query);
+      const t = normalize(text);
+      if (!q) return 0;
+      if (t.includes(q)) return 100 - Math.max(0, t.indexOf(q));
+      const tokens = q.split(/\s+/).filter(Boolean);
+      const matched = tokens.filter(token => t.includes(token) || token.split("").every(char => t.includes(char))).length;
+      return Math.round((matched / Math.max(tokens.length, 1)) * 75);
+    }
+
+    function searchProducts(query) {
+      const q = normalize(query);
+      if (!q) return [];
+      const barcodeMatch = products.find(product => product.barcode === q);
+      if (barcodeMatch) return [barcodeMatch];
+
+      return products
+        .map(product => ({ product, score: Math.max(similarity(q, product.name), similarity(q, product.barcode)) }))
+        .filter(item => item.score >= 35)
+        .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name))
+        .slice(0, 6)
+        .map(item => item.product);
+    }
+
+    function addToCart(product) {
+      const current = cart.get(product.id) || { ...product, quantity: 0 };
+      current.quantity += 1;
+      cart.set(product.id, current);
+      productSearch.value = "";
+      suggestions.classList.remove("show");
+      saleNotice.textContent = `${product.name} adicionado ao carrinho.`;
+      renderCart();
+      productSearch.focus();
+    }
+
+    function updateQuantity(productId, delta) {
+      const item = cart.get(productId);
+      if (!item) return;
+      item.quantity += delta;
+      if (item.quantity <= 0) cart.delete(productId);
+      renderCart();
+    }
+
+    function removeItem(productId) {
+      cart.delete(productId);
+      renderCart();
+    }
+
+    function getSubtotal() {
+      return [...cart.values()].reduce((total, item) => total + item.price * item.quantity, 0);
+    }
+
+    function getDiscount() {
+      return Math.max(0, Number(discountEl.value) || 0);
+    }
+
+    function getFinalTotal() {
+      return Math.max(0, getSubtotal() - getDiscount());
+    }
+
+    function renderCart() {
+      if (!cart.size) {
+        cartList.innerHTML = '<div class="empty">Nenhum produto no carrinho.</div>';
+      } else {
+        cartList.innerHTML = [...cart.values()].map(item => `
+          <div class="cart-item">
+            <div>
+              <strong>${item.name}</strong><br />
+              <small>${formatter.format(item.price)} cada • ${formatter.format(item.price * item.quantity)}</small>
+            </div>
+            <div class="qty-controls">
+              <button class="icon secondary" onclick="updateQuantity(${item.id}, -1)" aria-label="Diminuir quantidade">−</button>
+              <span class="qty">${item.quantity}</span>
+              <button class="icon secondary" onclick="updateQuantity(${item.id}, 1)" aria-label="Aumentar quantidade">+</button>
+              <button class="icon danger" onclick="removeItem(${item.id})" aria-label="Remover produto">×</button>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      subtotalEl.textContent = formatter.format(getSubtotal());
+      finalTotalEl.textContent = formatter.format(getFinalTotal());
+      updateChange();
+    }
+
+    function renderSuggestions(results) {
+      suggestions.innerHTML = results.map(product => `
+        <div class="suggestion" role="option" data-id="${product.id}">
+          <div><strong>${product.name}</strong><small>Cód. ${product.barcode}</small></div>
+          <strong>${formatter.format(product.price)}</strong>
+        </div>
+      `).join("");
+      suggestions.classList.toggle("show", results.length > 0);
+    }
+
+    function renderCatalog() {
+      catalogGrid.innerHTML = products.slice(0, 6).map(product => `
+        <article class="product-card">
+          <div><strong>${product.name}</strong><p>${product.barcode}</p></div>
+          <div class="row"><strong>${formatter.format(product.price)}</strong><button type="button" onclick='addToCart(${JSON.stringify(product)})'>Adicionar</button></div>
+        </article>
+      `).join("");
+    }
+
+    function updateChange() {
+      if (paymentMethod.value !== "cash") {
+        changeNotice.textContent = "";
+        return;
+      }
+      const received = Number(cashReceived.value) || 0;
+      const total = getFinalTotal();
+      if (!received) {
+        changeNotice.textContent = "Informe o valor recebido para calcular o troco.";
+      } else if (received < total) {
+        changeNotice.textContent = `Faltam ${formatter.format(total - received)}.`;
+      } else {
+        changeNotice.textContent = `Troco: ${formatter.format(received - total)}.`;
+      }
+    }
+
+    productSearch.addEventListener("input", event => renderSuggestions(searchProducts(event.target.value)));
+    productSearch.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const [first] = searchProducts(productSearch.value);
+        if (first) addToCart(first);
+      }
+    });
+
+    suggestions.addEventListener("click", event => {
+      const option = event.target.closest(".suggestion");
+      if (!option) return;
+      const product = products.find(item => item.id === Number(option.dataset.id));
+      addToCart(product);
+    });
+
+    document.querySelector("#addFirstResult").addEventListener("click", () => {
+      const [first] = searchProducts(productSearch.value);
+      if (first) addToCart(first);
+    });
+
+    discountEl.addEventListener("input", renderCart);
+    cashReceived.addEventListener("input", updateChange);
+    paymentMethod.addEventListener("change", () => {
+      cashField.classList.toggle("show", paymentMethod.value === "cash");
+      updateChange();
+    });
+
+    document.querySelector("#finishSale").addEventListener("click", () => {
+      const total = getFinalTotal();
+      if (!cart.size) {
+        saleNotice.textContent = "Adicione pelo menos um produto antes de fechar a venda.";
+        return;
+      }
+      if (paymentMethod.value === "cash" && (Number(cashReceived.value) || 0) < total) {
+        saleNotice.textContent = "O valor recebido em dinheiro é menor que o total final.";
+        return;
+      }
+      saleNotice.textContent = `Venda fechada com ${paymentMethod.options[paymentMethod.selectedIndex].text}: ${formatter.format(total)}.`;
+      cart.clear();
+      discountEl.value = 0;
+      cashReceived.value = "";
+      renderCart();
+    });
+
+    renderCatalog();
+    renderCart();
+  </script>
+</body>
+</html>
