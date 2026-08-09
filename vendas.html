@@ -94,7 +94,7 @@
 
     .filters {
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px);
+      grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px) minmax(160px, 220px);
       gap: 12px;
       margin: 24px 0;
     }
@@ -257,6 +257,11 @@
             <option value="cancelled">Canceladas</option>
           </select>
         </div>
+        <div>
+          <label for="totalDateFilter">Data dos totais</label>
+          <input id="totalDateFilter" type="date" aria-describedby="totalDateHelp" />
+          <span id="totalDateHelp" class="meta">Deixe vazio para ver todas as datas.</span>
+        </div>
       </div>
 
       <div id="summaryGrid" class="summary-grid" aria-live="polite"></div>
@@ -307,6 +312,7 @@
     const summaryGrid = document.querySelector("#summaryGrid");
     const searchSales = document.querySelector("#searchSales");
     const statusFilter = document.querySelector("#statusFilter");
+    const totalDateFilter = document.querySelector("#totalDateFilter");
     const notice = document.querySelector("#notice");
     const editModal = document.querySelector("#editModal");
     const editForm = document.querySelector("#editForm");
@@ -335,6 +341,19 @@
       return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(isoDate));
     }
 
+    function getSaleDateKey(isoDate) {
+      const date = new Date(isoDate);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatDateOnly(dateKey) {
+      const [year, month, day] = dateKey.split("-");
+      return `${day}/${month}/${year}`;
+    }
+
     function getSaleSubtotal(sale) {
       return sale.items.reduce((total, item) => total + Number(item.price) * Number(item.quantity), 0);
     }
@@ -346,6 +365,7 @@
     function getFilteredSales() {
       const query = normalize(searchSales.value);
       const status = statusFilter.value;
+      const totalDate = totalDateFilter.value;
       return getSales().filter(sale => {
         const text = normalize([
           sale.id,
@@ -355,7 +375,8 @@
         ].join(" "));
         const matchesQuery = !query || text.includes(query);
         const matchesStatus = status === "all" || sale.status === status;
-        return matchesQuery && matchesStatus;
+        const matchesDate = !totalDate || getSaleDateKey(sale.createdAt) === totalDate;
+        return matchesQuery && matchesStatus && matchesDate;
       });
     }
 
@@ -369,7 +390,7 @@
 
       summaryGrid.innerHTML = `
         <section class="summary-card">
-          <span class="meta">Total atual das vendas listadas</span>
+          <span class="meta">Total atual das vendas listadas${totalDateFilter.value ? ` em ${formatDateOnly(totalDateFilter.value)}` : ""}</span>
           <strong>${formatter.format(currentTotal)}</strong>
           <span class="meta">Canceladas não entram no total.</span>
         </section>
@@ -542,6 +563,7 @@
     document.querySelector("#closeModal").addEventListener("click", () => editModal.classList.remove("show"));
     searchSales.addEventListener("input", renderSales);
     statusFilter.addEventListener("change", renderSales);
+    totalDateFilter.addEventListener("change", renderSales);
     renderSales();
   </script>
 </body>
