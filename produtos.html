@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Produtos | Entre Folhas e Flores</title>
+  <style>
+    :root {
+      --bg: #f5f7f2;
+      --card: #ffffff;
+      --primary: #2f6b45;
+      --primary-dark: #245538;
+      --accent: #d9ead7;
+      --text: #1f2a23;
+      --muted: #68756d;
+      --danger: #b83232;
+      --warning: #8a5c00;
+      --border: #dbe3dc;
+      --shadow: 0 18px 50px rgba(31, 42, 35, 0.11);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #e8f3e6, transparent 38%), var(--bg);
+      color: var(--text);
+    }
+
+    header, main { padding-inline: clamp(16px, 4vw, 48px); }
+    header { padding-top: 28px; padding-bottom: 12px; }
+    main { display: grid; grid-template-columns: minmax(320px, 0.8fr) minmax(360px, 1.2fr); gap: 24px; padding-top: 16px; padding-bottom: 42px; }
+
+    .topbar, .page-heading, .row, .product-header, .actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .topbar, .page-heading, .row, .product-header { justify-content: space-between; }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--primary-dark);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+    }
+
+    .brand span {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--accent);
+      box-shadow: inset 0 0 0 1px #c8dec6;
+    }
+
+    nav { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    nav a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 14px;
+      border: 1px solid #cfe0cf;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--primary-dark);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    nav a.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(219, 227, 220, 0.9);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: clamp(18px, 3vw, 28px);
+    }
+
+    h1, h2, h3 { margin: 0; letter-spacing: -0.04em; }
+    h1 { font-size: clamp(2rem, 5vw, 3.7rem); line-height: 0.95; }
+    p { color: var(--muted); line-height: 1.55; }
+
+    form, .product-list, .tools { display: grid; gap: 14px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    label { display: block; font-weight: 800; margin-bottom: 8px; }
+    input, select, button {
+      width: 100%;
+      font: inherit;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    input, select {
+      padding: 13px 15px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(47, 107, 69, 0.12); }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      padding: 11px 14px;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    button.secondary { background: #eef4ee; color: var(--primary-dark); border: 1px solid #cfe0cf; }
+    button.warning { background: #fff6df; color: var(--warning); border: 1px solid #edd79b; }
+    button.danger { background: #fff0f0; color: var(--danger); border: 1px solid #f0c8c8; }
+    button.small { width: auto; min-width: 112px; }
+
+    .product-card {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: #fff;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      background: var(--accent);
+      color: var(--primary-dark);
+    }
+
+    .status.inactive { background: #fff0f0; color: var(--danger); }
+    .meta { color: var(--muted); font-size: 0.95rem; }
+    .notice { min-height: 24px; font-weight: 800; color: var(--primary-dark); }
+    .empty { padding: 28px; border: 1px dashed #bac8bd; border-radius: 18px; text-align: center; color: var(--muted); }
+    .file-input { display: none; }
+
+    @media (max-width: 920px) {
+      main, .grid-2 { grid-template-columns: 1fr; }
+      .product-header, .page-heading { align-items: flex-start; }
+      button.small { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand"><span>🌿</span> Entre Folhas e Flores</div>
+      <nav aria-label="Navegação principal">
+        <a href="pdv.html">Nova venda</a>
+        <a href="vendas.html">Vendas realizadas</a>
+        <a class="active" href="produtos.html">Produtos</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="page-heading">
+        <div>
+          <h1>Cadastro de produtos</h1>
+          <p>Cadastre produtos, altere informações e use status ativo/inativo para deleção lógica sem perder histórico.</p>
+        </div>
+      </div>
+
+      <form id="productForm">
+        <input type="hidden" id="editingId" />
+        <div class="grid-2">
+          <div>
+            <label for="code">Código</label>
+            <input id="code" required placeholder="Ex.: 001" />
+          </div>
+          <div>
+            <label for="barcode">Código EAN</label>
+            <input id="barcode" placeholder="Ex.: 789000000001" />
+          </div>
+        </div>
+
+        <div>
+          <label for="name">Nome</label>
+          <input id="name" required placeholder="Nome do produto" />
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label for="price">Preço</label>
+            <input id="price" required type="number" min="0" step="0.01" placeholder="0,00" />
+          </div>
+          <div>
+            <label for="stock">Estoque</label>
+            <input id="stock" type="number" min="0" step="1" value="0" />
+          </div>
+        </div>
+
+        <div>
+          <label for="status">Status</label>
+          <select id="status">
+            <option value="active">Ativo</option>
+            <option value="inactive">Inativo</option>
+          </select>
+        </div>
+
+        <button type="submit">Salvar produto</button>
+        <button class="secondary" type="button" id="clearForm">Limpar formulário</button>
+        <p class="notice" id="formNotice"></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="page-heading">
+        <div>
+          <h2>Produtos cadastrados</h2>
+          <p>Procure por código, EAN ou nome. A busca aceita texto parcial e aproximações.</p>
+        </div>
+      </div>
+
+      <div class="tools">
+        <div>
+          <label for="productSearch">Buscar produto</label>
+          <input id="productSearch" type="search" placeholder="Ex.: sucu, 789000000001, rosa..." />
+        </div>
+        <div class="actions">
+          <button class="secondary small" type="button" id="importButton">Importar planilha Excel/CSV</button>
+          <input class="file-input" id="importFile" type="file" accept=".csv,.tsv,.txt,.xls,.xlsx" />
+          <span class="meta">Colunas esperadas: código, código EAN, nome, preço, estoque, status.</span>
+        </div>
+      </div>
+
+      <div id="productList" class="product-list"></div>
+      <p class="notice" id="listNotice"></p>
+    </section>
+  </main>
+
+  <script>
+    const PRODUCTS_STORAGE_KEY = "entre-folhas-produtos";
+    const formatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+    const defaultProducts = [
+      { id: "1", code: "1", barcode: "789000000001", name: "Suculenta Echeveria", price: 18.90, stock: 12, status: "active" },
+      { id: "2", code: "2", barcode: "789000000002", name: "Rosa do Deserto", price: 49.90, stock: 8, status: "active" },
+      { id: "3", code: "3", barcode: "789000000003", name: "Orquídea Phalaenopsis", price: 89.90, stock: 6, status: "active" },
+      { id: "4", code: "4", barcode: "789000000004", name: "Samambaia Americana", price: 34.50, stock: 10, status: "active" },
+      { id: "5", code: "5", barcode: "789000000005", name: "Vaso de Cerâmica Verde", price: 42.00, stock: 15, status: "active" },
+      { id: "6", code: "6", barcode: "789000000006", name: "Terra Vegetal 2kg", price: 12.90, stock: 20, status: "active" },
+      { id: "7", code: "7", barcode: "789000000007", name: "Adubo Orgânico", price: 16.00, stock: 18, status: "active" },
+      { id: "8", code: "8", barcode: "789000000008", name: "Buquê de Girassóis", price: 75.00, stock: 5, status: "active" }
+    ];
+
+    const productForm = document.querySelector("#productForm");
+    const productList = document.querySelector("#productList");
+    const productSearch = document.querySelector("#productSearch");
+    const formNotice = document.querySelector("#formNotice");
+    const listNotice = document.querySelector("#listNotice");
+    const importFile = document.querySelector("#importFile");
+
+    function normalize(value) {
+      return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    }
+
+    function similarity(query, text) {
+      const q = normalize(query);
+      const t = normalize(text);
+      if (!q) return 0;
+      if (t.includes(q)) return 100 - Math.max(0, t.indexOf(q));
+      const tokens = q.split(/\s+/).filter(Boolean);
+      const matched = tokens.filter(token => t.includes(token) || token.split("").every(char => t.includes(char))).length;
+      return Math.round((matched / Math.max(tokens.length, 1)) * 75);
+    }
+
+    function getProducts() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(PRODUCTS_STORAGE_KEY)) || [];
+        if (saved.length) return saved;
+      } catch {}
+      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(defaultProducts));
+      return defaultProducts;
+    }
+
+    function saveProducts(products) {
+      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+    }
+
+    function getSearchableText(product) {
+      return `${product.code} ${product.barcode} ${product.name}`;
+    }
+
+    function searchProducts(query) {
+      const products = getProducts();
+      const q = normalize(query);
+      if (!q) return products;
+      return products
+        .map(product => ({ product, score: Math.max(similarity(q, getSearchableText(product)), similarity(q, product.barcode), similarity(q, product.code)) }))
+        .filter(item => item.score >= 35)
+        .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name))
+        .map(item => item.product);
+    }
+
+    function renderProducts() {
+      const products = searchProducts(productSearch.value);
+      if (!products.length) {
+        productList.innerHTML = '<div class="empty">Nenhum produto encontrado.</div>';
+        return;
+      }
+
+      productList.innerHTML = products.map(product => `
+        <article class="product-card">
+          <div class="product-header">
+            <div>
+              <h3>${product.name}</h3>
+              <div class="meta">Código ${product.code || "-"} • EAN ${product.barcode || "-"}</div>
+            </div>
+            <span class="status ${product.status === "inactive" ? "inactive" : ""}">${product.status === "inactive" ? "Inativo" : "Ativo"}</span>
+          </div>
+          <div class="row">
+            <strong>${formatter.format(Number(product.price) || 0)}</strong>
+            <span class="meta">Estoque: ${Number(product.stock) || 0}</span>
+          </div>
+          <div class="actions">
+            <button class="small secondary" type="button" onclick="editProduct('${product.id}')">Editar</button>
+            <button class="small ${product.status === "inactive" ? "secondary" : "warning"}" type="button" onclick="toggleProductStatus('${product.id}')">${product.status === "inactive" ? "Reativar" : "Inativar"}</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function clearForm() {
+      productForm.reset();
+      document.querySelector("#editingId").value = "";
+      document.querySelector("#stock").value = 0;
+      document.querySelector("#status").value = "active";
+    }
+
+    function editProduct(id) {
+      const product = getProducts().find(item => item.id === id);
+      if (!product) return;
+      document.querySelector("#editingId").value = product.id;
+      document.querySelector("#code").value = product.code || "";
+      document.querySelector("#barcode").value = product.barcode || "";
+      document.querySelector("#name").value = product.name || "";
+      document.querySelector("#price").value = product.price || 0;
+      document.querySelector("#stock").value = product.stock || 0;
+      document.querySelector("#status").value = product.status || "active";
+      formNotice.textContent = `Editando ${product.name}.`;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function toggleProductStatus(id) {
+      const products = getProducts().map(product => product.id === id ? {
+        ...product,
+        status: product.status === "inactive" ? "active" : "inactive"
+      } : product);
+      saveProducts(products);
+      renderProducts();
+      listNotice.textContent = "Status do produto atualizado.";
+    }
+
+    productForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const editingId = document.querySelector("#editingId").value;
+      const code = document.querySelector("#code").value.trim();
+      const barcode = document.querySelector("#barcode").value.trim();
+      const products = getProducts();
+      const product = {
+        id: editingId || code || barcode || String(Date.now()),
+        code,
+        barcode,
+        name: document.querySelector("#name").value.trim(),
+        price: Math.max(0, Number(document.querySelector("#price").value) || 0),
+        stock: Math.max(0, Number(document.querySelector("#stock").value) || 0),
+        status: document.querySelector("#status").value
+      };
+
+      const duplicated = products.some(item => item.id !== editingId && (item.code === product.code || (product.barcode && item.barcode === product.barcode)));
+      if (duplicated) {
+        formNotice.textContent = "Já existe produto com esse código ou EAN.";
+        return;
+      }
+
+      const updated = editingId ? products.map(item => item.id === editingId ? product : item) : [product, ...products];
+      saveProducts(updated);
+      clearForm();
+      renderProducts();
+      formNotice.textContent = "Produto salvo com sucesso.";
+    });
+
+    function parseCsvLine(line, separator) {
+      const values = [];
+      let current = "";
+      let quoted = false;
+      for (const char of line) {
+        if (char === '"') quoted = !quoted;
+        else if (char === separator && !quoted) { values.push(current.trim()); current = ""; }
+        else current += char;
+      }
+      values.push(current.trim());
+      return values;
+    }
+
+    function importSpreadsheetText(text) {
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      if (lines.length < 2) return 0;
+      const separator = lines[0].includes(";") ? ";" : lines[0].includes("\t") ? "\t" : ",";
+      const headers = parseCsvLine(lines[0], separator).map(normalize);
+      const indexOf = names => names.map(name => headers.indexOf(normalize(name))).find(index => index >= 0);
+      const indexes = {
+        code: indexOf(["codigo", "código", "code"]),
+        barcode: indexOf(["codigo ean", "código ean", "ean", "barcode"]),
+        name: indexOf(["nome", "name", "produto"]),
+        price: indexOf(["preco", "preço", "price"]),
+        stock: indexOf(["estoque", "stock"]),
+        status: indexOf(["status"])
+      };
+
+      const imported = lines.slice(1).map(line => {
+        const columns = parseCsvLine(line, separator);
+        const code = columns[indexes.code] || "";
+        const barcode = columns[indexes.barcode] || "";
+        return {
+          id: code || barcode || String(Date.now() + Math.random()),
+          code,
+          barcode,
+          name: columns[indexes.name] || "Produto sem nome",
+          price: Number(String(columns[indexes.price] || "0").replace(",", ".")) || 0,
+          stock: Number(columns[indexes.stock] || 0) || 0,
+          status: normalize(columns[indexes.status]) === "inativo" || normalize(columns[indexes.status]) === "inactive" ? "inactive" : "active"
+        };
+      });
+
+      const current = getProducts();
+      const merged = [...imported, ...current.filter(product => !imported.some(item => item.code === product.code || (item.barcode && item.barcode === product.barcode)))];
+      saveProducts(merged);
+      renderProducts();
+      return imported.length;
+    }
+
+    document.querySelector("#clearForm").addEventListener("click", clearForm);
+    productSearch.addEventListener("input", renderProducts);
+    document.querySelector("#importButton").addEventListener("click", () => importFile.click());
+    importFile.addEventListener("change", event => {
+      const [file] = event.target.files;
+      if (!file) return;
+      if (/\.xlsx?$/.test(file.name.toLowerCase())) {
+        listNotice.textContent = "Arquivo Excel selecionado. Para importar sem biblioteca externa, salve a planilha como CSV e importe novamente.";
+        importFile.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const total = importSpreadsheetText(String(reader.result || ""));
+        listNotice.textContent = `${total} produto(s) importado(s).`;
+      };
+      reader.readAsText(file, "utf-8");
+    });
+
+    renderProducts();
+  </script>
+</body>
+</html>

@@ -235,6 +235,7 @@
       <nav aria-label="Navegação principal">
         <a class="active" href="pdv.html">Nova venda</a>
         <a href="vendas.html">Vendas realizadas</a>
+        <a href="produtos.html">Produtos</a>
       </nav>
     </div>
   </header>
@@ -289,19 +290,21 @@
   </main>
 
   <script>
-    const products = [
-      { id: 1, barcode: "789000000001", name: "Suculenta Echeveria", price: 18.90 },
-      { id: 2, barcode: "789000000002", name: "Rosa do Deserto", price: 49.90 },
-      { id: 3, barcode: "789000000003", name: "Orquídea Phalaenopsis", price: 89.90 },
-      { id: 4, barcode: "789000000004", name: "Samambaia Americana", price: 34.50 },
-      { id: 5, barcode: "789000000005", name: "Vaso de Cerâmica Verde", price: 42.00 },
-      { id: 6, barcode: "789000000006", name: "Terra Vegetal 2kg", price: 12.90 },
-      { id: 7, barcode: "789000000007", name: "Adubo Orgânico", price: 16.00 },
-      { id: 8, barcode: "789000000008", name: "Buquê de Girassóis", price: 75.00 }
+    const DEFAULT_PRODUCTS = [
+      { id: "1", code: "1", barcode: "789000000001", name: "Suculenta Echeveria", price: 18.90, stock: 12, status: "active" },
+      { id: "2", code: "2", barcode: "789000000002", name: "Rosa do Deserto", price: 49.90, stock: 8, status: "active" },
+      { id: "3", code: "3", barcode: "789000000003", name: "Orquídea Phalaenopsis", price: 89.90, stock: 6, status: "active" },
+      { id: "4", code: "4", barcode: "789000000004", name: "Samambaia Americana", price: 34.50, stock: 10, status: "active" },
+      { id: "5", code: "5", barcode: "789000000005", name: "Vaso de Cerâmica Verde", price: 42.00, stock: 15, status: "active" },
+      { id: "6", code: "6", barcode: "789000000006", name: "Terra Vegetal 2kg", price: 12.90, stock: 20, status: "active" },
+      { id: "7", code: "7", barcode: "789000000007", name: "Adubo Orgânico", price: 16.00, stock: 18, status: "active" },
+      { id: "8", code: "8", barcode: "789000000008", name: "Buquê de Girassóis", price: 75.00, stock: 5, status: "active" }
     ];
 
     const cart = new Map();
+    const PRODUCTS_STORAGE_KEY = "entre-folhas-produtos";
     const SALES_STORAGE_KEY = "entre-folhas-vendas";
+    const products = loadProducts();
     const formatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
     const productSearch = document.querySelector("#productSearch");
@@ -323,6 +326,26 @@
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .trim();
+    }
+
+    function loadProducts() {
+      try {
+        const savedProducts = JSON.parse(localStorage.getItem(PRODUCTS_STORAGE_KEY)) || [];
+        const source = savedProducts.length ? savedProducts : DEFAULT_PRODUCTS;
+        return source
+          .filter(product => product.status !== "inactive")
+          .map(product => ({
+            id: String(product.id || product.code || product.barcode),
+            code: String(product.code || product.id || ""),
+            barcode: String(product.barcode || product.ean || product.code || ""),
+            name: product.name,
+            price: Number(product.price) || 0,
+            stock: Number(product.stock) || 0,
+            status: product.status || "active"
+          }));
+      } catch {
+        return DEFAULT_PRODUCTS;
+      }
     }
 
     function similarity(query, text) {
