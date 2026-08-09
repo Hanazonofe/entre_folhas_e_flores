@@ -133,6 +133,28 @@
     button.warning { background: #fff6df; color: var(--warning); border: 1px solid #edd79b; }
     button.small { width: auto; min-width: 108px; }
 
+    .summary-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 2fr;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .summary-card {
+      display: grid;
+      gap: 10px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: #fff;
+    }
+
+    .summary-card strong { color: var(--primary-dark); font-size: 1.7rem; }
+    .payment-totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .payment-pill { padding: 12px; border-radius: 16px; background: #f7faf7; border: 1px solid #e2ebe3; }
+    .payment-pill span { display: block; color: var(--muted); font-size: 0.9rem; }
+    .payment-pill strong { font-size: 1.05rem; }
+
     .sales-list { display: grid; gap: 14px; }
 
     .sale-card {
@@ -140,7 +162,17 @@
       border-radius: 22px;
       background: #fff;
       padding: 18px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
+
+    .sale-card.expanded { border-color: #b8d3bc; box-shadow: 0 12px 34px rgba(31, 42, 35, 0.09); }
+    .sale-toggle { text-align: left; background: transparent; color: inherit; border: 0; padding: 0; }
+    .sale-toggle:hover { background: transparent; transform: none; }
+    .sale-summary { width: 100%; cursor: pointer; }
+    .sale-details { display: none; margin-top: 12px; }
+    .sale-card.expanded .sale-details { display: block; }
+    .chevron { font-size: 1.35rem; color: var(--primary-dark); transition: transform 0.15s ease; }
+    .sale-card.expanded .chevron { transform: rotate(180deg); }
 
     .status {
       display: inline-flex;
@@ -184,7 +216,7 @@
     .notice { min-height: 24px; font-weight: 800; color: var(--primary-dark); }
 
     @media (max-width: 760px) {
-      .filters, .edit-grid { grid-template-columns: 1fr; }
+      .filters, .edit-grid, .summary-grid { grid-template-columns: 1fr; }
       .sale-header, .page-heading { align-items: flex-start; }
       button.small { width: 100%; }
     }
@@ -227,6 +259,7 @@
         </div>
       </div>
 
+      <div id="summaryGrid" class="summary-grid" aria-live="polite"></div>
       <div id="salesList" class="sales-list"></div>
       <p id="notice" class="notice"></p>
     </section>
@@ -271,6 +304,7 @@
     const paymentLabels = { credit: "Cartão de crédito", debit: "Débito", pix: "Pix", cash: "Dinheiro" };
 
     const salesList = document.querySelector("#salesList");
+    const summaryGrid = document.querySelector("#summaryGrid");
     const searchSales = document.querySelector("#searchSales");
     const statusFilter = document.querySelector("#statusFilter");
     const notice = document.querySelector("#notice");
@@ -279,6 +313,7 @@
     const editItems = document.querySelector("#editItems");
     const editSubtotal = document.querySelector("#editSubtotal");
     const editTotal = document.querySelector("#editTotal");
+    const expandedSales = new Set();
 
     function normalize(value) {
       return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -324,48 +359,97 @@
       });
     }
 
+    function renderSummary(sales) {
+      const activeSales = sales.filter(sale => sale.status !== "cancelled");
+      const currentTotal = activeSales.reduce((total, sale) => total + Number(sale.total || 0), 0);
+      const totalsByPayment = activeSales.reduce((totals, sale) => {
+        totals[sale.paymentMethod] = (totals[sale.paymentMethod] || 0) + Number(sale.total || 0);
+        return totals;
+      }, {});
+
+      summaryGrid.innerHTML = `
+        <section class="summary-card">
+          <span class="meta">Total atual das vendas listadas</span>
+          <strong>${formatter.format(currentTotal)}</strong>
+          <span class="meta">Canceladas não entram no total.</span>
+        </section>
+        <section class="summary-card">
+          <span class="meta">Total por meio de pagamento</span>
+          <div class="payment-totals">
+            ${Object.entries(paymentLabels).map(([method, label]) => `
+              <div class="payment-pill">
+                <span>${label}</span>
+                <strong>${formatter.format(totalsByPayment[method] || 0)}</strong>
+              </div>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    function toggleSale(id) {
+      if (expandedSales.has(id)) {
+        expandedSales.delete(id);
+      } else {
+        expandedSales.add(id);
+      }
+      renderSales();
+    }
+
     function renderSales() {
       const sales = getFilteredSales();
+      renderSummary(sales);
       if (!sales.length) {
         salesList.innerHTML = '<div class="empty">Nenhuma venda encontrada. Feche uma venda na tela de PDV para criar o primeiro registro.</div>';
         return;
       }
 
-      salesList.innerHTML = sales.map(sale => `
-        <article class="sale-card">
-          <div class="sale-header">
-            <div>
-              <h3>Venda #${sale.id.slice(0, 8)}</h3>
-              <div class="meta">Feita em ${formatDate(sale.createdAt)} • ${sale.paymentLabel}</div>
-              ${sale.updatedAt ? `<div class="meta">Última alteração em ${formatDate(sale.updatedAt)}</div>` : ""}
-            </div>
-            <span class="status ${sale.status}">${getStatusLabel(sale.status)}</span>
-          </div>
-
-          <div class="items">
-            ${sale.items.map(item => `
-              <div class="item-line">
-                <div><strong>${item.name}</strong><br><span class="meta">Cód. ${item.barcode} • ${formatter.format(Number(item.price))} cada</span></div>
-                <strong>${item.quantity} un. • ${formatter.format(Number(item.price) * Number(item.quantity))}</strong>
+      salesList.innerHTML = sales.map(sale => {
+        const expanded = expandedSales.has(sale.id);
+        const itemCount = sale.items.reduce((total, item) => total + Number(item.quantity), 0);
+        return `
+        <article class="sale-card ${expanded ? "expanded" : ""}">
+          <button class="sale-toggle" type="button" onclick="toggleSale('${sale.id}')" aria-expanded="${expanded}" aria-controls="sale-details-${sale.id}">
+            <div class="sale-header sale-summary">
+              <div>
+                <h3>Venda #${sale.id.slice(0, 8)}</h3>
+                <div class="meta">Feita em ${formatDate(sale.createdAt)} • ${sale.paymentLabel} • ${itemCount} item(ns)</div>
+                ${sale.updatedAt ? `<div class="meta">Última alteração em ${formatDate(sale.updatedAt)}</div>` : ""}
               </div>
-            `).join("")}
-          </div>
+              <div class="actions">
+                <span class="status ${sale.status}">${getStatusLabel(sale.status)}</span>
+                <strong class="total-final">${formatter.format(sale.total)}</strong>
+                <span class="chevron" aria-hidden="true">⌄</span>
+              </div>
+            </div>
+          </button>
 
-          ${sale.notes ? `<p><strong>Observações:</strong> ${sale.notes}</p>` : ""}
+          <div class="sale-details" id="sale-details-${sale.id}">
+            <div class="items">
+              ${sale.items.map(item => `
+                <div class="item-line">
+                  <div><strong>${item.name}</strong><br><span class="meta">Cód. ${item.barcode} • ${formatter.format(Number(item.price))} cada</span></div>
+                  <strong>${item.quantity} un. • ${formatter.format(Number(item.price) * Number(item.quantity))}</strong>
+                </div>
+              `).join("")}
+            </div>
 
-          <div class="totals">
-            <div class="row"><span>Subtotal</span><strong>${formatter.format(sale.subtotal)}</strong></div>
-            <div class="row"><span>Desconto</span><strong>${formatter.format(sale.discount || 0)}</strong></div>
-            ${sale.paymentMethod === "cash" ? `<div class="row"><span>Recebido</span><strong>${formatter.format(sale.cashReceived || sale.total)}</strong></div><div class="row"><span>Troco</span><strong>${formatter.format(sale.change || 0)}</strong></div>` : ""}
-            <div class="row total-final"><span>Total</span><span>${formatter.format(sale.total)}</span></div>
-          </div>
+            ${sale.notes ? `<p><strong>Observações:</strong> ${sale.notes}</p>` : ""}
 
-          <div class="actions">
-            <button class="small secondary" type="button" onclick="openEdit('${sale.id}')" ${sale.status === "cancelled" ? "disabled" : ""}>Alterar</button>
-            <button class="small warning" type="button" onclick="cancelSale('${sale.id}')" ${sale.status === "cancelled" ? "disabled" : ""}>Cancelar</button>
+            <div class="totals">
+              <div class="row"><span>Subtotal</span><strong>${formatter.format(sale.subtotal)}</strong></div>
+              <div class="row"><span>Desconto</span><strong>${formatter.format(sale.discount || 0)}</strong></div>
+              ${sale.paymentMethod === "cash" ? `<div class="row"><span>Recebido</span><strong>${formatter.format(sale.cashReceived || sale.total)}</strong></div><div class="row"><span>Troco</span><strong>${formatter.format(sale.change || 0)}</strong></div>` : ""}
+              <div class="row total-final"><span>Total</span><span>${formatter.format(sale.total)}</span></div>
+            </div>
+
+            <div class="actions">
+              <button class="small secondary" type="button" onclick="openEdit('${sale.id}')" ${sale.status === "cancelled" ? "disabled" : ""}>Alterar</button>
+              <button class="small warning" type="button" onclick="cancelSale('${sale.id}')" ${sale.status === "cancelled" ? "disabled" : ""}>Cancelar</button>
+            </div>
           </div>
         </article>
-      `).join("");
+      `}).join("");
     }
 
     function cancelSale(id) {
