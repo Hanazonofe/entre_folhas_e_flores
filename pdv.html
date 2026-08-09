@@ -52,6 +52,32 @@
       box-shadow: inset 0 0 0 1px #c8dec6;
     }
 
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    nav { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    nav a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 14px;
+      border: 1px solid #cfe0cf;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--primary-dark);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    nav a.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
     main {
       display: grid;
       grid-template-columns: minmax(300px, 1.1fr) minmax(340px, 0.9fr);
@@ -204,7 +230,13 @@
 </head>
 <body>
   <header>
-    <div class="brand"><span>🌿</span> Entre Folhas e Flores</div>
+    <div class="topbar">
+      <div class="brand"><span>🌿</span> Entre Folhas e Flores</div>
+      <nav aria-label="Navegação principal">
+        <a class="active" href="pdv.html">Nova venda</a>
+        <a href="vendas.html">Vendas realizadas</a>
+      </nav>
+    </div>
   </header>
 
   <main>
@@ -269,6 +301,7 @@
     ];
 
     const cart = new Map();
+    const SALES_STORAGE_KEY = "entre-folhas-vendas";
     const formatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
     const productSearch = document.querySelector("#productSearch");
@@ -350,6 +383,42 @@
 
     function getFinalTotal() {
       return Math.max(0, getSubtotal() - getDiscount());
+    }
+
+    function getSavedSales() {
+      try {
+        return JSON.parse(localStorage.getItem(SALES_STORAGE_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveClosedSale(total) {
+      const received = paymentMethod.value === "cash" ? Number(cashReceived.value) || 0 : total;
+      const sale = {
+        id: window.crypto?.randomUUID ? window.crypto.randomUUID() : String(Date.now()),
+        createdAt: new Date().toISOString(),
+        status: "completed",
+        paymentMethod: paymentMethod.value,
+        paymentLabel: paymentMethod.options[paymentMethod.selectedIndex].text,
+        subtotal: getSubtotal(),
+        discount: getDiscount(),
+        total,
+        cashReceived: received,
+        change: Math.max(0, received - total),
+        items: [...cart.values()].map(item => ({
+          id: item.id,
+          barcode: item.barcode,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        }))
+      };
+
+      const sales = getSavedSales();
+      sales.unshift(sale);
+      localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(sales));
+      return sale;
     }
 
     function renderCart() {
@@ -450,7 +519,8 @@
         saleNotice.textContent = "O valor recebido em dinheiro é menor que o total final.";
         return;
       }
-      saleNotice.textContent = `Venda fechada com ${paymentMethod.options[paymentMethod.selectedIndex].text}: ${formatter.format(total)}.`;
+      const sale = saveClosedSale(total);
+      saleNotice.innerHTML = `Venda <strong>#${sale.id.slice(0, 8)}</strong> fechada com ${paymentMethod.options[paymentMethod.selectedIndex].text}: ${formatter.format(total)}. <a href="vendas.html">Ver registro</a>`;
       cart.clear();
       discountEl.value = 0;
       cashReceived.value = "";
