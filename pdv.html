@@ -361,11 +361,11 @@
     function searchProducts(query) {
       const q = normalize(query);
       if (!q) return [];
-      const barcodeMatch = products.find(product => product.barcode === q);
-      if (barcodeMatch) return [barcodeMatch];
+      const codeMatch = products.find(product => product.code === q || product.barcode === q);
+      if (codeMatch) return [codeMatch];
 
       return products
-        .map(product => ({ product, score: Math.max(similarity(q, product.name), similarity(q, product.barcode)) }))
+        .map(product => ({ product, score: Math.max(similarity(q, product.name), similarity(q, product.code), similarity(q, product.barcode)) }))
         .filter(item => item.score >= 35)
         .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name))
         .slice(0, 6)
@@ -431,6 +431,7 @@
         change: Math.max(0, received - total),
         items: [...cart.values()].map(item => ({
           id: item.id,
+          code: item.code,
           barcode: item.barcode,
           name: item.name,
           price: item.price,
@@ -442,6 +443,76 @@
       sales.unshift(sale);
       localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(sales));
       return sale;
+    }
+
+    function getReceiptHtml(sale) {
+      const rows = sale.items.map(item => `
+        <tr>
+          <td>
+            <strong>${item.name}</strong><br>
+            <small>Cód. ${item.code || item.id || "-"} • EAN ${item.barcode || "-"}</small>
+          </td>
+          <td>${item.quantity}</td>
+          <td>${formatter.format(Number(item.price) || 0)}</td>
+          <td>${formatter.format((Number(item.price) || 0) * Number(item.quantity || 0))}</td>
+        </tr>
+      `).join("");
+
+      return `
+        <!doctype html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8">
+          <title>Comprovante ${sale.id}</title>
+          <style>
+            @page { size: 80mm auto; margin: 4mm; }
+            * { box-sizing: border-box; }
+            body { width: 72mm; margin: 0 auto; font: 11px Arial, sans-serif; color: #111; }
+            h1, p { margin: 0; text-align: center; }
+            h1 { font-size: 15px; }
+            .line { border-top: 1px dashed #111; margin: 8px 0; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { padding: 3px 0; text-align: left; vertical-align: top; }
+            th:nth-child(n+2), td:nth-child(n+2) { text-align: right; }
+            .totals div { display: flex; justify-content: space-between; margin: 3px 0; }
+            .total { font-weight: 700; font-size: 13px; }
+            small { font-size: 9px; }
+          </style>
+        </head>
+        <body>
+          <h1>Entre Folhas e Flores</h1>
+          <p>Comprovante de venda</p>
+          <p>#${sale.id.slice(0, 8)} • ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(sale.createdAt))}</p>
+          <div class="line"></div>
+          <table>
+            <thead><tr><th>Produto</th><th>Qtd</th><th>Un.</th><th>Total</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div class="line"></div>
+          <div class="totals">
+            <div><span>Subtotal</span><strong>${formatter.format(sale.subtotal)}</strong></div>
+            <div><span>Desconto</span><strong>${formatter.format(sale.discount || 0)}</strong></div>
+            <div class="total"><span>Total</span><strong>${formatter.format(sale.total)}</strong></div>
+            <div><span>Pagamento</span><strong>${sale.paymentLabel}</strong></div>
+            ${sale.paymentMethod === "cash" ? `<div><span>Recebido</span><strong>${formatter.format(sale.cashReceived || 0)}</strong></div><div><span>Troco</span><strong>${formatter.format(sale.change || 0)}</strong></div>` : ""}
+          </div>
+          <div class="line"></div>
+          <p>Obrigado pela preferência!</p>
+          <script>window.addEventListener("load", () => { window.print(); });<\/script>
+        </body>
+        </html>
+      `;
+    }
+
+    function printSaleReceipt(sale) {
+      const receiptWindow = window.open("", "_blank", "width=380,height=700");
+      if (!receiptWindow) {
+        saleNotice.textContent = "Venda salva, mas o navegador bloqueou a impressão do comprovante.";
+        return;
+      }
+      receiptWindow.document.open();
+      receiptWindow.document.write(getReceiptHtml(sale));
+      receiptWindow.document.close();
     }
 
     function renderCart() {
@@ -472,7 +543,7 @@
     function renderSuggestions(results) {
       suggestions.innerHTML = results.map(product => `
         <div class="suggestion" role="option" data-id="${product.id}">
-          <div><strong>${product.name}</strong><small>Cód. ${product.barcode}</small></div>
+          <div><strong>${product.name}</strong><small>Cód. ${product.code || product.id} • EAN ${product.barcode || "-"}</small></div>
           <strong>${formatter.format(product.price)}</strong>
         </div>
       `).join("");
@@ -482,7 +553,7 @@
     function renderCatalog() {
       catalogGrid.innerHTML = products.slice(0, 6).map(product => `
         <article class="product-card">
-          <div><strong>${product.name}</strong><p>${product.barcode}</p></div>
+          <div><strong>${product.name}</strong><p>Cód. ${product.code || product.id}</p></div>
           <div class="row"><strong>${formatter.format(product.price)}</strong><button type="button" onclick='addToCart(${JSON.stringify(product)})'>Adicionar</button></div>
         </article>
       `).join("");
@@ -543,6 +614,7 @@
         return;
       }
       const sale = saveClosedSale(total);
+      printSaleReceipt(sale);
       saleNotice.innerHTML = `Venda <strong>#${sale.id.slice(0, 8)}</strong> fechada com ${paymentMethod.options[paymentMethod.selectedIndex].text}: ${formatter.format(total)}. <a href="vendas.html">Ver registro</a>`;
       cart.clear();
       discountEl.value = 0;

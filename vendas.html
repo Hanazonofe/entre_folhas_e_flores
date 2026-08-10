@@ -372,7 +372,7 @@
           sale.id,
           sale.status,
           sale.paymentLabel,
-          sale.items.map(item => `${item.name} ${item.barcode}`).join(" ")
+          sale.items.map(item => `${item.name} ${item.code || ""} ${item.barcode || ""}`).join(" ")
         ].join(" "));
         const matchesQuery = !query || text.includes(query);
         const matchesStatus = status === "all" || sale.status === status;
@@ -450,7 +450,7 @@
             <div class="items">
               ${sale.items.map(item => `
                 <div class="item-line">
-                  <div><strong>${item.name}</strong><br><span class="meta">Cód. ${item.barcode} • ${formatter.format(Number(item.price))} cada</span></div>
+                  <div><strong>${item.name}</strong><br><span class="meta">Cód. ${item.code || item.id || "-"} • EAN ${item.barcode || "-"} • ${formatter.format(Number(item.price))} cada</span></div>
                   <strong>${item.quantity} un. • ${formatter.format(Number(item.price) * Number(item.quantity))}</strong>
                 </div>
               `).join("")}
@@ -466,12 +466,85 @@
             </div>
 
             <div class="actions">
+              <button class="small secondary" type="button" onclick="printSaleReceipt('${sale.id}')">Imprimir</button>
               <button class="small secondary" type="button" onclick="openEdit('${sale.id}')" ${sale.status === "cancelled" ? "disabled" : ""}>Alterar</button>
               <button class="small warning" type="button" onclick="cancelSale('${sale.id}')" ${sale.status === "cancelled" ? "disabled" : ""}>Cancelar</button>
             </div>
           </div>
         </article>
       `}).join("");
+    }
+
+    function getReceiptHtml(sale) {
+      const rows = sale.items.map(item => `
+        <tr>
+          <td>
+            <strong>${item.name}</strong><br>
+            <small>Cód. ${item.code || item.id || "-"} • EAN ${item.barcode || "-"}</small>
+          </td>
+          <td>${item.quantity}</td>
+          <td>${formatter.format(Number(item.price) || 0)}</td>
+          <td>${formatter.format((Number(item.price) || 0) * Number(item.quantity || 0))}</td>
+        </tr>
+      `).join("");
+
+      return `
+        <!doctype html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8">
+          <title>Comprovante ${sale.id}</title>
+          <style>
+            @page { size: 80mm auto; margin: 4mm; }
+            * { box-sizing: border-box; }
+            body { width: 72mm; margin: 0 auto; font: 11px Arial, sans-serif; color: #111; }
+            h1, p { margin: 0; text-align: center; }
+            h1 { font-size: 15px; }
+            .line { border-top: 1px dashed #111; margin: 8px 0; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { padding: 3px 0; text-align: left; vertical-align: top; }
+            th:nth-child(n+2), td:nth-child(n+2) { text-align: right; }
+            .totals div { display: flex; justify-content: space-between; margin: 3px 0; }
+            .total { font-weight: 700; font-size: 13px; }
+            small { font-size: 9px; }
+          </style>
+        </head>
+        <body>
+          <h1>Entre Folhas e Flores</h1>
+          <p>Comprovante de venda</p>
+          <p>#${sale.id.slice(0, 8)} • ${formatDate(sale.createdAt)}</p>
+          <div class="line"></div>
+          <table>
+            <thead><tr><th>Produto</th><th>Qtd</th><th>Un.</th><th>Total</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div class="line"></div>
+          <div class="totals">
+            <div><span>Subtotal</span><strong>${formatter.format(sale.subtotal)}</strong></div>
+            <div><span>Desconto</span><strong>${formatter.format(sale.discount || 0)}</strong></div>
+            <div class="total"><span>Total</span><strong>${formatter.format(sale.total)}</strong></div>
+            <div><span>Pagamento</span><strong>${sale.paymentLabel}</strong></div>
+            ${sale.paymentMethod === "cash" ? `<div><span>Recebido</span><strong>${formatter.format(sale.cashReceived || 0)}</strong></div><div><span>Troco</span><strong>${formatter.format(sale.change || 0)}</strong></div>` : ""}
+          </div>
+          <div class="line"></div>
+          <p>Obrigado pela preferência!</p>
+          <script>window.addEventListener("load", () => { window.print(); });<\/script>
+        </body>
+        </html>
+      `;
+    }
+
+    function printSaleReceipt(id) {
+      const sale = getSales().find(item => item.id === id);
+      if (!sale) return;
+      const receiptWindow = window.open("", "_blank", "width=380,height=700");
+      if (!receiptWindow) {
+        notice.textContent = "O navegador bloqueou a abertura do comprovante para impressão.";
+        return;
+      }
+      receiptWindow.document.open();
+      receiptWindow.document.write(getReceiptHtml(sale));
+      receiptWindow.document.close();
     }
 
     function cancelSale(id) {
