@@ -194,9 +194,12 @@
             h1, p { margin: 0; text-align: center; }
             h1 { font-size: 15px; }
             .line { border-top: 1px dashed #111; margin: 8px 0; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { padding: 3px 0; text-align: left; vertical-align: top; }
-            th:nth-child(n+2), td:nth-child(n+2) { text-align: right; }
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+            th, td { padding: 4px 0; text-align: left; vertical-align: top; }
+            th:nth-child(1), td:nth-child(1) { width: 47%; padding-right: 3mm; }
+            th:nth-child(2), td:nth-child(2) { width: 10%; text-align: center; }
+            th:nth-child(3), td:nth-child(3) { width: 20%; padding-left: 2mm; text-align: right; white-space: nowrap; }
+            th:nth-child(4), td:nth-child(4) { width: 23%; padding-left: 2.5mm; text-align: right; white-space: nowrap; }
             .totals div { display: flex; justify-content: space-between; margin: 3px 0; }
             .total { font-weight: 700; font-size: 13px; }
             small { font-size: 9px; }
