@@ -381,10 +381,16 @@
         .map(item => item.product);
     }
 
+    function getProductKey(productId) {
+      return String(productId ?? "");
+    }
+
     function addToCart(product) {
-      const current = cart.get(product.id) || { ...product, quantity: 0 };
+      if (!product) return;
+      const productKey = getProductKey(product.id);
+      const current = cart.get(productKey) || { ...product, id: productKey, quantity: 0 };
       current.quantity += 1;
-      cart.set(product.id, current);
+      cart.set(productKey, current);
       productSearch.value = "";
       suggestions.classList.remove("show");
       saleNotice.textContent = `${product.name} adicionado ao carrinho.`;
@@ -393,15 +399,16 @@
     }
 
     function updateQuantity(productId, delta) {
-      const item = cart.get(productId);
+      const productKey = getProductKey(productId);
+      const item = cart.get(productKey);
       if (!item) return;
       item.quantity += delta;
-      if (item.quantity <= 0) cart.delete(productId);
+      if (item.quantity <= 0) cart.delete(productKey);
       renderCart();
     }
 
     function removeItem(productId) {
-      cart.delete(productId);
+      cart.delete(getProductKey(productId));
       renderCart();
     }
 
