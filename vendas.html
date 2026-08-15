@@ -528,7 +528,6 @@
           </div>
           <div class="line"></div>
           <p>Obrigado pela preferência!</p>
-          <script>window.addEventListener("load", () => { window.print(); });<\/script>
         </body>
         </html>
       `;
@@ -542,6 +541,7 @@
         notice.textContent = "O navegador bloqueou a abertura do comprovante para impressão.";
         return;
       }
+      receiptWindow.addEventListener("load", () => receiptWindow.print(), { once: true });
       receiptWindow.document.open();
       receiptWindow.document.write(getReceiptHtml(sale));
       receiptWindow.document.close();
