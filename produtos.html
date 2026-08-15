@@ -222,6 +222,9 @@
 
         <button type="submit">Salvar produto</button>
         <button class="secondary" type="button" id="clearForm">Limpar formulário</button>
+        <button class="secondary" type="button" id="importButton">Importar planilha Excel/CSV</button>
+        <input class="file-input" id="importFile" type="file" accept=".csv,.tsv,.txt,.xls,.xlsx" />
+        <span class="meta">Colunas esperadas: código, código EAN, nome, preço, estoque, status.</span>
         <p class="notice" id="formNotice"></p>
       </form>
     </section>
@@ -238,11 +241,6 @@
         <div>
           <label for="productSearch">Buscar produto</label>
           <input id="productSearch" type="search" placeholder="Ex.: sucu, 789000000001, rosa..." />
-        </div>
-        <div class="actions">
-          <button class="secondary small" type="button" id="importButton">Importar planilha Excel/CSV</button>
-          <input class="file-input" id="importFile" type="file" accept=".csv,.tsv,.txt,.xls,.xlsx" />
-          <span class="meta">Colunas esperadas: código, código EAN, nome, preço, estoque, status.</span>
         </div>
       </div>
 
