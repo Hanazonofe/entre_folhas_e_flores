@@ -328,6 +328,15 @@
         .trim();
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"]/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;"
+      })[character]);
+    }
+
     function loadProducts() {
       try {
         const savedProducts = JSON.parse(localStorage.getItem(PRODUCTS_STORAGE_KEY)) || [];
@@ -522,14 +531,14 @@
         cartList.innerHTML = [...cart.values()].map(item => `
           <div class="cart-item">
             <div>
-              <strong>${item.name}</strong><br />
+              <strong>${escapeHtml(item.name)}</strong><br />
               <small>${formatter.format(item.price)} cada • ${formatter.format(item.price * item.quantity)}</small>
             </div>
             <div class="qty-controls">
-              <button class="icon secondary" onclick="updateQuantity(${item.id}, -1)" aria-label="Diminuir quantidade">−</button>
+              <button class="icon secondary" type="button" data-cart-action="decrease" data-product-id="${escapeHtml(item.id)}" aria-label="Diminuir quantidade">−</button>
               <span class="qty">${item.quantity}</span>
-              <button class="icon secondary" onclick="updateQuantity(${item.id}, 1)" aria-label="Aumentar quantidade">+</button>
-              <button class="icon danger" onclick="removeItem(${item.id})" aria-label="Remover produto">×</button>
+              <button class="icon secondary" type="button" data-cart-action="increase" data-product-id="${escapeHtml(item.id)}" aria-label="Aumentar quantidade">+</button>
+              <button class="icon danger" type="button" data-cart-action="remove" data-product-id="${escapeHtml(item.id)}" aria-label="Remover produto">×</button>
             </div>
           </div>
         `).join("");
@@ -542,8 +551,8 @@
 
     function renderSuggestions(results) {
       suggestions.innerHTML = results.map(product => `
-        <div class="suggestion" role="option" data-id="${product.id}">
-          <div><strong>${product.name}</strong><small>Cód. ${product.code || product.id} • EAN ${product.barcode || "-"}</small></div>
+        <div class="suggestion" role="option" data-id="${escapeHtml(product.id)}">
+          <div><strong>${escapeHtml(product.name)}</strong><small>Cód. ${escapeHtml(product.code || product.id)} • EAN ${escapeHtml(product.barcode || "-")}</small></div>
           <strong>${formatter.format(product.price)}</strong>
         </div>
       `).join("");
@@ -553,8 +562,8 @@
     function renderCatalog() {
       catalogGrid.innerHTML = products.slice(0, 6).map(product => `
         <article class="product-card">
-          <div><strong>${product.name}</strong><p>Cód. ${product.code || product.id}</p></div>
-          <div class="row"><strong>${formatter.format(product.price)}</strong><button type="button" onclick='addToCart(${JSON.stringify(product)})'>Adicionar</button></div>
+          <div><strong>${escapeHtml(product.name)}</strong><p>Cód. ${escapeHtml(product.code || product.id)}</p></div>
+          <div class="row"><strong>${formatter.format(product.price)}</strong><button type="button" data-add-product-id="${escapeHtml(product.id)}">Adicionar</button></div>
         </article>
       `).join("");
     }
@@ -587,8 +596,24 @@
     suggestions.addEventListener("click", event => {
       const option = event.target.closest(".suggestion");
       if (!option) return;
-      const product = products.find(item => item.id === Number(option.dataset.id));
-      addToCart(product);
+      const product = products.find(item => String(item.id) === option.dataset.id);
+      if (product) addToCart(product);
+    });
+
+    catalogGrid.addEventListener("click", event => {
+      const button = event.target.closest("[data-add-product-id]");
+      if (!button) return;
+      const product = products.find(item => String(item.id) === button.dataset.addProductId);
+      if (product) addToCart(product);
+    });
+
+    cartList.addEventListener("click", event => {
+      const button = event.target.closest("[data-cart-action]");
+      if (!button) return;
+      const productId = button.dataset.productId;
+      if (button.dataset.cartAction === "remove") removeItem(productId);
+      if (button.dataset.cartAction === "decrease") updateQuantity(productId, -1);
+      if (button.dataset.cartAction === "increase") updateQuantity(productId, 1);
     });
 
     document.querySelector("#addFirstResult").addEventListener("click", () => {

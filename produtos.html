@@ -276,6 +276,12 @@
       return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[character]);
+    }
+
     function similarity(query, text) {
       const q = normalize(query);
       const t = normalize(text);
@@ -325,8 +331,8 @@
         <article class="product-card">
           <div class="product-header">
             <div>
-              <h3>${product.name}</h3>
-              <div class="meta">Código ${product.code || "-"} • EAN ${product.barcode || "-"}</div>
+              <h3>${escapeHtml(product.name)}</h3>
+              <div class="meta">Código ${escapeHtml(product.code || "-")} • EAN ${escapeHtml(product.barcode || "-")}</div>
             </div>
             <span class="status ${product.status === "inactive" ? "inactive" : ""}">${product.status === "inactive" ? "Inativo" : "Ativo"}</span>
           </div>
@@ -335,8 +341,8 @@
             <span class="meta">Estoque: ${Number(product.stock) || 0}</span>
           </div>
           <div class="actions">
-            <button class="small secondary" type="button" onclick="editProduct('${product.id}')">Editar</button>
-            <button class="small ${product.status === "inactive" ? "secondary" : "warning"}" type="button" onclick="toggleProductStatus('${product.id}')">${product.status === "inactive" ? "Reativar" : "Inativar"}</button>
+            <button class="small secondary" type="button" data-product-action="edit" data-product-id="${escapeHtml(product.id)}">Editar</button>
+            <button class="small ${product.status === "inactive" ? "secondary" : "warning"}" type="button" data-product-action="toggle" data-product-id="${escapeHtml(product.id)}">${product.status === "inactive" ? "Reativar" : "Inativar"}</button>
           </div>
         </article>
       `).join("");
@@ -454,6 +460,12 @@
 
     document.querySelector("#clearForm").addEventListener("click", clearForm);
     productSearch.addEventListener("input", renderProducts);
+    productList.addEventListener("click", event => {
+      const button = event.target.closest("[data-product-action]");
+      if (!button) return;
+      if (button.dataset.productAction === "edit") editProduct(button.dataset.productId);
+      if (button.dataset.productAction === "toggle") toggleProductStatus(button.dataset.productId);
+    });
     document.querySelector("#importButton").addEventListener("click", () => importFile.click());
     importFile.addEventListener("change", event => {
       const [file] = event.target.files;
