@@ -161,7 +161,9 @@
             <div class="actions">
               <button class="small secondary" type="button" onclick="printSaleReceipt('${sale.id}')">Imprimir</button>
               <button class="small secondary" type="button" onclick="openEdit('${sale.id}')" ${sale.status === "cancelled" ? "disabled" : ""}>Alterar</button>
-              <button class="small warning" type="button" onclick="cancelSale('${sale.id}')" ${sale.status === "cancelled" ? "disabled" : ""}>Cancelar</button>
+              ${sale.status === "cancelled"
+                ? `<button class="small secondary" type="button" onclick="reactivateSale('${sale.id}')">Reativar</button>`
+                : `<button class="small warning" type="button" onclick="cancelSale('${sale.id}')">Cancelar</button>`}
             </div>
           </div>
         </article>
@@ -247,12 +249,27 @@
       if (!confirm("Tem certeza que deseja cancelar esta venda?")) return;
       const sales = getSales().map(sale => sale.id === id ? {
         ...sale,
+        statusBeforeCancellation: sale.status,
         status: "cancelled",
         updatedAt: new Date().toISOString(),
         notes: `${sale.notes ? `${sale.notes}\n` : ""}Venda cancelada.`
       } : sale);
       saveSales(sales);
       notice.textContent = "Venda cancelada com sucesso.";
+      renderSales();
+    }
+
+    function reactivateSale(id) {
+      if (!confirm("Tem certeza que deseja reativar esta venda?")) return;
+      const sales = getSales().map(sale => sale.id === id && sale.status === "cancelled" ? {
+        ...sale,
+        status: ["completed", "edited"].includes(sale.statusBeforeCancellation) ? sale.statusBeforeCancellation : "completed",
+        statusBeforeCancellation: undefined,
+        updatedAt: new Date().toISOString(),
+        notes: `${sale.notes ? `${sale.notes}\n` : ""}Venda reativada.`
+      } : sale);
+      saveSales(sales);
+      notice.textContent = "Venda reativada com sucesso.";
       renderSales();
     }
 
