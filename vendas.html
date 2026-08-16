@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vendas realizadas | Entre Folhas e Flores</title>
+  <style>
+    :root {
+      --bg: #f5f7f2;
+      --card: #ffffff;
+      --primary: #2f6b45;
+      --primary-dark: #245538;
+      --accent: #d9ead7;
+      --text: #1f2a23;
+      --muted: #68756d;
+      --danger: #b83232;
+      --warning: #8a5c00;
+      --border: #dbe3dc;
+      --shadow: 0 18px 50px rgba(31, 42, 35, 0.11);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #e8f3e6, transparent 38%), var(--bg);
+      color: var(--text);
+    }
+
+    header, main { padding-inline: clamp(16px, 4vw, 48px); }
+    header { padding-top: 28px; padding-bottom: 12px; }
+    main { padding-top: 16px; padding-bottom: 42px; }
+
+    .topbar, .page-heading, .sale-header, .row, .actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .topbar, .page-heading, .sale-header, .row { justify-content: space-between; }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--primary-dark);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+    }
+
+    .brand span {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--accent);
+      box-shadow: inset 0 0 0 1px #c8dec6;
+    }
+
+    nav { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    nav a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 14px;
+      border: 1px solid #cfe0cf;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--primary-dark);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    nav a.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(219, 227, 220, 0.9);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: clamp(18px, 3vw, 28px);
+    }
+
+    h1, h2, h3 { margin: 0; letter-spacing: -0.04em; }
+    h1 { font-size: clamp(2rem, 5vw, 3.7rem); line-height: 0.95; }
+    p { color: var(--muted); line-height: 1.55; }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(160px, 220px) minmax(160px, 220px);
+      gap: 12px;
+      margin: 24px 0;
+    }
+
+    label { display: block; font-weight: 800; margin-bottom: 8px; }
+    input, select, button, textarea {
+      width: 100%;
+      font: inherit;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    input, select, textarea {
+      padding: 13px 15px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea { min-height: 78px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(47, 107, 69, 0.12); }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      padding: 11px 14px;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    button.secondary { background: #eef4ee; color: var(--primary-dark); border: 1px solid #cfe0cf; }
+    button.danger { background: #fff0f0; color: var(--danger); border: 1px solid #f0c8c8; }
+    button.warning { background: #fff6df; color: var(--warning); border: 1px solid #edd79b; }
+    button.small { width: auto; min-width: 108px; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 2fr;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .summary-card {
+      display: grid;
+      gap: 10px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: #fff;
+    }
+
+    .summary-card strong { color: var(--primary-dark); font-size: 1.7rem; }
+    .payment-totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .payment-pill { padding: 12px; border-radius: 16px; background: #f7faf7; border: 1px solid #e2ebe3; }
+    .payment-pill span { display: block; color: var(--muted); font-size: 0.9rem; }
+    .payment-pill strong { font-size: 1.05rem; }
+
+    .sales-list { display: grid; gap: 14px; }
+
+    .sale-card {
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: #fff;
+      padding: 18px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .sale-card.expanded { border-color: #b8d3bc; box-shadow: 0 12px 34px rgba(31, 42, 35, 0.09); }
+    .sale-toggle { text-align: left; background: transparent; color: inherit; border: 0; padding: 0; }
+    .sale-toggle:hover { background: transparent; transform: none; }
+    .sale-summary { width: 100%; cursor: pointer; }
+    .sale-details { display: none; margin-top: 12px; }
+    .sale-card.expanded .sale-details { display: block; }
+    .chevron { font-size: 1.35rem; color: var(--primary-dark); transition: transform 0.15s ease; }
+    .sale-card.expanded .chevron { transform: rotate(180deg); }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      background: var(--accent);
+      color: var(--primary-dark);
+    }
+
+    .status.cancelled { background: #fff0f0; color: var(--danger); }
+    .status.edited { background: #fff6df; color: var(--warning); }
+    .meta { color: var(--muted); font-size: 0.95rem; }
+    .items { margin: 14px 0; display: grid; gap: 8px; }
+
+    .item-line {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #edf2ee;
+    }
+
+    .totals {
+      display: grid;
+      gap: 8px;
+      max-width: 420px;
+      margin-left: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .total-final { color: var(--primary-dark); font-size: 1.25rem; font-weight: 900; }
+    .empty { padding: 34px; border: 1px dashed #bac8bd; border-radius: 18px; text-align: center; color: var(--muted); }
+    .modal { position: fixed; inset: 0; display: none; place-items: center; padding: 18px; background: rgba(31, 42, 35, 0.42); }
+    .modal.show { display: grid; }
+    .modal .card { width: min(720px, 100%); max-height: 92vh; overflow: auto; }
+    .edit-grid { display: grid; grid-template-columns: 1fr 120px 140px; gap: 10px; align-items: end; margin: 12px 0; }
+    .notice { min-height: 24px; font-weight: 800; color: var(--primary-dark); }
+
+    @media (max-width: 760px) {
+      .filters, .edit-grid, .summary-grid { grid-template-columns: 1fr; }
+      .sale-header, .page-heading { align-items: flex-start; }
+      button.small { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand"><span>🌿</span> Entre Folhas e Flores</div>
+      <nav aria-label="Navegação principal">
+        <a href="pdv.html">Nova venda</a>
+        <a class="active" href="vendas.html">Vendas realizadas</a>
+        <a href="produtos.html">Produtos</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="page-heading">
+        <div>
+          <h1>Registro geral de vendas</h1>
+          <p>Consulte o que foi adquirido, quando a venda aconteceu, altere observações/valores e cancele registros quando necessário.</p>
+        </div>
+        <a href="pdv.html"><button class="small" type="button">+ Nova venda</button></a>
+      </div>
+
+      <div class="filters">
+        <div>
+          <label for="searchSales">Consultar venda</label>
+          <input id="searchSales" type="search" placeholder="Busque por produto, código, pagamento ou ID" />
+        </div>
+        <div>
+          <label for="statusFilter">Status</label>
+          <select id="statusFilter">
+            <option value="all">Todas</option>
+            <option value="completed">Concluídas</option>
+            <option value="edited">Alteradas</option>
+            <option value="cancelled">Canceladas</option>
+          </select>
+        </div>
+        <div>
+          <label for="totalDateFilter">Data dos totais</label>
+          <input id="totalDateFilter" type="date" aria-describedby="totalDateHelp" />
+          <span id="totalDateHelp" class="meta">Deixe vazio para ver todas as datas.</span>
+        </div>
+      </div>
+
+      <div id="summaryGrid" class="summary-grid" aria-live="polite"></div>
+      <div id="salesList" class="sales-list"></div>
+      <p id="notice" class="notice"></p>
+    </section>
+  </main>
+
+  <div id="editModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+    <form id="editForm" class="card">
+      <div class="page-heading">
+        <h2 id="editTitle">Alterar venda</h2>
+        <button class="small secondary" type="button" id="closeModal">Fechar</button>
+      </div>
+      <input type="hidden" id="saleId" />
+
+      <label for="editPayment">Método de pagamento</label>
+      <select id="editPayment">
+        <option value="credit">Cartão de crédito</option>
+        <option value="debit">Débito</option>
+        <option value="pix">Pix</option>
+        <option value="cash">Dinheiro</option>
+      </select>
+
+      <div id="editItems"></div>
+
+      <label for="editDiscount">Desconto em R$</label>
+      <input id="editDiscount" type="number" min="0" step="0.01" />
+
+      <label for="editNotes">Observações da alteração</label>
+      <textarea id="editNotes" placeholder="Ex.: cliente trocou produto, ajuste de desconto..."></textarea>
+
+      <div class="totals">
+        <div class="row"><span>Subtotal ajustado</span><strong id="editSubtotal">R$ 0,00</strong></div>
+        <div class="row total-final"><span>Total ajustado</span><span id="editTotal">R$ 0,00</span></div>
+      </div>
+
+      <button type="submit">Salvar alterações</button>
+    </form>
+  </div>
+
+  <script src="vendas.js"></script>
+</body>
+</html>

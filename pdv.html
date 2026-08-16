@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDV | Entre Folhas e Flores</title>
+  <style>
+    :root {
+      --bg: #f5f7f2;
+      --card: #ffffff;
+      --primary: #2f6b45;
+      --primary-dark: #245538;
+      --accent: #d9ead7;
+      --text: #1f2a23;
+      --muted: #68756d;
+      --danger: #b83232;
+      --border: #dbe3dc;
+      --shadow: 0 18px 50px rgba(31, 42, 35, 0.11);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #e8f3e6, transparent 38%), var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 28px clamp(16px, 4vw, 48px) 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--primary-dark);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+    }
+
+    .brand span {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--accent);
+      box-shadow: inset 0 0 0 1px #c8dec6;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    nav { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    nav a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 14px;
+      border: 1px solid #cfe0cf;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--primary-dark);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    nav a.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(300px, 1.1fr) minmax(340px, 0.9fr);
+      gap: 24px;
+      padding: 16px clamp(16px, 4vw, 48px) 42px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(219, 227, 220, 0.9);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: clamp(18px, 3vw, 28px);
+    }
+
+    h1, h2 { margin: 0; letter-spacing: -0.04em; }
+    h1 { font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.95; max-width: 760px; }
+    h2 { font-size: 1.35rem; }
+    p { color: var(--muted); line-height: 1.55; }
+
+    .search-area { margin-top: 26px; position: relative; }
+
+    label { display: block; font-weight: 700; margin-bottom: 8px; }
+
+    input, select, button {
+      font: inherit;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 14px 16px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(47, 107, 69, 0.12); }
+
+    .search-line { display: flex; gap: 10px; }
+    .search-line input { font-size: 1.05rem; }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      padding: 12px 16px;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    button.secondary { background: #eef4ee; color: var(--primary-dark); border: 1px solid #cfe0cf; }
+    button.danger { background: #fff0f0; color: var(--danger); border: 1px solid #f0c8c8; }
+    button.icon { width: 38px; height: 38px; padding: 0; border-radius: 12px; }
+
+    .suggestions {
+      position: absolute;
+      inset-inline: 0;
+      top: calc(100% + 8px);
+      z-index: 5;
+      display: none;
+      max-height: 320px;
+      overflow: auto;
+      padding: 8px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 16px 34px rgba(31, 42, 35, 0.16);
+    }
+
+    .suggestions.show { display: block; }
+
+    .suggestion {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .suggestion:hover, .suggestion.active { background: var(--accent); }
+    .suggestion strong { display: block; }
+    .suggestion small { color: var(--muted); }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .product-card {
+      display: grid;
+      gap: 10px;
+      align-content: space-between;
+      min-height: 144px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: #fff;
+    }
+
+    .cart-list { display: grid; gap: 12px; margin: 20px 0; }
+
+    .cart-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      background: #fbfcfb;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+
+    .qty-controls { display: flex; align-items: center; gap: 8px; }
+    .qty { min-width: 28px; text-align: center; font-weight: 800; }
+
+    .empty {
+      padding: 28px;
+      border: 1px dashed #bac8bd;
+      border-radius: 18px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .totals {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .total-final { font-size: 1.5rem; font-weight: 900; color: var(--primary-dark); }
+    .payment { display: grid; gap: 14px; margin-top: 22px; }
+    .cash-field { display: none; }
+    .cash-field.show { display: block; }
+    .notice { min-height: 24px; font-weight: 700; color: var(--primary-dark); }
+
+    @media (max-width: 920px) {
+      main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand"><span>🌿</span> Entre Folhas e Flores</div>
+      <nav aria-label="Navegação principal">
+        <a class="active" href="pdv.html">Nova venda</a>
+        <a href="vendas.html">Vendas realizadas</a>
+        <a href="produtos.html">Produtos</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h1>Venda rápida no PDV</h1>
+      <p>Leia um código de barras ou digite parte do nome. A busca encontra produtos aproximados e, ao repetir um item, aumenta a quantidade no carrinho automaticamente.</p>
+
+      <div class="search-area">
+        <label for="productSearch">Buscar produto ou código de barras</label>
+        <div class="search-line">
+          <input id="productSearch" type="search" placeholder="Ex.: suculenta, rosa, 789000000001..." autocomplete="off" autofocus />
+          <button id="addFirstResult" type="button">Adicionar</button>
+        </div>
+        <div id="suggestions" class="suggestions" role="listbox" aria-label="Sugestões de produtos"></div>
+      </div>
+
+      <div class="catalog-grid" id="catalogGrid" aria-label="Produtos em destaque"></div>
+    </section>
+
+    <aside class="card">
+      <h2>Carrinho</h2>
+      <div id="cartList" class="cart-list"></div>
+
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><strong id="subtotal">R$ 0,00</strong></div>
+        <label for="discount">Desconto em R$</label>
+        <input id="discount" type="number" min="0" step="0.01" value="0" />
+        <div class="row total-final"><span>Total final</span><span id="finalTotal">R$ 0,00</span></div>
+      </div>
+
+      <div class="payment">
+        <label for="paymentMethod">Método de pagamento</label>
+        <select id="paymentMethod">
+          <option value="credit">Cartão de crédito</option>
+          <option value="debit">Débito</option>
+          <option value="pix">Pix</option>
+          <option value="cash">Dinheiro</option>
+        </select>
+
+        <div id="cashField" class="cash-field">
+          <label for="cashReceived">Valor recebido em dinheiro</label>
+          <input id="cashReceived" type="number" min="0" step="0.01" placeholder="Ex.: 100,00" />
+          <p class="notice" id="changeNotice"></p>
+        </div>
+
+        <button id="finishSale" type="button">Fechar venda</button>
+        <p class="notice" id="saleNotice"></p>
+      </div>
+    </aside>
+  </main>
+
+  <script src="pdv.js"></script>
+</body>
+</html>
