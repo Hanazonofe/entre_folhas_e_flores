@@ -1,66 +1,16 @@
-# Entre Folhas e Flores — PDV local
+# Entre Folhas e Flores — PDV na rede local
 
-As páginas `pdv.html`, `vendas.html` e `produtos.html` são uma aplicação estática.
-O bot Telegram em `main.py` é independente e não foi alterado por estas correções.
+PDV de uma loja com múltiplos operadores, banco PostgreSQL centralizado, API FastAPI e páginas servidas localmente por HTTPS. Logins e vendas independem de internet; conexão ao servidor local é obrigatória. O bot Telegram em `main.py` permanece separado e não foi alterado.
 
-## Executar e testar
+- [Modelo, diagrama e dicionário de dados](docs/MODEL.md)
+- [Instalação Linux, Docker e HTTPS local](docs/INSTALL.md)
+- [Backup Google Drive e restauração](docs/BACKUP.md)
+- [Testes e pendências do piloto](docs/TESTING.md)
 
-Sirva a pasta por HTTP, por exemplo com `python3 -m http.server 8765`, e abra
-`http://localhost:8765/pdv.html`. Não é necessário instalar dependências JavaScript.
-Com Node.js 18 ou superior, rode `npm test` e `npm run check`.
+Não executar apenas `python -m http.server`: as páginas agora precisam da API. Instalação operacional: seguir INSTALL.md depois da revisão/autorização. Não há usuário/senha padrão, produtos de exemplo ou importação automática. Backups e dados antigos do navegador devem ser preservados para consulta.
 
-Os testes usam `node:test`, armazenamento em memória com injeção de falhas e um
-adaptador de eventos para executar os scripts reais das páginas. Esse adaptador
-não substitui o navegador para layout, parsing do DOM e validação nativa de inputs.
-O roteiro de conferência visual está em `tests/BROWSER-CHECKLIST.md`.
+Operador registra/consulta/imprime vendas. Administrador gerencia produtos/usuários, edita/cancela/reativa vendas e solicita backups. Autorização no servidor, sessões locais de oito horas, CSRF, rate limit, senhas Argon2id. Pagamentos divididos registram valores informados, sem integração bancária e sem estorno automático. Estoque continua somente cadastral.
 
-## Dados, compatibilidade e limites
+Testes JavaScript: `npm test` e `npm run check`. Integração: ambiente PostgreSQL descartável `pdv_test`, instruções em TESTING.md. Parte dos testes JavaScript preserva a regressão do módulo legado do PR #2, que não é carregado nas páginas novas. Nunca apontar testes destrutivos à base operacional.
 
-- As chaves `entre-folhas-produtos` e `entre-folhas-vendas` continuam sendo listas
-  JSON. Não há migração automática nem alteração dos valores de vendas antigas.
-- O catálogo de exemplo só é usado quando a chave de produtos não existe. Uma
-  lista explicitamente vazia permanece vazia. Ler uma página não grava exemplos.
-- Dados inválidos impedem gravações em ambas as coleções e geram aviso. Preserve
-  os dados originais para diagnóstico; não apague o armazenamento para resolver
-  um erro. Um backup inválido não pode substituir os dados atuais.
-- O histórico opcional `history` contém eventos `{id, type, at, changes}`. Os tipos
-  são `created`, `edited`, `cancelled` e `reactivated`; `changes.before` e
-  `changes.after` guardam os campos da venda sem seu histórico. Na criação,
-  `before` é `null`. Eventos antigos não são inferidos das observações.
-- O histórico é somente leitura na interface, mas pode ser manipulado pelas
-  ferramentas do navegador. Não há login, autoria autenticada ou auditoria de servidor.
-- Novos cálculos monetários usam centavos inteiros, sem recalcular valores antigos
-  durante leitura, cancelamento ou reativação. Edições aplicam as regras atuais.
-- Nenhuma operação de venda altera estoque, nem bloqueia por saldo zero/negativo.
-- Os dados pertencem à origem do site e ao perfil do navegador. Outro endereço,
-  porta, dispositivo ou perfil terá armazenamento separado. Limpar os dados do
-  navegador pode apagar os registros. Não há sincronização ou backup automático.
-- Use apenas uma aba de operação por vez, especialmente durante restauração.
-  O armazenamento local não oferece transações entre abas nem operação multi-caixa.
-  A edição rejeita uma venda/produto que mudou desde a abertura do formulário,
-  mas isso não constitui controle de concorrência distribuído.
-
-## Backup e recuperação
-
-O painel de backup aparece nas três páginas. Exporte e guarde o arquivo antes de
-restaurar; confirme o download no navegador. O aplicativo consegue iniciar o
-download, mas não comprovar que o arquivo foi guardado fora do navegador.
-
-O formato é `{version: 1, exportedAt, products, sales}`. A seleção valida todo o
-arquivo e mostra as contagens antes de permitir a substituição. Não há mesclagem.
-Se os dados mudarem desde a exportação, é necessário exportar novamente. A
-restauração também descarta o carrinho e os formulários abertos na página atual.
-
-Antes de substituir as duas coleções, o aplicativo grava uma cópia exata das
-chaves originais em `entre-folhas-backup-recovery-v1`. Uma falha reverte as duas
-chaves; se a reversão também falhar, essa cópia permanece e bloqueia novas
-operações até que a recuperação seja possível. Após liberar espaço ou acesso ao
-armazenamento, recarregue a página. Não remova a chave de recuperação manualmente.
-Essa cópia temporária exige espaço adicional; sem espaço, a importação não começa.
-
-O arquivo contém produtos, vendas, observações e históricos. Guarde-o com cuidado.
-
-## Entrega
-
-Estas correções partem de `codex/add-pagina-de-vendas-pdv` (base `e84b566`).
-O PR destina-se à revisão nessa branch; não publica o site nem altera a `main`.
+Entrega em PR para revisão, sem merge/publicação automática. Configuração Google, confiança da CA nos dispositivos, restauração externa real e piloto de dois dispositivos são requisitos antes de entrar em operação.

@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+secrets/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+.venv/
+.qa/
+*.dump
+*.age
+*.pem
+*.key
+credentials*.json
+token*.json

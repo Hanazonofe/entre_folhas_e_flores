@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Produtos | Entre Folhas e Flores</title>
+  <title>Administração | Entre Folhas e Flores</title>
   <style>
     :root {
       --bg: #f5f7f2;
@@ -175,80 +175,4 @@
     </div>
   </header>
 
-  <main>
-    <section class="card">
-      <div class="page-heading">
-        <div>
-          <h1>Cadastro de produtos</h1>
-          <p>Cadastre produtos, altere informações e use status ativo/inativo para deleção lógica sem perder histórico.</p>
-        </div>
-      </div>
-
-      <form id="productForm">
-        <input type="hidden" id="editingId" />
-        <div class="grid-2">
-          <div>
-            <label for="code">Código</label>
-            <input id="code" required placeholder="Ex.: 001" />
-          </div>
-          <div>
-            <label for="barcode">Código EAN</label>
-            <input id="barcode" placeholder="Ex.: 789000000001" />
-          </div>
-        </div>
-
-        <div>
-          <label for="name">Nome</label>
-          <input id="name" required placeholder="Nome do produto" />
-        </div>
-
-        <div class="grid-2">
-          <div>
-            <label for="price">Preço</label>
-            <input id="price" required type="number" min="0" step="0.01" placeholder="0,00" />
-          </div>
-          <div>
-            <label for="stock">Estoque cadastral (informativo)</label>
-            <input id="stock" type="number" step="0.001" value="0" />
-          </div>
-        </div>
-
-        <div>
-          <label for="status">Status</label>
-          <select id="status">
-            <option value="active">Ativo</option>
-            <option value="inactive">Inativo</option>
-          </select>
-        </div>
-
-        <button type="submit">Salvar produto</button>
-        <button class="secondary" type="button" id="clearForm">Limpar formulário</button>
-        <p class="notice" id="formNotice"></p>
-      </form>
-    </section>
-
-    <section class="card">
-      <div class="page-heading">
-        <div>
-          <h2>Produtos cadastrados</h2>
-          <p>Procure por código, EAN ou nome. A busca aceita texto parcial.</p>
-        </div>
-      </div>
-
-      <div class="tools">
-        <div>
-          <label for="productSearch">Buscar produto</label>
-          <input id="productSearch" type="search" placeholder="Ex.: sucu, 789000000001, rosa..." />
-        </div>
-      </div>
-
-      <div id="productList" class="product-list"></div><div class="pagination"><button id="previousProducts">Anterior</button><span id="productCount"></span><button id="nextProducts">Próxima</button></div>
-      <p class="notice" id="listNotice"></p>
-    </section>
-  </main>
-
-  <script src="api.js"></script>
-  <script src="payments.js"></script>
-  <script src="produtos.js"></script>
-</body>
-</html>
+<main><section class="card"><h1>Entrar no PDV</h1><p>Acesso ao servidor local da loja. Não precisa de internet.</p><form id="loginForm"><label for="login">Login</label><input id="login" required autocomplete="username"><label for="password">Senha</label><input id="password" type="password" required autocomplete="current-password"><button>Entrar</button><p id="loginNotice" role="alert"></p></form></section></main><script src="api.js"></script><script src="login.js"></script></body></html>

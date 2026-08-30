@@ -180,7 +180,7 @@ test('interrupted import restores absent keys as absent', () => {
 });
 test('receipts escape user data and show cancellation without changing saved money', () => {
   const context = vm.createContext({ Shop, Intl });
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../receipt.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, './legacy/receipt.js'), 'utf8'), context);
   const sale = legacy('cancelled'); sale.items[0].name = '<img src=x onerror=alert(1)> " &';
   sale.items[0].code = '</td><script>alert(1)</script>'; sale.paymentLabel = '<svg onload=alert(1)>';
   const html = Shop.receiptHtml(sale);
