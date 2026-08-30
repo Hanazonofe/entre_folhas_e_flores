@@ -1,18 +1,6 @@
-    const DEFAULT_PRODUCTS = [
-      { id: "1", code: "1", barcode: "789000000001", name: "Suculenta Echeveria", price: 18.90, stock: 12, status: "active" },
-      { id: "2", code: "2", barcode: "789000000002", name: "Rosa do Deserto", price: 49.90, stock: 8, status: "active" },
-      { id: "3", code: "3", barcode: "789000000003", name: "Orquídea Phalaenopsis", price: 89.90, stock: 6, status: "active" },
-      { id: "4", code: "4", barcode: "789000000004", name: "Samambaia Americana", price: 34.50, stock: 10, status: "active" },
-      { id: "5", code: "5", barcode: "789000000005", name: "Vaso de Cerâmica Verde", price: 42.00, stock: 15, status: "active" },
-      { id: "6", code: "6", barcode: "789000000006", name: "Terra Vegetal 2kg", price: 12.90, stock: 20, status: "active" },
-      { id: "7", code: "7", barcode: "789000000007", name: "Adubo Orgânico", price: 16.00, stock: 18, status: "active" },
-      { id: "8", code: "8", barcode: "789000000008", name: "Buquê de Girassóis", price: 75.00, stock: 5, status: "active" }
-    ];
-
-    const cart = new Map();
-    const PRODUCTS_STORAGE_KEY = "entre-folhas-produtos";
-    const SALES_STORAGE_KEY = "entre-folhas-vendas";
-    const products = loadProducts();
+const cart = new Map();
+    let products = [];
+    const database = () => Shop.createStore(window.localStorage, DEFAULT_PRODUCTS);
     const formatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
     const productSearch = document.querySelector("#productSearch");
@@ -36,34 +24,9 @@
         .trim();
     }
 
-    function escapeHtml(value) {
-      return String(value ?? "").replace(/[&<>"]/g, character => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;"
-      })[character]);
-    }
-
-    function loadProducts() {
-      try {
-        const savedProducts = JSON.parse(localStorage.getItem(PRODUCTS_STORAGE_KEY)) || [];
-        const source = savedProducts.length ? savedProducts : DEFAULT_PRODUCTS;
-        return source
-          .filter(product => product.status !== "inactive")
-          .map(product => ({
-            id: String(product.id || product.code || product.barcode),
-            code: String(product.code || product.id || ""),
-            barcode: String(product.barcode || product.ean || product.code || ""),
-            name: product.name,
-            price: Number(product.price) || 0,
-            stock: Number(product.stock) || 0,
-            status: product.status || "active"
-          }));
-      } catch {
-        return DEFAULT_PRODUCTS;
-      }
-    }
+    const escapeHtml = Shop.escapeHtml;
+    function loadProducts() { return database().readProducts().filter(product => product.status !== "inactive"); }
+    function run(action) { return Shop.attempt(saleNotice, action); }
 
     function similarity(query, text) {
       const q = normalize(query);
@@ -102,7 +65,7 @@
       productSearch.value = "";
       suggestions.classList.remove("show");
       saleNotice.textContent = `${product.name} adicionado ao carrinho.`;
-      renderCart();
+      run(renderCart);
       productSearch.focus();
     }
 
@@ -112,123 +75,24 @@
       if (!item) return;
       item.quantity += delta;
       if (item.quantity <= 0) cart.delete(productKey);
-      renderCart();
+      run(renderCart);
     }
 
     function removeItem(productId) {
       cart.delete(getProductKey(productId));
-      renderCart();
+      run(renderCart);
     }
 
-    function getSubtotal() {
-      return [...cart.values()].reduce((total, item) => total + item.price * item.quantity, 0);
-    }
-
-    function getDiscount() {
-      return Math.max(0, Number(discountEl.value) || 0);
-    }
-
-    function getFinalTotal() {
-      return Math.max(0, getSubtotal() - getDiscount());
-    }
-
-    function getSavedSales() {
-      try {
-        return JSON.parse(localStorage.getItem(SALES_STORAGE_KEY)) || [];
-      } catch {
-        return [];
-      }
-    }
-
-    function saveClosedSale(total) {
-      const received = paymentMethod.value === "cash" ? Number(cashReceived.value) || 0 : total;
-      const sale = {
-        id: window.crypto?.randomUUID ? window.crypto.randomUUID() : String(Date.now()),
-        createdAt: new Date().toISOString(),
-        status: "completed",
-        paymentMethod: paymentMethod.value,
-        paymentLabel: paymentMethod.options[paymentMethod.selectedIndex].text,
-        subtotal: getSubtotal(),
-        discount: getDiscount(),
-        total,
-        cashReceived: received,
-        change: Math.max(0, received - total),
-        items: [...cart.values()].map(item => ({
-          id: item.id,
-          code: item.code,
-          barcode: item.barcode,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        }))
-      };
-
-      const sales = getSavedSales();
-      sales.unshift(sale);
-      localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(sales));
+    function getSubtotal() { return cart.size ? Shop.totals([...cart.values()], 0).subtotal : 0; }
+    function getDiscount() { return Shop.cents(discountEl.value || "0", "Desconto") / 100; }
+    function getFinalTotal() { return cart.size ? Shop.totals([...cart.values()], getDiscount()).total : 0; }
+    function saveClosedSale() {
+      const sale = Shop.create({ items: [...cart.values()].map(item => ({ id: item.id, code: item.code, barcode: item.barcode, name: item.name, price: item.price, quantity: item.quantity })), discount: getDiscount(), paymentMethod: paymentMethod.value, cashReceived: cashReceived.value });
+      const sales = database().readSales();
+      database().saveSales([sale, ...sales]);
       return sale;
     }
-
-    function getReceiptHtml(sale) {
-      const rows = sale.items.map(item => `
-        <tr>
-          <td>
-            <strong>${item.name}</strong><br>
-            <small>Cód. ${item.code || item.id || "-"} • EAN ${item.barcode || "-"}</small>
-          </td>
-          <td>${item.quantity}</td>
-          <td>${formatter.format(Number(item.price) || 0)}</td>
-          <td>${formatter.format((Number(item.price) || 0) * Number(item.quantity || 0))}</td>
-        </tr>
-      `).join("");
-
-      return `
-        <!doctype html>
-        <html lang="pt-BR">
-        <head>
-          <meta charset="utf-8">
-          <title>Comprovante ${sale.id}</title>
-          <style>
-            @page { size: 80mm auto; margin: 4mm; }
-            * { box-sizing: border-box; }
-            body { width: 72mm; margin: 0 auto; font: 11px Arial, sans-serif; color: #111; }
-            h1, p { margin: 0; text-align: center; }
-            h1 { font-size: 15px; }
-            .line { border-top: 1px dashed #111; margin: 8px 0; }
-            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-            th, td { padding: 4px 0; text-align: left; vertical-align: top; }
-            th:nth-child(1), td:nth-child(1) { width: 47%; padding-right: 3mm; }
-            th:nth-child(2), td:nth-child(2) { width: 10%; text-align: center; }
-            th:nth-child(3), td:nth-child(3) { width: 20%; padding-left: 2mm; text-align: right; white-space: nowrap; }
-            th:nth-child(4), td:nth-child(4) { width: 23%; padding-left: 2.5mm; text-align: right; white-space: nowrap; }
-            .totals div { display: flex; justify-content: space-between; margin: 3px 0; }
-            .total { font-weight: 700; font-size: 13px; }
-            small { font-size: 9px; }
-          </style>
-        </head>
-        <body>
-          <h1>Entre Folhas e Flores</h1>
-          <p>Comprovante de venda</p>
-          <p>#${sale.id.slice(0, 8)} • ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(sale.createdAt))}</p>
-          <div class="line"></div>
-          <table>
-            <thead><tr><th>Produto</th><th>Qtd</th><th>Un.</th><th>Total</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-          <div class="line"></div>
-          <div class="totals">
-            <div><span>Subtotal</span><strong>${formatter.format(sale.subtotal)}</strong></div>
-            <div><span>Desconto</span><strong>${formatter.format(sale.discount || 0)}</strong></div>
-            <div class="total"><span>Total</span><strong>${formatter.format(sale.total)}</strong></div>
-            <div><span>Pagamento</span><strong>${sale.paymentLabel}</strong></div>
-            ${sale.paymentMethod === "cash" ? `<div><span>Recebido</span><strong>${formatter.format(sale.cashReceived || 0)}</strong></div><div><span>Troco</span><strong>${formatter.format(sale.change || 0)}</strong></div>` : ""}
-          </div>
-          <div class="line"></div>
-          <p>Obrigado pela preferência!</p>
-        </body>
-        </html>
-      `;
-    }
+    const getReceiptHtml = Shop.receiptHtml;
 
     function printSaleReceipt(sale) {
       const receiptWindow = window.open("", "_blank", "width=380,height=700");
@@ -250,7 +114,7 @@
           <div class="cart-item">
             <div>
               <strong>${escapeHtml(item.name)}</strong><br />
-              <small>${formatter.format(item.price)} cada • ${formatter.format(item.price * item.quantity)}</small>
+              <small>${formatter.format(item.price)} cada • ${formatter.format(Shop.cents(item.price) * item.quantity / 100)}</small>
             </div>
             <div class="qty-controls">
               <button class="icon secondary" type="button" data-cart-action="decrease" data-product-id="${escapeHtml(item.id)}" aria-label="Diminuir quantidade">−</button>
@@ -264,7 +128,7 @@
 
       subtotalEl.textContent = formatter.format(getSubtotal());
       finalTotalEl.textContent = formatter.format(getFinalTotal());
-      updateChange();
+      run(updateChange);
     }
 
     function renderSuggestions(results) {
@@ -287,19 +151,12 @@
     }
 
     function updateChange() {
-      if (paymentMethod.value !== "cash") {
-        changeNotice.textContent = "";
-        return;
-      }
-      const received = Number(cashReceived.value) || 0;
-      const total = getFinalTotal();
-      if (!received) {
-        changeNotice.textContent = "Informe o valor recebido para calcular o troco.";
-      } else if (received < total) {
-        changeNotice.textContent = `Faltam ${formatter.format(total - received)}.`;
-      } else {
-        changeNotice.textContent = `Troco: ${formatter.format(received - total)}.`;
-      }
+      changeNotice.textContent = "";
+      if (paymentMethod.value !== "cash") return;
+      if (cashReceived.value === "") { changeNotice.textContent = "Informe o valor recebido para calcular o troco."; return; }
+      const received = Shop.cents(cashReceived.value, "Valor recebido");
+      const total = Shop.cents(getFinalTotal());
+      changeNotice.textContent = received < total ? `Faltam ${formatter.format((total - received) / 100)}.` : `Troco: ${formatter.format((received - total) / 100)}.`;
     }
 
     productSearch.addEventListener("input", event => renderSuggestions(searchProducts(event.target.value)));
@@ -339,31 +196,22 @@
       if (first) addToCart(first);
     });
 
-    discountEl.addEventListener("input", renderCart);
-    cashReceived.addEventListener("input", updateChange);
+    discountEl.addEventListener("input", () => run(renderCart));
+    cashReceived.addEventListener("input", () => run(updateChange));
     paymentMethod.addEventListener("change", () => {
       cashField.classList.toggle("show", paymentMethod.value === "cash");
-      updateChange();
+      run(updateChange);
     });
 
-    document.querySelector("#finishSale").addEventListener("click", () => {
-      const total = getFinalTotal();
-      if (!cart.size) {
-        saleNotice.textContent = "Adicione pelo menos um produto antes de fechar a venda.";
-        return;
-      }
-      if (paymentMethod.value === "cash" && (Number(cashReceived.value) || 0) < total) {
-        saleNotice.textContent = "O valor recebido em dinheiro é menor que o total final.";
-        return;
-      }
-      const sale = saveClosedSale(total);
-      printSaleReceipt(sale);
-      saleNotice.innerHTML = `Venda <strong>#${sale.id.slice(0, 8)}</strong> fechada com ${paymentMethod.options[paymentMethod.selectedIndex].text}: ${formatter.format(total)}. <a href="vendas.html">Ver registro</a>`;
-      cart.clear();
-      discountEl.value = 0;
-      cashReceived.value = "";
-      renderCart();
-    });
+    document.querySelector("#finishSale").addEventListener("click", () => run(() => {
+      Shop.assert(cart.size, "Adicione pelo menos um produto antes de fechar a venda.");
+      const sale = saveClosedSale();
+      // Clear the paid draft immediately after persistence, even if printing fails.
+      cart.clear(); discountEl.value = 0; cashReceived.value = "";
+      run(renderCart);
+      saleNotice.textContent = `Venda #${sale.id.slice(0, 8)} salva com sucesso: ${formatter.format(sale.total)}.`;
+      try { printSaleReceipt(sale); }
+      catch { saleNotice.textContent += " Não foi possível imprimir. Reimprima na página de vendas."; }
+    }));
 
-    renderCatalog();
-    renderCart();
+    run(() => { products = loadProducts(); renderCatalog(); renderCart(); });
