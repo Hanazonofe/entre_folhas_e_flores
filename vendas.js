@@ -1,6 +1,8 @@
-    const SALES_STORAGE_KEY = "entre-folhas-vendas";
+    const database = () => Shop.createStore(window.localStorage, DEFAULT_PRODUCTS);
+    const escapeHtml = Shop.escapeHtml;
+    let editingSnapshot;
     const formatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-    const paymentLabels = { credit: "Cartão de crédito", debit: "Débito", pix: "Pix", cash: "Dinheiro" };
+    const paymentLabels = Shop.payments;
 
     const salesList = document.querySelector("#salesList");
     const summaryGrid = document.querySelector("#summaryGrid");
@@ -19,17 +21,8 @@
       return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     }
 
-    function getSales() {
-      try {
-        return JSON.parse(localStorage.getItem(SALES_STORAGE_KEY)) || [];
-      } catch {
-        return [];
-      }
-    }
-
-    function saveSales(sales) {
-      localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(sales));
-    }
+    function getSales() { return database().readSales(); }
+    function run(action) { return Shop.attempt(editModal.classList.contains("show") ? document.querySelector("#editNotice") : notice, action); }
 
     function formatDate(isoDate) {
       return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(isoDate));
@@ -46,10 +39,6 @@
     function formatDateOnly(dateKey) {
       const [year, month, day] = dateKey.split("-");
       return `${day}/${month}/${year}`;
-    }
-
-    function getSaleSubtotal(sale) {
-      return sale.items.reduce((total, item) => total + Number(item.price) * Number(item.quantity), 0);
     }
 
     function getStatusLabel(status) {
@@ -76,9 +65,9 @@
 
     function renderSummary(sales) {
       const activeSales = sales.filter(sale => sale.status !== "cancelled");
-      const currentTotal = activeSales.reduce((total, sale) => total + Number(sale.total || 0), 0);
+      const currentTotal = activeSales.reduce((total, sale) => total + Shop.cents(sale.total), 0) / 100;
       const totalsByPayment = activeSales.reduce((totals, sale) => {
-        totals[sale.paymentMethod] = (totals[sale.paymentMethod] || 0) + Number(sale.total || 0);
+        totals[sale.paymentMethod] = (totals[sale.paymentMethod] || 0) + Shop.cents(sale.total);
         return totals;
       }, {});
 
@@ -94,7 +83,7 @@
             ${Object.entries(paymentLabels).map(([method, label]) => `
               <div class="payment-pill">
                 <span>${label}</span>
-                <strong>${formatter.format(totalsByPayment[method] || 0)}</strong>
+                <strong>${formatter.format((totalsByPayment[method] || 0) / 100)}</strong>
               </div>
             `).join("")}
           </div>
@@ -108,7 +97,7 @@
       } else {
         expandedSales.add(id);
       }
-      renderSales();
+      run(renderSales);
     }
 
     function renderSales() {
@@ -124,112 +113,58 @@
         const itemCount = sale.items.reduce((total, item) => total + Number(item.quantity), 0);
         return `
         <article class="sale-card ${expanded ? "expanded" : ""}">
-          <button class="sale-toggle" type="button" onclick="toggleSale('${sale.id}')" aria-expanded="${expanded}" aria-controls="sale-details-${sale.id}">
+          <button class="sale-toggle" type="button" data-sale-action="toggle" data-sale-id="${escapeHtml(sale.id)}" aria-expanded="${expanded}" aria-controls="sale-details-${escapeHtml(sale.id)}">
             <div class="sale-header sale-summary">
               <div>
-                <h3>Venda #${sale.id.slice(0, 8)}</h3>
-                <div class="meta">Feita em ${formatDate(sale.createdAt)} • ${sale.paymentLabel} • ${itemCount} item(ns)</div>
+                <h3>Venda #${escapeHtml(sale.id.slice(0, 8))}</h3>
+                <div class="meta">Feita em ${formatDate(sale.createdAt)} • ${escapeHtml(sale.paymentLabel)} • ${itemCount} item(ns)</div>
                 ${sale.updatedAt ? `<div class="meta">Última alteração em ${formatDate(sale.updatedAt)}</div>` : ""}
               </div>
               <div class="actions">
-                <span class="status ${sale.status}">${getStatusLabel(sale.status)}</span>
+                <span class="status ${escapeHtml(sale.status)}">${getStatusLabel(sale.status)}</span>
                 <strong class="total-final">${formatter.format(sale.total)}</strong>
                 <span class="chevron" aria-hidden="true">⌄</span>
               </div>
             </div>
           </button>
 
-          <div class="sale-details" id="sale-details-${sale.id}">
+          <div class="sale-details" id="sale-details-${escapeHtml(sale.id)}">
             <div class="items">
               ${sale.items.map(item => `
                 <div class="item-line">
-                  <div><strong>${item.name}</strong><br><span class="meta">Cód. ${item.code || item.id || "-"} • EAN ${item.barcode || "-"} • ${formatter.format(Number(item.price))} cada</span></div>
-                  <strong>${item.quantity} un. • ${formatter.format(Number(item.price) * Number(item.quantity))}</strong>
+                  <div><strong>${escapeHtml(item.name)}</strong><br><span class="meta">Cód. ${escapeHtml(item.code || item.id || "-")} • EAN ${escapeHtml(item.barcode || "-")} • ${formatter.format(Number(item.price))} cada</span></div>
+                  <strong>${Number(item.quantity)} un. • ${formatter.format(Shop.cents(item.price) * Number(item.quantity) / 100)}</strong>
                 </div>
               `).join("")}
             </div>
 
-            ${sale.notes ? `<p><strong>Observações:</strong> ${sale.notes}</p>` : ""}
+            ${sale.notes ? `<p><strong>Observações:</strong> ${escapeHtml(sale.notes)}</p>` : ""}
 
+            <details class="sale-history">
+              <summary>Histórico de alterações (${(sale.history || []).length})</summary>
+              <p class="meta">Registro local: pode ser manipulado fora da aplicação e não identifica um usuário autenticado.</p>
+              ${(sale.history || []).map(event => `<details><summary>${escapeHtml(({ created: "Criação", edited: "Edição", cancelled: "Cancelamento", reactivated: "Reativação" })[event.type])} • ${formatDate(event.at)}</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(JSON.stringify(event.changes, null, 2))}</pre></details>`).join("") || '<p>Sem eventos registrados nesta versão. As observações antigas foram preservadas.</p>'}
+            </details>
             <div class="totals">
               <div class="row"><span>Subtotal</span><strong>${formatter.format(sale.subtotal)}</strong></div>
               <div class="row"><span>Desconto</span><strong>${formatter.format(sale.discount || 0)}</strong></div>
-              ${sale.paymentMethod === "cash" ? `<div class="row"><span>Recebido</span><strong>${formatter.format(sale.cashReceived || sale.total)}</strong></div><div class="row"><span>Troco</span><strong>${formatter.format(sale.change || 0)}</strong></div>` : ""}
+              ${sale.paymentMethod === "cash" ? `<div class="row"><span>Recebido</span><strong>${formatter.format(sale.cashReceived ?? sale.total)}</strong></div><div class="row"><span>Troco</span><strong>${formatter.format(sale.change || 0)}</strong></div>` : ""}
               <div class="row total-final"><span>Total</span><span>${formatter.format(sale.total)}</span></div>
             </div>
 
             <div class="actions">
-              <button class="small secondary" type="button" onclick="printSaleReceipt('${sale.id}')">Imprimir</button>
-              <button class="small secondary" type="button" onclick="openEdit('${sale.id}')" ${sale.status === "cancelled" ? "disabled" : ""}>Alterar</button>
+              <button class="small secondary" type="button" data-sale-action="print" data-sale-id="${escapeHtml(sale.id)}">Imprimir</button>
+              <button class="small secondary" type="button" data-sale-action="edit" data-sale-id="${escapeHtml(sale.id)}" ${sale.status === "cancelled" ? "disabled" : ""}>Alterar</button>
               ${sale.status === "cancelled"
-                ? `<button class="small secondary" type="button" onclick="reactivateSale('${sale.id}')">Reativar</button>`
-                : `<button class="small warning" type="button" onclick="cancelSale('${sale.id}')">Cancelar</button>`}
+                ? `<button class="small secondary" type="button" data-sale-action="reactivate" data-sale-id="${escapeHtml(sale.id)}">Reativar</button>`
+                : `<button class="small warning" type="button" data-sale-action="cancel" data-sale-id="${escapeHtml(sale.id)}">Cancelar</button>`}
             </div>
           </div>
         </article>
       `}).join("");
     }
 
-    function getReceiptHtml(sale) {
-      const rows = sale.items.map(item => `
-        <tr>
-          <td>
-            <strong>${item.name}</strong><br>
-            <small>Cód. ${item.code || item.id || "-"} • EAN ${item.barcode || "-"}</small>
-          </td>
-          <td>${item.quantity}</td>
-          <td>${formatter.format(Number(item.price) || 0)}</td>
-          <td>${formatter.format((Number(item.price) || 0) * Number(item.quantity || 0))}</td>
-        </tr>
-      `).join("");
-
-      return `
-        <!doctype html>
-        <html lang="pt-BR">
-        <head>
-          <meta charset="utf-8">
-          <title>Comprovante ${sale.id}</title>
-          <style>
-            @page { size: 80mm auto; margin: 4mm; }
-            * { box-sizing: border-box; }
-            body { width: 72mm; margin: 0 auto; font: 11px Arial, sans-serif; color: #111; }
-            h1, p { margin: 0; text-align: center; }
-            h1 { font-size: 15px; }
-            .line { border-top: 1px dashed #111; margin: 8px 0; }
-            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-            th, td { padding: 4px 0; text-align: left; vertical-align: top; }
-            th:nth-child(1), td:nth-child(1) { width: 47%; padding-right: 3mm; }
-            th:nth-child(2), td:nth-child(2) { width: 10%; text-align: center; }
-            th:nth-child(3), td:nth-child(3) { width: 20%; padding-left: 2mm; text-align: right; white-space: nowrap; }
-            th:nth-child(4), td:nth-child(4) { width: 23%; padding-left: 2.5mm; text-align: right; white-space: nowrap; }
-            .totals div { display: flex; justify-content: space-between; margin: 3px 0; }
-            .total { font-weight: 700; font-size: 13px; }
-            small { font-size: 9px; }
-          </style>
-        </head>
-        <body>
-          <h1>Entre Folhas e Flores</h1>
-          <p>Comprovante de venda</p>
-          <p>#${sale.id.slice(0, 8)} • ${formatDate(sale.createdAt)}</p>
-          <div class="line"></div>
-          <table>
-            <thead><tr><th>Produto</th><th>Qtd</th><th>Un.</th><th>Total</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-          <div class="line"></div>
-          <div class="totals">
-            <div><span>Subtotal</span><strong>${formatter.format(sale.subtotal)}</strong></div>
-            <div><span>Desconto</span><strong>${formatter.format(sale.discount || 0)}</strong></div>
-            <div class="total"><span>Total</span><strong>${formatter.format(sale.total)}</strong></div>
-            <div><span>Pagamento</span><strong>${sale.paymentLabel}</strong></div>
-            ${sale.paymentMethod === "cash" ? `<div><span>Recebido</span><strong>${formatter.format(sale.cashReceived || 0)}</strong></div><div><span>Troco</span><strong>${formatter.format(sale.change || 0)}</strong></div>` : ""}
-          </div>
-          <div class="line"></div>
-          <p>Obrigado pela preferência!</p>
-        </body>
-        </html>
-      `;
-    }
+    const getReceiptHtml = Shop.receiptHtml;
 
     function printSaleReceipt(id) {
       const sale = getSales().find(item => item.id === id);
@@ -247,35 +182,25 @@
 
     function cancelSale(id) {
       if (!confirm("Tem certeza que deseja cancelar esta venda?")) return;
-      const sales = getSales().map(sale => sale.id === id ? {
-        ...sale,
-        statusBeforeCancellation: sale.status,
-        status: "cancelled",
-        updatedAt: new Date().toISOString(),
-        notes: `${sale.notes ? `${sale.notes}\n` : ""}Venda cancelada.`
-      } : sale);
-      saveSales(sales);
+      database().updateSale(id, sale => Shop.transition(sale, "cancelled"));
       notice.textContent = "Venda cancelada com sucesso.";
-      renderSales();
+      run(renderSales);
     }
 
     function reactivateSale(id) {
       if (!confirm("Tem certeza que deseja reativar esta venda?")) return;
-      const sales = getSales().map(sale => sale.id === id && sale.status === "cancelled" ? {
-        ...sale,
-        status: ["completed", "edited"].includes(sale.statusBeforeCancellation) ? sale.statusBeforeCancellation : "completed",
-        statusBeforeCancellation: undefined,
-        updatedAt: new Date().toISOString(),
-        notes: `${sale.notes ? `${sale.notes}\n` : ""}Venda reativada.`
-      } : sale);
-      saveSales(sales);
+      database().updateSale(id, sale => Shop.transition(sale, "reactivated"));
       notice.textContent = "Venda reativada com sucesso.";
-      renderSales();
+      run(renderSales);
     }
 
     function openEdit(id) {
       const sale = getSales().find(item => item.id === id);
-      if (!sale) return;
+      Shop.assert(sale, "Venda não encontrada.");
+      Shop.assert(sale.status !== "cancelled", "Reative a venda antes de alterá-la.");
+      editingSnapshot = JSON.stringify(sale);
+      document.querySelector("#editNotice").textContent = "";
+      document.querySelector("#editCashReceived").value = sale.paymentMethod === "cash" ? (sale.cashReceived ?? "") : "";
       document.querySelector("#saleId").value = sale.id;
       document.querySelector("#editPayment").value = sale.paymentMethod;
       document.querySelector("#editDiscount").value = sale.discount || 0;
@@ -284,21 +209,21 @@
         <div class="edit-grid">
           <div>
             <label for="item-name-${index}">Produto</label>
-            <input id="item-name-${index}" data-field="name" data-index="${index}" value="${item.name}" />
+            <input id="item-name-${index}" data-field="name" data-index="${index}" value="${escapeHtml(item.name)}" />
           </div>
           <div>
             <label for="item-qty-${index}">Qtd.</label>
-            <input id="item-qty-${index}" data-field="quantity" data-index="${index}" type="number" min="1" step="1" value="${item.quantity}" />
+            <input id="item-qty-${index}" data-field="quantity" data-index="${index}" type="number" min="1" step="1" value="${escapeHtml(item.quantity)}" />
           </div>
           <div>
             <label for="item-price-${index}">Preço</label>
-            <input id="item-price-${index}" data-field="price" data-index="${index}" type="number" min="0" step="0.01" value="${item.price}" />
+            <input id="item-price-${index}" data-field="price" data-index="${index}" type="number" min="0" step="0.01" value="${escapeHtml(item.price)}" />
           </div>
         </div>
       `).join("");
       editModal.dataset.items = JSON.stringify(sale.items);
-      updateEditTotals();
       editModal.classList.add("show");
+      run(updateEditTotals);
     }
 
     function getEditedItems() {
@@ -306,49 +231,56 @@
       return original.map((item, index) => ({
         ...item,
         name: document.querySelector(`[data-index="${index}"][data-field="name"]`).value.trim() || item.name,
-        quantity: Math.max(1, Number(document.querySelector(`[data-index="${index}"][data-field="quantity"]`).value) || 1),
-        price: Math.max(0, Number(document.querySelector(`[data-index="${index}"][data-field="price"]`).value) || 0)
+        quantity: Shop.quantity(document.querySelector(`[data-index="${index}"][data-field="quantity"]`).value),
+        price: Shop.cents(document.querySelector(`[data-index="${index}"][data-field="price"]`).value, "Preço") / 100
       }));
     }
 
     function updateEditTotals() {
-      const subtotal = getEditedItems().reduce((total, item) => total + item.price * item.quantity, 0);
-      const discount = Math.max(0, Number(document.querySelector("#editDiscount").value) || 0);
-      editSubtotal.textContent = formatter.format(subtotal);
-      editTotal.textContent = formatter.format(Math.max(0, subtotal - discount));
+      document.querySelector("#editChange").textContent = "";
+      const values = Shop.totals(getEditedItems(), document.querySelector("#editDiscount").value || "0");
+      editSubtotal.textContent = formatter.format(values.subtotal);
+      editTotal.textContent = formatter.format(values.total);
+      const isCash = document.querySelector("#editPayment").value === "cash";
+      document.querySelector("#editCashField").hidden = !isCash;
+      document.querySelector("#editCashReceived").required = isCash;
+      document.querySelector("#editNotice").textContent = "";
+      const raw = document.querySelector("#editCashReceived").value;
+      document.querySelector("#editChange").textContent = !isCash ? "" : raw === "" ? "Informe o valor recebido." : `Troco: ${formatter.format(Shop.payment("cash", values.total, raw).change)}`;
     }
 
-    editForm.addEventListener("input", updateEditTotals);
+    editForm.addEventListener("input", () => run(updateEditTotals));
+    document.querySelector("#editPayment").addEventListener("change", () => {
+      document.querySelector("#editCashReceived").value = "";
+      document.querySelector("#editChange").textContent = "";
+      run(updateEditTotals);
+    });
     editForm.addEventListener("submit", event => {
       event.preventDefault();
-      const id = document.querySelector("#saleId").value;
-      const items = getEditedItems();
-      const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
-      const discount = Math.max(0, Number(document.querySelector("#editDiscount").value) || 0);
-      const total = Math.max(0, subtotal - discount);
-      const paymentMethod = document.querySelector("#editPayment").value;
-
-      const sales = getSales().map(sale => sale.id === id ? {
-        ...sale,
-        items,
-        subtotal,
-        discount,
-        total,
-        paymentMethod,
-        paymentLabel: paymentLabels[paymentMethod],
-        status: "edited",
-        updatedAt: new Date().toISOString(),
-        notes: document.querySelector("#editNotes").value.trim()
-      } : sale);
-
-      saveSales(sales);
-      editModal.classList.remove("show");
-      notice.textContent = "Venda alterada com sucesso.";
-      renderSales();
+      run(() => {
+        const id = document.querySelector("#saleId").value;
+        database().updateSale(id, sale => Shop.edit(sale, {
+          items: getEditedItems(),
+          discount: document.querySelector("#editDiscount").value || "0",
+          paymentMethod: document.querySelector("#editPayment").value,
+          cashReceived: document.querySelector("#editCashReceived").value,
+          notes: document.querySelector("#editNotes").value.trim()
+        }), editingSnapshot);
+        editModal.classList.remove("show");
+        notice.textContent = "Venda alterada com sucesso.";
+        run(renderSales);
+      });
     });
 
+    salesList.addEventListener("click", event => {
+      const button = event.target.closest("[data-sale-action]");
+      if (!button) return;
+      const actions = { toggle: toggleSale, print: printSaleReceipt, edit: openEdit, cancel: cancelSale, reactivate: reactivateSale };
+      if (Object.hasOwn(actions, button.dataset.saleAction)) run(() => actions[button.dataset.saleAction](button.dataset.saleId));
+    });
     document.querySelector("#closeModal").addEventListener("click", () => editModal.classList.remove("show"));
-    searchSales.addEventListener("input", renderSales);
-    statusFilter.addEventListener("change", renderSales);
-    totalDateFilter.addEventListener("change", renderSales);
-    renderSales();
+    searchSales.addEventListener("input", () => run(renderSales));
+    statusFilter.addEventListener("change", () => run(renderSales));
+    totalDateFilter.addEventListener("change", () => run(renderSales));
+    run(renderSales);
+

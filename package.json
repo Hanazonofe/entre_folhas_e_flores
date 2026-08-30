@@ -1,0 +1,9 @@
+{
+  "name": "entre-folhas-e-flores-pdv",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check store.js && node --check receipt.js && node --check catalog.js && node --check pdv.js && node --check vendas.js && node --check produtos.js && node --check backup.js"
+  },
+  "engines": { "node": ">=18" }
+}

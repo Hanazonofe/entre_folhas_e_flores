@@ -292,6 +292,12 @@
       <label for="editDiscount">Desconto em R$</label>
       <input id="editDiscount" type="number" min="0" step="0.01" />
 
+      <div id="editCashField" hidden>
+        <label for="editCashReceived">Valor recebido em R$</label>
+        <input id="editCashReceived" type="number" min="0" step="0.01" />
+        <p id="editChange" aria-live="polite"></p>
+      </div>
+      <p id="editNotice" class="notice" role="alert"></p>
       <label for="editNotes">Observações da alteração</label>
       <textarea id="editNotes" placeholder="Ex.: cliente trocou produto, ajuste de desconto..."></textarea>
 
@@ -304,6 +310,11 @@
     </form>
   </div>
 
+  <script src="store.js"></script>
+  <script src="catalog.js"></script>
+  <script src="receipt.js"></script>
   <script src="vendas.js"></script>
+  <script src="backup.js"></script>
 </body>
 </html>
+
