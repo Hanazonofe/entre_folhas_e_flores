@@ -227,6 +227,7 @@
       main { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="ui.css">
 </head>
 <body>
   <header>
@@ -243,7 +244,7 @@
   <main>
     <section class="card">
       <h1>Venda rápida no PDV</h1>
-      <p>Leia um código de barras ou digite parte do nome. A busca encontra produtos aproximados e, ao repetir um item, aumenta a quantidade no carrinho automaticamente.</p>
+      <p>Leia um código de barras ou digite parte do nome. A busca encontra nomes, códigos e EAN e, ao repetir um item, aumenta a quantidade no carrinho automaticamente.</p>
 
       <div class="search-area">
         <label for="productSearch">Buscar produto ou código de barras</label>
@@ -251,7 +252,7 @@
           <input id="productSearch" type="search" placeholder="Ex.: suculenta, rosa, 789000000001..." autocomplete="off" autofocus />
           <button id="addFirstResult" type="button">Adicionar</button>
         </div>
-        <div id="suggestions" class="suggestions" role="listbox" aria-label="Sugestões de produtos"></div>
+        <div hidden id="suggestions" class="suggestions" role="listbox" aria-label="Sugestões de produtos"></div>
       </div>
 
       <div class="catalog-grid" id="catalogGrid" aria-label="Produtos em destaque"></div>
@@ -268,32 +269,18 @@
         <div class="row total-final"><span>Total final</span><span id="finalTotal">R$ 0,00</span></div>
       </div>
 
-      <div class="payment">
-        <label for="paymentMethod">Método de pagamento</label>
-        <select id="paymentMethod">
-          <option value="credit">Cartão de crédito</option>
-          <option value="debit">Débito</option>
-          <option value="pix">Pix</option>
-          <option value="cash">Dinheiro</option>
-        </select>
-
-        <div id="cashField" class="cash-field">
-          <label for="cashReceived">Valor recebido em dinheiro</label>
-          <input id="cashReceived" type="number" min="0" step="0.01" placeholder="Ex.: 100,00" />
-          <p class="notice" id="changeNotice"></p>
-        </div>
-
-        <button id="finishSale" type="button">Fechar venda</button>
-        <p class="notice" id="saleNotice"></p>
-      </div>
+      <button type="button" id="quoteSale">Conferir valores no servidor</button>
+      <p id="quoteNotice" aria-live="polite">Confira os valores antes de fechar.</p>
+      <div id="paymentEditor"></div>
+      <label for="saleNotes">Observações</label><textarea id="saleNotes" maxlength="10000"></textarea>
+      <button type="button" id="finishSale" disabled>Fechar venda / tentar novamente</button>
+      <p class="notice" id="saleNotice" role="status"></p>
+      <a id="receiptLink" target="_blank" rel="noopener" hidden>Visualizar comprovante</a>
     </aside>
   </main>
 
-  <script src="store.js"></script>
-  <script src="catalog.js"></script>
-  <script src="receipt.js"></script>
+  <script src="api.js"></script>
+  <script src="payments.js"></script>
   <script src="pdv.js"></script>
-  <script src="backup.js"></script>
 </body>
 </html>
-

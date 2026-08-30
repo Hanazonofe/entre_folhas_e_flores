@@ -1,286 +1,64 @@
-    const database = () => Shop.createStore(window.localStorage, DEFAULT_PRODUCTS);
-    const escapeHtml = Shop.escapeHtml;
-    let editingSnapshot;
-    const formatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-    const paymentLabels = Shop.payments;
-
-    const salesList = document.querySelector("#salesList");
-    const summaryGrid = document.querySelector("#summaryGrid");
-    const searchSales = document.querySelector("#searchSales");
-    const statusFilter = document.querySelector("#statusFilter");
-    const totalDateFilter = document.querySelector("#totalDateFilter");
-    const notice = document.querySelector("#notice");
-    const editModal = document.querySelector("#editModal");
-    const editForm = document.querySelector("#editForm");
-    const editItems = document.querySelector("#editItems");
-    const editSubtotal = document.querySelector("#editSubtotal");
-    const editTotal = document.querySelector("#editTotal");
-    const expandedSales = new Set();
-
-    function normalize(value) {
-      return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-    }
-
-    function getSales() { return database().readSales(); }
-    function run(action) { return Shop.attempt(editModal.classList.contains("show") ? document.querySelector("#editNotice") : notice, action); }
-
-    function formatDate(isoDate) {
-      return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(isoDate));
-    }
-
-    function getSaleDateKey(isoDate) {
-      const date = new Date(isoDate);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    }
-
-    function formatDateOnly(dateKey) {
-      const [year, month, day] = dateKey.split("-");
-      return `${day}/${month}/${year}`;
-    }
-
-    function getStatusLabel(status) {
-      return ({ completed: "Concluída", edited: "Alterada", cancelled: "Cancelada" })[status] || "Concluída";
-    }
-
-    function getFilteredSales() {
-      const query = normalize(searchSales.value);
-      const status = statusFilter.value;
-      const totalDate = totalDateFilter.value;
-      return getSales().filter(sale => {
-        const text = normalize([
-          sale.id,
-          sale.status,
-          sale.paymentLabel,
-          sale.items.map(item => `${item.name} ${item.code || ""} ${item.barcode || ""}`).join(" ")
-        ].join(" "));
-        const matchesQuery = !query || text.includes(query);
-        const matchesStatus = status === "all" || sale.status === status;
-        const matchesDate = !totalDate || getSaleDateKey(sale.createdAt) === totalDate;
-        return matchesQuery && matchesStatus && matchesDate;
-      });
-    }
-
-    function renderSummary(sales) {
-      const activeSales = sales.filter(sale => sale.status !== "cancelled");
-      const currentTotal = activeSales.reduce((total, sale) => total + Shop.cents(sale.total), 0) / 100;
-      const totalsByPayment = activeSales.reduce((totals, sale) => {
-        totals[sale.paymentMethod] = (totals[sale.paymentMethod] || 0) + Shop.cents(sale.total);
-        return totals;
-      }, {});
-
-      summaryGrid.innerHTML = `
-        <section class="summary-card">
-          <span class="meta">Total atual das vendas listadas${totalDateFilter.value ? ` em ${formatDateOnly(totalDateFilter.value)}` : ""}</span>
-          <strong>${formatter.format(currentTotal)}</strong>
-          <span class="meta">Canceladas não entram no total.</span>
-        </section>
-        <section class="summary-card">
-          <span class="meta">Total por meio de pagamento</span>
-          <div class="payment-totals">
-            ${Object.entries(paymentLabels).map(([method, label]) => `
-              <div class="payment-pill">
-                <span>${label}</span>
-                <strong>${formatter.format((totalsByPayment[method] || 0) / 100)}</strong>
-              </div>
-            `).join("")}
-          </div>
-        </section>
-      `;
-    }
-
-    function toggleSale(id) {
-      if (expandedSales.has(id)) {
-        expandedSales.delete(id);
-      } else {
-        expandedSales.add(id);
+(() => {
+  const $=selector=>document.querySelector(selector), notice=$('#notice'), modal=$('#editModal');
+  const payments=new PaymentEditor($('#editPayments'));
+  let sales=[],offset=0,count=0,editing=null,sequence=0;
+  const expanded=new Set();
+  const status=sale=>sale.status==='cancelled'?'Cancelada':sale.edited?'Alterada':'Concluída';
+  async function load() {
+    const current=++sequence;
+    const query=new URLSearchParams({q:$('#searchSales').value,status:$('#statusFilter').value,offset:String(offset),limit:'50'});
+    if($('#totalDateFilter').value)query.set('day',$('#totalDateFilter').value);
+    const result=await API.call('/sales?'+query);
+    if(current!==sequence)return;
+    sales=result.items;count=result.count;
+    $('#summaryGrid').innerHTML=`<section class="summary-card"><span>Total ativo das vendas filtradas</span><strong>${API.money(result.total_cents)}</strong><span>Canceladas não entram no total.</span></section><section class="summary-card"><span>Valores aplicados por pagamento</span>${Object.entries(PaymentEditor.labels).map(([key,label])=>`<div>${label}: <strong>${API.money(result.by_payment[key]||0)}</strong></div>`).join('')}</section>`;
+    $('#salesList').innerHTML=sales.map(sale=>`<article class="sale-card ${expanded.has(sale.id)?'expanded':''}"><button class="sale-toggle" data-action="toggle" data-id="${sale.id}" aria-expanded="${expanded.has(sale.id)}"><div class="sale-header"><h3>Venda #${sale.number}</h3><span>${status(sale)} · ${API.date(sale.created_at)}</span><strong>${API.money(sale.total_cents)}</strong></div></button><div class="sale-details">
+      ${sale.items.map(item=>`<div class="item-line"><span>${API.esc(item.name)} · Cód. ${API.esc(item.code)} · ${item.quantity} un.</span><strong>${API.money(item.unit_price_cents*item.quantity)}</strong></div>`).join('')}
+      <p class="preserve-lines">${API.esc(sale.notes)}</p><div class="totals"><div>Subtotal: ${API.money(sale.subtotal_cents)}</div><div>Desconto: ${API.money(sale.discount_cents)}</div><strong>Total: ${API.money(sale.total_cents)}</strong>
+      ${sale.payments.map(row=>`<div>${PaymentEditor.labels[row.method]}: ${API.money(row.applied_cents)}${row.method==='cash'?` · Recebido: ${API.money(row.received_cents)} · Troco: ${API.money(row.change_cents)}`:''}</div>`).join('')}</div>
+      <div class="actions"><a target="_blank" rel="noopener" href="receipt.html?id=${sale.id}">Comprovante</a><button class="secondary" data-action="events" data-id="${sale.id}">Histórico</button>
+      ${API.user.role==='admin'?`<button data-action="edit" data-id="${sale.id}" ${sale.status==='cancelled'?'disabled':''}>Alterar</button><button class="warning" data-action="${sale.status==='cancelled'?'reactivate':'cancel'}" data-id="${sale.id}">${sale.status==='cancelled'?'Reativar':'Cancelar'}</button>`:''}</div><div data-history="${sale.id}"></div></div></article>`).join('')||'<p>Nenhuma venda encontrada.</p>';
+    $('#pageCount').textContent=`${count?offset+1:0}–${Math.min(offset+sales.length,count)} de ${count}`;
+    $('#previousPage').disabled=offset===0;$('#nextPage').disabled=offset+50>=count;
+    notice.textContent='';
+  }
+  function editedItems() {
+    return editing.items.map((item,index)=>({...item,name:$(`[data-edit-name="${index}"]`).value,quantity:Number($(`[data-edit-quantity="${index}"]`).value),unit_price_cents:API.cents($(`[data-edit-price="${index}"]`).value)}));
+  }
+  function totals() {
+    const subtotal=editedItems().reduce((sum,item)=>sum+item.quantity*item.unit_price_cents,0),discount=API.cents($('#editDiscount').value);
+    $('#editSubtotal').textContent=API.money(subtotal);$('#editTotal').textContent=API.money(subtotal-discount);
+    if(discount>subtotal)throw new Error('Desconto maior que o subtotal.');
+  }
+  async function edit(id) {
+    editing=await API.call('/sales/'+id);
+    if(editing.status==='cancelled')throw new Error('Reative a venda antes de editar.');
+    $('#editItems').innerHTML=editing.items.map((item,index)=>`<div class="edit-grid"><label>Produto ${index+1}<input data-edit-name="${index}" value="${API.esc(item.name)}" required></label><label>Quantidade ${index+1}<input data-edit-quantity="${index}" type="number" min="1" step="1" value="${item.quantity}" required></label><label>Preço ${index+1}<input data-edit-price="${index}" type="number" min="0" step="0.01" value="${(item.unit_price_cents/100).toFixed(2)}" required></label></div>`).join('');
+    $('#editDiscount').value=(editing.discount_cents/100).toFixed(2);$('#editNotes').value=editing.notes;payments.set(editing.payments);totals();$('#editNotice').textContent='';modal.classList.add('show');
+  }
+  $('#salesList').addEventListener('click',event=>{
+    const button=event.target.closest('[data-action]');if(!button)return;
+    API.run(notice,async()=>{
+      const id=button.dataset.id,action=button.dataset.action;
+      if(action==='toggle'){expanded.has(id)?expanded.delete(id):expanded.add(id);await load();return;}
+      if(action==='edit'){await edit(id);notice.textContent='';return;}
+      if(action==='events'){
+        const rows=await API.call('/sales/'+id+'/events');
+        document.querySelector(`[data-history="${id}"]`).innerHTML='<h4>Histórico registrado no servidor</h4>'+rows.map(row=>`<details><summary>${API.esc(({created:'Criação',edited:'Edição',cancelled:'Cancelamento',reactivated:'Reativação'})[row.type])} · ${API.esc(row.actor)} · ${API.date(row.at)}</summary><pre>${API.esc(JSON.stringify({antes:row.before,depois:row.after},null,2))}</pre></details>`).join('');notice.textContent='';return;
       }
-      run(renderSales);
-    }
-
-    function renderSales() {
-      const sales = getFilteredSales();
-      renderSummary(sales);
-      if (!sales.length) {
-        salesList.innerHTML = '<div class="empty">Nenhuma venda encontrada. Feche uma venda na tela de PDV para criar o primeiro registro.</div>';
-        return;
-      }
-
-      salesList.innerHTML = sales.map(sale => {
-        const expanded = expandedSales.has(sale.id);
-        const itemCount = sale.items.reduce((total, item) => total + Number(item.quantity), 0);
-        return `
-        <article class="sale-card ${expanded ? "expanded" : ""}">
-          <button class="sale-toggle" type="button" data-sale-action="toggle" data-sale-id="${escapeHtml(sale.id)}" aria-expanded="${expanded}" aria-controls="sale-details-${escapeHtml(sale.id)}">
-            <div class="sale-header sale-summary">
-              <div>
-                <h3>Venda #${escapeHtml(sale.id.slice(0, 8))}</h3>
-                <div class="meta">Feita em ${formatDate(sale.createdAt)} • ${escapeHtml(sale.paymentLabel)} • ${itemCount} item(ns)</div>
-                ${sale.updatedAt ? `<div class="meta">Última alteração em ${formatDate(sale.updatedAt)}</div>` : ""}
-              </div>
-              <div class="actions">
-                <span class="status ${escapeHtml(sale.status)}">${getStatusLabel(sale.status)}</span>
-                <strong class="total-final">${formatter.format(sale.total)}</strong>
-                <span class="chevron" aria-hidden="true">⌄</span>
-              </div>
-            </div>
-          </button>
-
-          <div class="sale-details" id="sale-details-${escapeHtml(sale.id)}">
-            <div class="items">
-              ${sale.items.map(item => `
-                <div class="item-line">
-                  <div><strong>${escapeHtml(item.name)}</strong><br><span class="meta">Cód. ${escapeHtml(item.code || item.id || "-")} • EAN ${escapeHtml(item.barcode || "-")} • ${formatter.format(Number(item.price))} cada</span></div>
-                  <strong>${Number(item.quantity)} un. • ${formatter.format(Shop.cents(item.price) * Number(item.quantity) / 100)}</strong>
-                </div>
-              `).join("")}
-            </div>
-
-            ${sale.notes ? `<p><strong>Observações:</strong> ${escapeHtml(sale.notes)}</p>` : ""}
-
-            <details class="sale-history">
-              <summary>Histórico de alterações (${(sale.history || []).length})</summary>
-              <p class="meta">Registro local: pode ser manipulado fora da aplicação e não identifica um usuário autenticado.</p>
-              ${(sale.history || []).map(event => `<details><summary>${escapeHtml(({ created: "Criação", edited: "Edição", cancelled: "Cancelamento", reactivated: "Reativação" })[event.type])} • ${formatDate(event.at)}</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(JSON.stringify(event.changes, null, 2))}</pre></details>`).join("") || '<p>Sem eventos registrados nesta versão. As observações antigas foram preservadas.</p>'}
-            </details>
-            <div class="totals">
-              <div class="row"><span>Subtotal</span><strong>${formatter.format(sale.subtotal)}</strong></div>
-              <div class="row"><span>Desconto</span><strong>${formatter.format(sale.discount || 0)}</strong></div>
-              ${sale.paymentMethod === "cash" ? `<div class="row"><span>Recebido</span><strong>${formatter.format(sale.cashReceived ?? sale.total)}</strong></div><div class="row"><span>Troco</span><strong>${formatter.format(sale.change || 0)}</strong></div>` : ""}
-              <div class="row total-final"><span>Total</span><span>${formatter.format(sale.total)}</span></div>
-            </div>
-
-            <div class="actions">
-              <button class="small secondary" type="button" data-sale-action="print" data-sale-id="${escapeHtml(sale.id)}">Imprimir</button>
-              <button class="small secondary" type="button" data-sale-action="edit" data-sale-id="${escapeHtml(sale.id)}" ${sale.status === "cancelled" ? "disabled" : ""}>Alterar</button>
-              ${sale.status === "cancelled"
-                ? `<button class="small secondary" type="button" data-sale-action="reactivate" data-sale-id="${escapeHtml(sale.id)}">Reativar</button>`
-                : `<button class="small warning" type="button" data-sale-action="cancel" data-sale-id="${escapeHtml(sale.id)}">Cancelar</button>`}
-            </div>
-          </div>
-        </article>
-      `}).join("");
-    }
-
-    const getReceiptHtml = Shop.receiptHtml;
-
-    function printSaleReceipt(id) {
-      const sale = getSales().find(item => item.id === id);
-      if (!sale) return;
-      const receiptWindow = window.open("", "_blank", "width=380,height=700");
-      if (!receiptWindow) {
-        notice.textContent = "O navegador bloqueou a abertura do comprovante para impressão.";
-        return;
-      }
-      receiptWindow.addEventListener("load", () => receiptWindow.print(), { once: true });
-      receiptWindow.document.open();
-      receiptWindow.document.write(getReceiptHtml(sale));
-      receiptWindow.document.close();
-    }
-
-    function cancelSale(id) {
-      if (!confirm("Tem certeza que deseja cancelar esta venda?")) return;
-      database().updateSale(id, sale => Shop.transition(sale, "cancelled"));
-      notice.textContent = "Venda cancelada com sucesso.";
-      run(renderSales);
-    }
-
-    function reactivateSale(id) {
-      if (!confirm("Tem certeza que deseja reativar esta venda?")) return;
-      database().updateSale(id, sale => Shop.transition(sale, "reactivated"));
-      notice.textContent = "Venda reativada com sucesso.";
-      run(renderSales);
-    }
-
-    function openEdit(id) {
-      const sale = getSales().find(item => item.id === id);
-      Shop.assert(sale, "Venda não encontrada.");
-      Shop.assert(sale.status !== "cancelled", "Reative a venda antes de alterá-la.");
-      editingSnapshot = JSON.stringify(sale);
-      document.querySelector("#editNotice").textContent = "";
-      document.querySelector("#editCashReceived").value = sale.paymentMethod === "cash" ? (sale.cashReceived ?? "") : "";
-      document.querySelector("#saleId").value = sale.id;
-      document.querySelector("#editPayment").value = sale.paymentMethod;
-      document.querySelector("#editDiscount").value = sale.discount || 0;
-      document.querySelector("#editNotes").value = sale.notes || "";
-      editItems.innerHTML = sale.items.map((item, index) => `
-        <div class="edit-grid">
-          <div>
-            <label for="item-name-${index}">Produto</label>
-            <input id="item-name-${index}" data-field="name" data-index="${index}" value="${escapeHtml(item.name)}" />
-          </div>
-          <div>
-            <label for="item-qty-${index}">Qtd.</label>
-            <input id="item-qty-${index}" data-field="quantity" data-index="${index}" type="number" min="1" step="1" value="${escapeHtml(item.quantity)}" />
-          </div>
-          <div>
-            <label for="item-price-${index}">Preço</label>
-            <input id="item-price-${index}" data-field="price" data-index="${index}" type="number" min="0" step="0.01" value="${escapeHtml(item.price)}" />
-          </div>
-        </div>
-      `).join("");
-      editModal.dataset.items = JSON.stringify(sale.items);
-      editModal.classList.add("show");
-      run(updateEditTotals);
-    }
-
-    function getEditedItems() {
-      const original = JSON.parse(editModal.dataset.items || "[]");
-      return original.map((item, index) => ({
-        ...item,
-        name: document.querySelector(`[data-index="${index}"][data-field="name"]`).value.trim() || item.name,
-        quantity: Shop.quantity(document.querySelector(`[data-index="${index}"][data-field="quantity"]`).value),
-        price: Shop.cents(document.querySelector(`[data-index="${index}"][data-field="price"]`).value, "Preço") / 100
-      }));
-    }
-
-    function updateEditTotals() {
-      document.querySelector("#editChange").textContent = "";
-      const values = Shop.totals(getEditedItems(), document.querySelector("#editDiscount").value || "0");
-      editSubtotal.textContent = formatter.format(values.subtotal);
-      editTotal.textContent = formatter.format(values.total);
-      const isCash = document.querySelector("#editPayment").value === "cash";
-      document.querySelector("#editCashField").hidden = !isCash;
-      document.querySelector("#editCashReceived").required = isCash;
-      document.querySelector("#editNotice").textContent = "";
-      const raw = document.querySelector("#editCashReceived").value;
-      document.querySelector("#editChange").textContent = !isCash ? "" : raw === "" ? "Informe o valor recebido." : `Troco: ${formatter.format(Shop.payment("cash", values.total, raw).change)}`;
-    }
-
-    editForm.addEventListener("input", () => run(updateEditTotals));
-    document.querySelector("#editPayment").addEventListener("change", () => {
-      document.querySelector("#editCashReceived").value = "";
-      document.querySelector("#editChange").textContent = "";
-      run(updateEditTotals);
+      if(!['cancel','reactivate'].includes(action))return;
+      if(!await API.confirm(action==='cancel'?'Cancelar esta venda? Isso altera somente o registro. Nenhum pagamento será estornado automaticamente.':'Reativar esta venda e incluí-la novamente nos totais?')){notice.textContent='';return;}
+      const sale=sales.find(row=>row.id===id);
+      await API.call(`/sales/${id}/${action}`,{method:'POST',body:JSON.stringify({version:sale.version})});await load();notice.textContent='Situação atualizada com sucesso.';
     });
-    editForm.addEventListener("submit", event => {
-      event.preventDefault();
-      run(() => {
-        const id = document.querySelector("#saleId").value;
-        database().updateSale(id, sale => Shop.edit(sale, {
-          items: getEditedItems(),
-          discount: document.querySelector("#editDiscount").value || "0",
-          paymentMethod: document.querySelector("#editPayment").value,
-          cashReceived: document.querySelector("#editCashReceived").value,
-          notes: document.querySelector("#editNotes").value.trim()
-        }), editingSnapshot);
-        editModal.classList.remove("show");
-        notice.textContent = "Venda alterada com sucesso.";
-        run(renderSales);
-      });
-    });
-
-    salesList.addEventListener("click", event => {
-      const button = event.target.closest("[data-sale-action]");
-      if (!button) return;
-      const actions = { toggle: toggleSale, print: printSaleReceipt, edit: openEdit, cancel: cancelSale, reactivate: reactivateSale };
-      if (Object.hasOwn(actions, button.dataset.saleAction)) run(() => actions[button.dataset.saleAction](button.dataset.saleId));
-    });
-    document.querySelector("#closeModal").addEventListener("click", () => editModal.classList.remove("show"));
-    searchSales.addEventListener("input", () => run(renderSales));
-    statusFilter.addEventListener("change", () => run(renderSales));
-    totalDateFilter.addEventListener("change", () => run(renderSales));
-    run(renderSales);
-
+  });
+  $('#editForm').addEventListener('input',()=>API.run($('#editNotice'),async()=>{totals();$('#editNotice').textContent='';}));
+  $('#editForm').addEventListener('submit',event=>{event.preventDefault();const button=event.submitter;API.run($('#editNotice'),async()=>{
+    if(button)button.disabled=true;
+    try{await API.call('/sales/'+editing.id,{method:'PUT',body:JSON.stringify({version:editing.version,items:editedItems(),discount_cents:API.cents($('#editDiscount').value),payments:payments.values(),notes:$('#editNotes').value})});modal.classList.remove('show');await load();notice.textContent='Venda alterada com sucesso.';}finally{if(button)button.disabled=false;}
+  });});
+  $('#closeModal').addEventListener('click',()=>modal.classList.remove('show'));
+  for(const id of ['searchSales','statusFilter','totalDateFilter'])$('#'+id).addEventListener(id==='searchSales'?'input':'change',()=>{offset=0;API.run(notice,load);});
+  $('#previousPage').addEventListener('click',()=>{offset=Math.max(0,offset-50);API.run(notice,load);});$('#nextPage').addEventListener('click',()=>{offset+=50;API.run(notice,load);});
+  API.run(notice,async()=>{await API.ready();API.header();await load();});
+})();

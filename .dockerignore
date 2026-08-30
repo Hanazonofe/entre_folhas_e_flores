@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+secrets
+**/__pycache__
+**/.pytest_cache
+.qa
+*.dump
+*.age

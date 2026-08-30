@@ -1,0 +1,16 @@
+[hidden] { display: none !important; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+dialog { border: 1px solid #bac8bd; border-radius: 18px; padding: 24px; max-width: min(560px, 92vw); color: #1f2a23; }
+dialog::backdrop { background: #1f2a2370; }
+dialog form { display: grid; gap: 16px; }
+label { display: block; }
+dialog input { display: block; width: 100%; }
+.payment-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; border-bottom: 1px solid #bac8bd; padding: 12px 0; }
+.payment-row input,.payment-row select { width: 100%; }
+.payment-summary,[role=alert] { overflow-wrap: anywhere; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f4f7f4; padding: 12px; }
+.preserve-lines { white-space: pre-wrap; overflow-wrap: anywhere; }
+#accountBar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:.85rem; }
+.pagination { display:flex; gap:12px; align-items:center; margin-top:20px; }
+.admin-grid { display:grid; gap:24px; }
+@media(max-width:600px) { .payment-row { grid-template-columns:1fr; } }

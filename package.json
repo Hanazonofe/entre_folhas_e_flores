@@ -3,7 +3,9 @@
   "private": true,
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "check": "node --check store.js && node --check receipt.js && node --check catalog.js && node --check pdv.js && node --check vendas.js && node --check produtos.js && node --check backup.js"
+    "check": "node --check api.js && node --check payments.js && node --check receipt.js && node --check pdv.js && node --check vendas.js && node --check produtos.js && node --check admin.js && node --check login.js && node --check store.js && node --check backup.js"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }
