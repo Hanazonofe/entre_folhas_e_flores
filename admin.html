@@ -170,13 +170,14 @@
       <nav aria-label="Navegação principal">
         <a href="pdv.html">Nova venda</a>
         <a href="vendas.html">Vendas realizadas</a>
-        <a class="active" href="produtos.html">Produtos</a>
+        <a href="produtos.html">Produtos</a>
+        <a class="active" href="admin.html">Minha conta / Administração</a>
       </nav>
     </div>
   </header>
 
 <main class="admin-grid">
-<section class="card"><h1>Minha conta</h1><form id="passwordForm"><label>Senha atual<input id="currentPassword" type="password" required autocomplete="current-password"></label><label>Nova senha<input id="newPassword" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></label><button>Alterar senha e encerrar sessões</button><p id="passwordNotice" role="alert"></p></form></section>
+<section class="card"><h1>Minha conta</h1><form id="passwordForm"><label>Senha atual<input id="currentPassword" type="password" required autocomplete="current-password"></label><label>Nova senha (mínimo 6 caracteres)<input id="newPassword" type="password" required minlength="6" maxlength="128" autocomplete="new-password"></label><button>Alterar senha e encerrar sessões</button><p id="passwordNotice" role="alert"></p></form></section>
 <div id="adminOnly" class="admin-grid" hidden>
-<section class="card"><h2>Usuários</h2><form id="userForm"><input id="userId" type="hidden"><label>Nome<input id="userName" required maxlength="200"></label><label>Login<input id="userLogin" required pattern="[a-z0-9_.-]{3,80}"></label><label id="newUserPassword">Senha inicial<input id="userPassword" type="password" minlength="12" maxlength="128" required autocomplete="new-password"></label><label>Papel<select id="userRole"><option value="operator">Operador</option><option value="admin">Administrador</option></select></label><label><input id="userActive" type="checkbox" checked>Ativo</label><button>Salvar usuário</button><button id="clearUser" class="secondary" type="button">Novo usuário</button></form><div id="usersList"></div></section>
+<section class="card"><h2>Usuários cadastrados</h2><p id="usersCount" role="status"></p><button id="refreshUsers" class="secondary" type="button">Atualizar usuários</button><p id="usersNotice" role="alert"></p><div id="usersList" class="product-list"></div><h3 id="userFormTitle">Cadastrar usuário</h3><form id="userForm"><input id="userId" type="hidden"><label>Nome<input id="userName" required maxlength="200"></label><label>Login<input id="userLogin" required pattern="[a-z0-9_.-]{3,80}"></label><label id="newUserPassword">Senha inicial (mínimo 6 caracteres)<input id="userPassword" type="password" minlength="6" maxlength="128" required autocomplete="new-password"></label><label>Papel<select id="userRole"><option value="operator">Operador</option><option value="admin">Administrador</option></select></label><label><input id="userActive" type="checkbox" checked>Ativo</label><button>Salvar usuário</button><button id="clearUser" class="secondary" type="button">Novo usuário</button></form></section>
 <section class="card"><h2>Backup diário</h2><p>Geração às 23h (São Paulo). Sem internet, os arquivos criptografados aguardam envio. Isso não bloqueia vendas.</p><p id="backupStatus" role="status"></p><button id="backupNow">Solicitar backup</button><button id="refreshAdmin" class="secondary">Atualizar situação</button><ul id="backupRuns"></ul></section></div><p id="adminNotice" role="alert"></p></main><script src="api.js"></script><script src="admin.js"></script></body></html>

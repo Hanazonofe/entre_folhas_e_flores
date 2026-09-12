@@ -14,7 +14,7 @@ def main():
     parser.add_argument("command", choices=["create-admin", "reset-password"])
     parser.add_argument("login")
     args = parser.parse_args()
-    password = getpass.getpass("Nova senha (mínimo 12 caracteres): ")
+    password = getpass.getpass("Nova senha (mínimo 6 caracteres): ")
     if password != getpass.getpass("Repita a senha: "):
         parser.error("Senhas diferentes.")
     with Session(engine()) as db:
