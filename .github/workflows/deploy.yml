@@ -2,6 +2,9 @@ name: Deploy PDV
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - codex/users-password-six
 
 permissions:
   contents: read
