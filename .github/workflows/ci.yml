@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - production
+
+  push:
+    branches:
+      - production
+      - codex/users-password-six
+
+permissions:
+  contents: read
+
+jobs:
+  javascript:
+    name: JavaScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: JavaScript tests
+        run: npm test
+
+      - name: JavaScript syntax check
+        run: npm run check
+
+  backend:
+    name: Python + PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.lock
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements-dev.lock
+
+      - name: Ruff
+        run: |
+          python -m ruff check backend/pdv --select F
+
+      - name: PostgreSQL integration tests
+        env:
+          PYTHON: python
+        run: |
+          chmod +x scripts/test-database.sh
+          scripts/test-database.sh
+
+  compose:
+    name: Docker Compose
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Compose
+        env:
+          PDV_HOST: localhost
+          PUBLIC_ORIGIN: https://localhost
+          SECRETS_DIR: /tmp/pdv-ci-secrets
+        run: |
+          mkdir -p /tmp/pdv-ci-secrets
+          touch /tmp/pdv-ci-secrets/owner_password
+          touch /tmp/pdv-ci-secrets/api_password
+          touch /tmp/pdv-ci-secrets/backup_password
+          touch /tmp/pdv-ci-secrets/owner_url
+          touch /tmp/pdv-ci-secrets/api_url
+          touch /tmp/pdv-ci-secrets/backup_url
+          touch /tmp/pdv-ci-secrets/age_recipient
+          touch /tmp/pdv-ci-secrets/drive_folder_id
+          touch /tmp/pdv-ci-secrets/duckdns_token
+
+          docker compose config --quiet
