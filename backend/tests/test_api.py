@@ -176,7 +176,7 @@ def test_permissions_csrf_cookie(client):
         c.post(
             "/api/products", json={"code": "x", "name": "x", "price_cents": 1}
         ).status_code
-        == 403
+        == 201
     )
     assert c.post("/api/backups", json={}).status_code == 403
     assert c.get("/api/products").status_code == 200

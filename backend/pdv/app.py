@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from . import __version__, auth, models as m, schemas as s, services as svc
 from .config import public_origin
 from .db import get_db
+from . import product_spreadsheet as sheets
 
 app = FastAPI(
     title="Entre Folhas e Flores — API local",
@@ -46,13 +47,18 @@ async def security(request: Request, call_next):
     ):
         if request.headers.get("origin") != public_origin():
             return JSONResponse({"detail": "Origem não autorizada."}, status_code=403)
-        if request.headers.get("content-type", "").split(";")[0] != "application/json":
-            return JSONResponse({"detail": "Envie JSON."}, status_code=415)
+        is_xlsx = request.url.path == "/api/products/import"
+        expected_type = sheets.MIME if is_xlsx else "application/json"
+        if request.headers.get("content-type", "").split(";")[0] != expected_type:
+            return JSONResponse(
+                {"detail": "Envie um arquivo XLSX." if is_xlsx else "Envie JSON."},
+                status_code=415,
+            )
         # Bound request bodies even for chunked requests before JSON parsing.
         body = bytearray()
         async for chunk in request.stream():
             body.extend(chunk)
-            if len(body) > 1_048_576:
+            if len(body) > (5_242_880 if is_xlsx else 1_048_576):
                 return JSONResponse({"detail": "Pedido muito grande."}, status_code=413)
         request._body = bytes(body)
     response = await call_next(request)
@@ -233,7 +239,7 @@ def products(
     db=Depends(get_db),
 ):
     statement = select(m.Product)
-    if user.role != "admin" or active_only:
+    if active_only:
         statement = statement.where(m.Product.active.is_(True))
     if q:
         statement = statement.where(
@@ -257,8 +263,42 @@ def products(
     }
 
 
+@app.get("/api/products/export")
+def export_products(user=Depends(auth.principal), db=Depends(get_db)):
+    content = sheets.export_xlsx(db.scalars(select(m.Product).order_by(m.Product.code)))
+    return Response(
+        content,
+        media_type=sheets.MIME,
+        headers={"Content-Disposition": 'attachment; filename="produtos.xlsx"'},
+    )
+
+
+@app.post("/api/products/import")
+async def import_products(
+    request: Request,
+    apply: bool = False,
+    preview: str = "",
+    skip_invalid: bool = False,
+    user=Depends(auth.principal),
+    db=Depends(get_db),
+):
+    from starlette.concurrency import run_in_threadpool
+
+    data = await request.body()
+    return await run_in_threadpool(
+        sheets.process,
+        db,
+        data,
+        apply=apply,
+        preview=preview,
+        skip_invalid=skip_invalid,
+    )
+
+
 @app.post("/api/products", status_code=201)
-def add_product(payload: s.ProductInput, user=Depends(auth.admin), db=Depends(get_db)):
+def add_product(
+    payload: s.ProductInput, user=Depends(auth.principal), db=Depends(get_db)
+):
     values = payload.model_dump()
     values["barcode"] = values["barcode"] or None
     row = m.Product(**values)
@@ -271,7 +311,7 @@ def add_product(payload: s.ProductInput, user=Depends(auth.admin), db=Depends(ge
 def edit_product(
     product_id: UUID,
     payload: s.ProductEdit,
-    user=Depends(auth.admin),
+    user=Depends(auth.principal),
     db=Depends(get_db),
 ):
     row = db.get(m.Product, product_id, with_for_update=True)
