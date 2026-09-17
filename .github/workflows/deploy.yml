@@ -2,9 +2,6 @@ name: Deploy PDV
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - codex/users-password-six
 
 permissions:
   contents: read
@@ -50,7 +47,7 @@ jobs:
               set -euo pipefail
 
               SHA="$1"
-              BRANCH="codex/users-password-six"
+              BRANCH="production"
               APP_DIR="/home/felipe/entre_folhas_prod"
 
               cd "$APP_DIR"
