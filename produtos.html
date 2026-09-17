@@ -154,6 +154,11 @@
     .notice { min-height: 24px; font-weight: 800; color: var(--primary-dark); }
     .empty { padding: 28px; border: 1px dashed #bac8bd; border-radius: 18px; text-align: center; color: var(--muted); }
     .file-input { display: none; }
+    #skipInvalid { width: auto; margin-right: 8px; }
+    #importFile { margin-bottom: 16px; }
+    #spreadsheetTitle + p { margin-bottom: 10px; }
+    .spreadsheet-export { display: inline-block; padding: 13px 18px; border-radius: 14px; background: var(--primary); color: white; font-weight: 800; text-decoration: none; }
+    button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
     @media (max-width: 920px) {
       main, .grid-2 { grid-template-columns: 1fr; }
@@ -225,6 +230,22 @@
         <button class="secondary" type="button" id="clearForm">Limpar formulário</button>
         <p class="notice" id="formNotice"></p>
       </form>
+    </section>
+
+    <section class="card" aria-labelledby="spreadsheetTitle">
+      <h2 id="spreadsheetTitle">Produtos em Excel</h2>
+      <p>Exporte todos os produtos, edite no Excel e importe a planilha. Códigos existentes serão atualizados; novos códigos criarão produtos. Remover uma linha da planilha não exclui o produto.</p>
+      <p>Colunas: CODIGO, PRODUTO, VALOR, BARCODE, ESTOQUE e ATIVO (sim/não). Mantenha códigos e barcodes como Texto para preservar zeros. Preço aceita vírgula ou ponto decimal; estoque aceita até 3 casas. Colunas opcionais ausentes mantêm os dados existentes.</p>
+      <div class="actions"><a class="spreadsheet-export" href="/api/products/export" download="produtos.xlsx">Exportar produtos (.xlsx)</a></div>
+      <label for="importFile">Planilha para importar (.xlsx, até 5 MB)</label>
+      <input id="importFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+      <label><input id="skipInvalid" type="checkbox" /> Ignorar produtos inválidos e importar somente os válidos</label>
+      <div class="actions">
+        <button id="previewImport" type="button">Validar planilha</button>
+        <button id="applyImport" type="button" disabled>Confirmar importação</button>
+      </div>
+      <p id="importNotice" class="notice" role="status" aria-live="polite"></p>
+      <div id="importErrors" style="max-height:320px;overflow:auto"></div>
     </section>
 
     <section class="card">

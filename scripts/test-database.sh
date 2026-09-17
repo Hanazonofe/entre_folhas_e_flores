@@ -28,4 +28,5 @@ CREATE ROLE pdv_backup LOGIN PASSWORD 'pdv-backup-test-only';
 SQL
 docker exec -i "$PDV_TEST_CONTAINER" psql -U postgres -d pdv_test -v ON_ERROR_STOP=1 < deployment/grants.sql
 export DATABASE_URL="postgresql+psycopg://pdv_api:pdv-api-test-only@localhost:$PDV_TEST_PORT/pdv_test"
-"$PYTHON" -m pytest backend/tests -q
+if [ "$#" -eq 0 ]; then set -- backend/tests; fi
+"$PYTHON" -m pytest "$@" -q

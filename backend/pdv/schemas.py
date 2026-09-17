@@ -13,7 +13,7 @@ Login = Annotated[
         strip_whitespace=True, to_lower=True, pattern=r"^[a-z0-9_.-]{3,80}$"
     ),
 ]
-Password = Annotated[str, Field(min_length=12, max_length=128)]
+Password = Annotated[str, Field(min_length=6, max_length=128)]
 
 
 class Input(BaseModel):

@@ -1,0 +1,14 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.caddy
+    image: entre-folhas-pdv-caddy
+    secrets:
+      - duckdns_token
+    entrypoint:
+      - /usr/local/bin/caddy-entrypoint.sh
+
+secrets:
+  duckdns_token:
+    file: "${SECRETS_DIR:?}/duckdns_token"

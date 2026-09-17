@@ -1,5 +1,8 @@
 {$PDV_HOST} {
-    tls internal
+    tls {
+        dns duckdns {env.DUCKDNS_API_TOKEN}
+    }
+
     encode gzip
     reverse_proxy api:8000
 }
