@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Administração | Entre Folhas e Flores</title>
+  <style>
+    :root {
+      --bg: #f5f7f2;
+      --card: #ffffff;
+      --primary: #2f6b45;
+      --primary-dark: #245538;
+      --accent: #d9ead7;
+      --text: #1f2a23;
+      --muted: #68756d;
+      --danger: #b83232;
+      --warning: #8a5c00;
+      --border: #dbe3dc;
+      --shadow: 0 18px 50px rgba(31, 42, 35, 0.11);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #e8f3e6, transparent 38%), var(--bg);
+      color: var(--text);
+    }
+
+    header, main { padding-inline: clamp(16px, 4vw, 48px); }
+    header { padding-top: 28px; padding-bottom: 12px; }
+    main { display: grid; grid-template-columns: minmax(320px, 0.8fr) minmax(360px, 1.2fr); gap: 24px; padding-top: 16px; padding-bottom: 42px; }
+
+    .topbar, .page-heading, .row, .product-header, .actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .topbar, .page-heading, .row, .product-header { justify-content: space-between; }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--primary-dark);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+    }
+
+    .brand span {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--accent);
+      box-shadow: inset 0 0 0 1px #c8dec6;
+    }
+
+    nav { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    nav a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 14px;
+      border: 1px solid #cfe0cf;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--primary-dark);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    nav a.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(219, 227, 220, 0.9);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: clamp(18px, 3vw, 28px);
+    }
+
+    h1, h2, h3 { margin: 0; letter-spacing: -0.04em; }
+    h1 { font-size: clamp(2rem, 5vw, 3.7rem); line-height: 0.95; }
+    p { color: var(--muted); line-height: 1.55; }
+
+    form, .product-list, .tools { display: grid; gap: 14px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    label { display: block; font-weight: 800; margin-bottom: 8px; }
+    input, select, button {
+      width: 100%;
+      font: inherit;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    input, select {
+      padding: 13px 15px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(47, 107, 69, 0.12); }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      padding: 11px 14px;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    button.secondary { background: #eef4ee; color: var(--primary-dark); border: 1px solid #cfe0cf; }
+    button.warning { background: #fff6df; color: var(--warning); border: 1px solid #edd79b; }
+    button.danger { background: #fff0f0; color: var(--danger); border: 1px solid #f0c8c8; }
+    button.small { width: auto; min-width: 112px; }
+
+    .product-card {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: #fff;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      background: var(--accent);
+      color: var(--primary-dark);
+    }
+
+    .status.inactive { background: #fff0f0; color: var(--danger); }
+    .meta { color: var(--muted); font-size: 0.95rem; }
+    .notice { min-height: 24px; font-weight: 800; color: var(--primary-dark); }
+    .empty { padding: 28px; border: 1px dashed #bac8bd; border-radius: 18px; text-align: center; color: var(--muted); }
+    .file-input { display: none; }
+
+    @media (max-width: 920px) {
+      main, .grid-2 { grid-template-columns: 1fr; }
+      .product-header, .page-heading { align-items: flex-start; }
+      button.small { width: 100%; }
+    }
+  </style>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand"><span>🌿</span> Entre Folhas e Flores</div>
+      <nav aria-label="Navegação principal">
+        <a href="pdv.html">Nova venda</a>
+        <a href="vendas.html">Vendas realizadas</a>
+        <a href="produtos.html">Produtos</a>
+        <a class="active" href="admin.html">Minha conta / Administração</a>
+      </nav>
+    </div>
+  </header>
+
+<main class="admin-grid">
+<section class="card"><h1>Minha conta</h1><form id="passwordForm"><label>Senha atual<input id="currentPassword" type="password" required autocomplete="current-password"></label><label>Nova senha (mínimo 6 caracteres)<input id="newPassword" type="password" required minlength="6" maxlength="128" autocomplete="new-password"></label><button>Alterar senha e encerrar sessões</button><p id="passwordNotice" role="alert"></p></form></section>
+<div id="adminOnly" class="admin-grid" hidden>
+<section class="card"><h2>Usuários cadastrados</h2><p id="usersCount" role="status"></p><button id="refreshUsers" class="secondary" type="button">Atualizar usuários</button><p id="usersNotice" role="alert"></p><div id="usersList" class="product-list"></div><h3 id="userFormTitle">Cadastrar usuário</h3><form id="userForm"><input id="userId" type="hidden"><label>Nome<input id="userName" required maxlength="200"></label><label>Login<input id="userLogin" required pattern="[a-z0-9_.-]{3,80}"></label><label id="newUserPassword">Senha inicial (mínimo 6 caracteres)<input id="userPassword" type="password" minlength="6" maxlength="128" required autocomplete="new-password"></label><label>Papel<select id="userRole"><option value="operator">Operador</option><option value="admin">Administrador</option></select></label><label><input id="userActive" type="checkbox" checked>Ativo</label><button>Salvar usuário</button><button id="clearUser" class="secondary" type="button">Novo usuário</button></form></section>
+<section class="card"><h2>Backup diário</h2><p>Geração às 23h (São Paulo). Sem internet, os arquivos criptografados aguardam envio. Isso não bloqueia vendas.</p><p id="backupStatus" role="status"></p><button id="backupNow">Solicitar backup</button><button id="refreshAdmin" class="secondary">Atualizar situação</button><ul id="backupRuns"></ul></section></div><p id="adminNotice" role="alert"></p></main><script src="api.js"></script><script src="admin.js"></script></body></html>

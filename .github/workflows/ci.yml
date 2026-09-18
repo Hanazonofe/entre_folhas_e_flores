@@ -1,0 +1,193 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - production
+
+  push:
+    branches:
+      - production
+      - codex/users-password-six
+
+permissions:
+  contents: read
+
+jobs:
+  javascript:
+    name: JavaScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: JavaScript tests
+        run: npm test
+
+      - name: JavaScript syntax check
+        run: npm run check
+
+  backend:
+    name: Python + PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.lock
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements-dev.lock
+
+      - name: Ruff
+        run: |
+          python -m ruff check backend/pdv --select F
+
+      - name: PostgreSQL integration tests
+        env:
+          PYTHON: python
+        run: |
+          chmod +x scripts/test-database.sh
+          scripts/test-database.sh
+
+  compose:
+    name: Docker Compose
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Compose
+        env:
+          PDV_HOST: localhost
+          PUBLIC_ORIGIN: https://localhost
+          SECRETS_DIR: /tmp/pdv-ci-secrets
+        run: |
+          mkdir -p /tmp/pdv-ci-secrets
+          touch /tmp/pdv-ci-secrets/owner_password
+          touch /tmp/pdv-ci-secrets/api_password
+          touch /tmp/pdv-ci-secrets/backup_password
+          touch /tmp/pdv-ci-secrets/owner_url
+          touch /tmp/pdv-ci-secrets/api_url
+          touch /tmp/pdv-ci-secrets/backup_url
+          touch /tmp/pdv-ci-secrets/age_recipient
+          touch /tmp/pdv-ci-secrets/drive_folder_id
+          touch /tmp/pdv-ci-secrets/duckdns_token
+
+          docker compose config --quiet
+
+  deploy:
+    name: Deploy production
+    needs:
+      - javascript
+      - backend
+      - compose
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:github-actions
+
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          ssh \
+            -o IdentitiesOnly=yes \
+            -i ~/.ssh/id_ed25519 \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash -s -- '$DEPLOY_SHA'" <<'EOF'
+              set -euo pipefail
+
+              SHA="$1"
+              BRANCH="production"
+              APP_DIR="/home/felipe/entre_folhas_prod"
+
+              cd "$APP_DIR"
+
+              if [ -n "$(git status --porcelain)" ]; then
+                echo "ERRO: diretório de produção possui alterações locais."
+                git status --short
+                exit 1
+              fi
+
+              echo "Atualizando repositório..."
+              git fetch --prune origin "$BRANCH"
+
+              git cat-file -e "${SHA}^{commit}"
+
+              PREVIOUS_SHA="$(git rev-parse HEAD)"
+
+              echo "Versão anterior: $PREVIOUS_SHA"
+              echo "Nova versão:      $SHA"
+
+              git reset --hard "$SHA"
+
+              echo "Construindo e atualizando containers..."
+              docker compose up -d --build \
+                db migrate api web
+
+              echo "Aguardando aplicação ficar saudável..."
+
+              for attempt in $(seq 1 30); do
+                if curl \
+                  --fail \
+                  --silent \
+                  --show-error \
+                  --resolve entre-folhas-pdv.duckdns.org:443:127.0.0.1 \
+                  https://entre-folhas-pdv.duckdns.org/api/health
+                then
+                  echo
+                  echo "Deploy concluído com sucesso."
+                  echo "Commit:"
+                  git rev-parse --short HEAD
+                  exit 0
+                fi
+
+                echo "Tentativa $attempt/30..."
+                sleep 2
+              done
+
+              echo "ERRO: aplicação não ficou saudável."
+              docker compose ps
+              docker compose logs --tail=100 api web migrate db
+              exit 1
+          EOF  

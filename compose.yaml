@@ -1,0 +1,97 @@
+name: entre-folhas-pdv
+services:
+  db:
+    image: postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pdv_owner
+      POSTGRES_DB: pdv
+      POSTGRES_PASSWORD_FILE: /run/secrets/owner_password
+    secrets: [owner_password, api_password, backup_password]
+    volumes:
+      - database:/var/lib/postgresql
+      - ./deployment/init-db.sh:/docker-entrypoint-initdb.d/01-pdv.sh:ro
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U pdv_owner -d pdv"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  migrate:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.api
+    command: [python, /app/deployment/migrate.py]
+    # Migration runs with owner privileges only as a short-lived task.
+    user: "0:0"
+    environment:
+      OWNER_DATABASE_URL_FILE: /run/secrets/owner_url
+    secrets: [owner_url]
+    depends_on:
+      db: {condition: service_healthy}
+    networks: [database]
+    restart: "no"
+  api:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL_FILE: /run/secrets/api_url
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Run scripts/configure.py first}
+    secrets: [api_url]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    networks: [database, frontend]
+    read_only: true
+    tmpfs: [/tmp]
+  backup:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.backup
+    restart: unless-stopped
+    environment:
+      DATABASE_URL_FILE: /run/secrets/backup_url
+      AGE_RECIPIENT_FILE: /run/secrets/age_recipient
+      DRIVE_FOLDER_ID_FILE: /run/secrets/drive_folder_id
+      DRIVE_CREDENTIALS_FILE: /private/drive.json
+      BACKUP_DIR: /backups
+    secrets: [backup_url, age_recipient, drive_folder_id]
+    volumes:
+      - backups:/backups
+      - ${SECRETS_DIR:?}/drive:/private:ro
+    tmpfs: [/tmp]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    networks: [database, upload]
+  web:
+    image: caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    restart: unless-stopped
+    environment:
+      PDV_HOST: ${PDV_HOST:?Run scripts/configure.py first}
+    ports: ["443:443"]
+    volumes:
+      - ./deployment/Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+      - caddy_config:/config
+    depends_on: [api]
+    networks: [frontend, ingress]
+networks:
+  database: {internal: true}
+  frontend: {internal: true}
+  upload: {}
+  ingress: {}
+volumes:
+  database: {}
+  backups: {}
+  certificates: {}
+  caddy_config: {}
+secrets:
+  owner_password: {file: "${SECRETS_DIR:?}/owner_password"}
+  api_password: {file: "${SECRETS_DIR:?}/api_password"}
+  backup_password: {file: "${SECRETS_DIR:?}/backup_password"}
+  owner_url: {file: "${SECRETS_DIR:?}/owner_url"}
+  api_url: {file: "${SECRETS_DIR:?}/api_url"}
+  backup_url: {file: "${SECRETS_DIR:?}/backup_url"}
+  age_recipient: {file: "${SECRETS_DIR:?}/age_recipient"}
+  drive_folder_id: {file: "${SECRETS_DIR:?}/drive_folder_id"}

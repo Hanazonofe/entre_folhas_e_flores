@@ -1,0 +1,10 @@
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+GRANT USAGE ON SCHEMA public TO pdv_api, pdv_backup;
+GRANT SELECT, INSERT, UPDATE, DELETE ON users, sessions, products, sales, sale_items, sale_payments, idempotency_requests, login_attempts TO pdv_api;
+GRANT SELECT, INSERT ON sale_events TO pdv_api;
+REVOKE UPDATE, DELETE, TRUNCATE ON sale_events FROM pdv_api;
+GRANT SELECT, INSERT ON backup_runs TO pdv_api;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO pdv_api;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO pdv_backup;
+GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO pdv_backup;
+GRANT INSERT, UPDATE ON backup_runs TO pdv_backup;
