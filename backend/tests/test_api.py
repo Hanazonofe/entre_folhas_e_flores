@@ -44,6 +44,7 @@ def create(c, body=None, key=None):
     )
 
 
+# @principle:P-006
 def test_sale_history_transitions_and_stock(client):
     c = client
     r = create(c)
@@ -87,6 +88,7 @@ def test_sale_history_transitions_and_stock(client):
     assert c.get("/api/sales").json()["total_cents"] == 1900
 
 
+# @principle:P-006
 def test_idempotency_and_price_conflict(client):
     c = client
     p = product(c)
@@ -130,6 +132,8 @@ def test_idempotency_and_price_conflict(client):
         [{"method": "pix", "applied_cents": 1.5, "received_cents": 1.5}],
     ],
 )
+# @principle:P-006
+# @principle:P-005
 def test_invalid_payments_atomic(client, clean, payments):
     body = order(client)
     body["payments"] = payments
@@ -145,6 +149,7 @@ def test_invalid_payments_atomic(client, clean, payments):
             assert db.scalar(text(f"SELECT count(*) FROM {table}")) == 0
 
 
+# @principle:P-005
 def test_free_sale_and_discount(client):
     p = product(client)
     base = {"items": [{"product_id": p["id"], "quantity": 1}], "discount_cents": 1001}
@@ -196,6 +201,7 @@ def test_permissions_csrf_cookie(client):
     assert c.get("/api/sales").status_code == 401
 
 
+# @principle:P-006
 def test_database_permissions_and_constraints(client, clean):
     sale = create(client).json()
     for sql in [
@@ -208,8 +214,31 @@ def test_database_permissions_and_constraints(client, clean):
     with pytest.raises(DBAPIError), engine().begin() as db:
         db.execute(text("UPDATE sales SET total_cents=total_cents+1"))
     assert client.get("/api/sales/" + sale["id"]).json()["total_cents"] == 1900
+    before_events = client.get("/api/sales/" + sale["id"] + "/events").json()
+    # PostgreSQL 18 reports ON DELETE RESTRICT as restrict_violation (23001).
+    for sql, sqlstate in [
+        ("UPDATE sale_items SET unit_price_cents=unit_price_cents+1", "23514"),
+        (
+            "UPDATE sale_payments SET applied_cents=applied_cents-1, change_cents=change_cents+1 WHERE method='cash'",
+            "23514",
+        ),
+        ("DELETE FROM sale_items", "23514"),
+        ("DELETE FROM sale_payments", "23514"),
+        ("DELETE FROM sales", "23001"),
+        ("DELETE FROM products", "23001"),
+        ("DELETE FROM users WHERE login='admin'", "23001"),
+    ]:
+        # Includes commit: the balance triggers are deferred.
+        with pytest.raises(DBAPIError) as error, engine().begin() as db:
+            db.execute(text(sql))
+        assert error.value.orig.sqlstate == sqlstate
+        assert client.get("/api/sales/" + sale["id"]).json() == sale
+        assert (
+            client.get("/api/sales/" + sale["id"] + "/events").json() == before_events
+        )
 
 
+# @principle:P-006
 def test_parallel_edits(client):
     sale = create(client).json()
     path = "/api/sales/" + sale["id"] + "/cancel"
@@ -221,13 +250,19 @@ def test_parallel_edits(client):
     assert len(client.get("/api/sales/" + sale["id"] + "/events").json()) == 2
 
 
-def test_operator_sale_and_session_expiry(client, clean):
+# @principle:P-007
+def test_operator_sale_and_session_expiry(client, clean, local_only_network):
     p = product(client)
     r = client.post(
         "/api/auth/login", json={"login": "operator", "password": "test-password-123"}
     )
     client.headers["X-CSRF-Token"] = r.json()["csrf_token"]
-    sale = create(client, order(client, p)).json()
+    listed = client.get("/api/products")
+    assert listed.status_code == 200 and listed.json()["items"][0]["id"] == p["id"]
+    response = create(client, order(client, p))
+    assert response.status_code == 201, response.text
+    sale = response.json()
+    assert client.get("/api/sales/" + sale["id"]).json() == sale
     assert sale["created_by"] == r.json()["user"]["id"]
     assert client.get("/api/sales/" + sale["id"]).status_code == 200
     assert (
@@ -265,6 +300,7 @@ def test_login_limit_and_last_admin(client):
     )
 
 
+# @principle:P-006
 def test_snapshot_and_duplicate_code(client):
     p = product(client)
     sale = create(client, order(client, p)).json()
@@ -294,3 +330,123 @@ def test_snapshot_and_duplicate_code(client):
         saved["items"][0]["name"] == p["name"]
         and saved["items"][0]["unit_price_cents"] == 1000
     )
+
+
+# @principle:P-005
+def test_persisted_money_uses_exact_integer_cents(client, clean):
+    p = client.post(
+        "/api/products", json={"code": "CENTS", "name": "Cents", "price_cents": 10}
+    ).json()
+    base = {"items": [{"product_id": p["id"], "quantity": 3}], "discount_cents": 1}
+    quote = client.post("/api/sales/quote", json=base).json()
+    response = create(
+        client,
+        {
+            **base,
+            "quote_token": quote["quote_token"],
+            "payments": [{"method": "cash", "applied_cents": 29, "received_cents": 50}],
+        },
+    )
+    assert response.status_code == 201, response.text
+    sale = response.json()
+    edit = {key: sale[key] for key in ("version", "items", "discount_cents", "notes")}
+    edit["notes"] = "money snapshot after edit"
+    edit["payments"] = [
+        {key: value for key, value in payment.items() if key != "change_cents"}
+        for payment in sale["payments"]
+    ]
+    updated = client.put("/api/sales/" + sale["id"], json=edit)
+    assert updated.status_code == 200, updated.text
+    fields = {
+        "products": {"price_cents": 10},
+        "sales": {"subtotal_cents": 30, "discount_cents": 1, "total_cents": 29},
+        "sale_items": {"unit_price_cents": 10},
+        "sale_payments": {
+            "applied_cents": 29,
+            "received_cents": 50,
+            "change_cents": 21,
+        },
+    }
+    with clean.connect() as db:
+        types = {
+            (r.table_name, r.column_name): r.data_type
+            for r in db.execute(
+                text(
+                    "SELECT table_name, column_name, data_type FROM information_schema.columns "
+                    "WHERE table_schema='public' AND right(column_name, 6)='_cents'"
+                )
+            )
+        }
+        assert set(types) == {
+            (table, key) for table, values in fields.items() for key in values
+        }
+        assert all(kind in {"smallint", "integer", "bigint"} for kind in types.values())
+        for table, values in fields.items():
+            row = (
+                db.execute(text(f"SELECT {', '.join(values)} FROM {table}"))
+                .mappings()
+                .one()
+            )
+            assert dict(row) == values
+            assert all(type(value) is int for value in row.values())
+        created = db.scalar(text("SELECT after FROM sale_events WHERE type='created'"))
+        previous = db.scalar(text("SELECT before FROM sale_events WHERE type='edited'"))
+        current = db.scalar(text("SELECT after FROM sale_events WHERE type='edited'"))
+        repeated = db.scalar(text("SELECT result FROM idempotency_requests"))
+        assert created == previous == repeated == sale
+        assert current == updated.json()
+        for snapshot in (created, previous, current, repeated):
+
+            def check_money(value):
+                if isinstance(value, dict):
+                    for key, child in value.items():
+                        if key.endswith("_cents"):
+                            assert type(child) is int
+                        check_money(child)
+                elif isinstance(value, list):
+                    for child in value:
+                        check_money(child)
+
+            check_money(snapshot)
+            assert {key: snapshot[key] for key in fields["sales"]} == fields["sales"]
+            assert snapshot["items"][0]["unit_price_cents"] == 10
+            assert {
+                key: snapshot["payments"][0][key] for key in fields["sale_payments"]
+            } == fields["sale_payments"]
+
+
+# @principle:P-006
+def test_sale_edit_failure_rolls_back_sale_and_history(client, clean):
+    from sqlalchemy import event
+    from sqlalchemy.exc import IntegrityError
+    from pdv.models import SaleEvent
+
+    sale = create(client).json()
+    path = "/api/sales/" + sale["id"]
+    events_before = client.get(path + "/events").json()
+    edit = {key: sale[key] for key in ("version", "items", "discount_cents", "notes")}
+    edit["notes"] = "must roll back"
+    edit["payments"] = [
+        {key: value for key, value in payment.items() if key != "change_cents"}
+        for payment in sale["payments"]
+    ]
+    observed = []
+
+    def fail_after_event(mapper, connection, target):
+        # The updated sale and its new event have already reached PostgreSQL.
+        observed.append(connection.scalar(text("SELECT notes FROM sales")))
+        assert connection.scalar(text("SELECT count(*) FROM sale_events")) == 2
+        raise IntegrityError(
+            "injected after event insert", {}, Exception("test-only failure")
+        )
+
+    event.listen(SaleEvent, "after_insert", fail_after_event)
+    try:
+        assert client.put(path, json=edit).status_code == 409
+    finally:
+        event.remove(SaleEvent, "after_insert", fail_after_event)
+    assert observed == ["must roll back"]
+    assert client.get(path).json() == sale
+    assert client.get(path + "/events").json() == events_before
+    with clean.connect() as db:
+        assert db.scalar(text("SELECT result FROM idempotency_requests")) == sale

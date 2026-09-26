@@ -1,6 +1,6 @@
 # Verificação reproduzível
 
-Nunca executar testes na base operacional. Os testes PostgreSQL recusam banco cujo nome não seja `pdv_test`; o script cria contêiner descartável próprio e recusa substituir um existente. As credenciais explícitas são fixtures sem uso operacional.
+Nunca executar testes na base operacional. Os testes PostgreSQL exigem o destino descartável autorizado pelo runner (`PDV_TEST_TARGET`), nomes de banco de teste e credenciais descartáveis. URLs alternativas, arquivos de secrets e configuração libpq herdada são recusados antes de conectar; não basta chamar um banco de `pdv_test`. O script cria contêiner descartável próprio e recusa substituir um existente. As credenciais explícitas são fixtures sem uso operacional.
 
 ```sh
 python3 -m venv .venv
@@ -46,3 +46,50 @@ Os testes de transporte Google usam respostas simuladas. Não houve OAuth da con
 6. Reiniciar servidor Linux e verificar volumes, sessão/validade e serviços automáticos. Testar data das 23h e agendamento perdido, espaço insuficiente e fila sem rede.
 7. Autorizar Drive, gerar/enviar/baixar/descriptografar/restaurar cópia real. Revogar credencial e simular quota: vendas continuam, pendências alertam, nada pendente é excluído. Medir tempo de recuperação, conferir 30 cópias remotas e sete dias locais usando dados descartáveis.
 8. Registrar evidências, responsáveis e decisão explícita de entrada em operação. Nenhum merge, troca de base ou publicação automática.
+
+
+## Provas mínimas da Constituição (P-002 a P-007)
+
+Executar `./scripts/test-onp.sh` e, com o pacote 0.9.0 já disponível no cache,
+`npm_config_offline=true npx @onovoprogramador/onp-spec@0.9.0 audit`.
+O runner usa projeto Compose exclusivo, PostgreSQL descartável em tmpfs e rede
+interna sem rota externa. Não lê `.env` operacional. Reutiliza a imagem local
+`entre-folhas-pdv-test-test:latest` (ou `PDV_TEST_IMAGE`) com backend, testes e
+scripts de implantação atuais montados somente para leitura. As dependências
+da imagem devem corresponder a `backend/requirements-dev.lock` e seu lock base.
+Sem imagem pronta, tenta build sem rede; dependências/imagens ausentes são uma
+falha de preparação, não motivo para baixar durante a prova offline.
+
+- P-002: `tests/secrets.test.js` examina blobs do índice, cópias de trabalho
+  rastreadas e arquivos novos não ignorados. Detecta literais de credenciais,
+  URLs autenticadas, chaves privadas e assinaturas de tokens; só relata
+  localizações. Valores descartáveis terminados em `test-only` e uma lista
+  explícita de fixtures antigas/placeholders são permitidos. As regras têm
+  controles positivos e negativos. Não é prova universal contra segredos
+  ofuscados, formatos desconhecidos ou presentes apenas no histórico Git.
+- P-003: `tests/database/test_migrations.py` exige banco vazio, executa a cadeia
+  de migrations, `alembic check`, confere revisão e triggers/funções de
+  integridade. Executa antes das fixtures e grants; roles/grants são
+  provisionamento do ambiente. Não reutilizar um banco preenchido nessa etapa.
+- P-004: `tests/safety/test_database_isolation.py` verifica recusa anterior à
+  conexão, inclusive overrides por arquivo/query/libpq. `backend/test_support.py`
+  protege fixtures e conexões SQLAlchemy da aplicação durante os testes.
+  `PDV_TEST_TARGET` é autorização fornecida pelo runner que provisiona o
+  contêiner, não um mecanismo para tornar uma base operacional segura.
+- P-005: testes existentes de entrada, planilha e CSV, mais inspeção dos tipos
+  e valores no PostgreSQL e dos snapshots before/after e de idempotência.
+  O escopo é o domínio PostgreSQL atual, não a persistência legada do navegador.
+- P-006: testes existentes de histórico, snapshots, idempotência e concorrência,
+  ampliados com rejeição de desequilíbrio/exclusão e rollback de edição após
+  escrita real do evento. Asserções de estado são feitas após a falha.
+- P-007: `test_operator_sale_and_session_expiry` autentica usuário local,
+  consulta produtos, registra e consulta a venda com rede externa bloqueada;
+  mantém as verificações anteriores de permissão e expiração. A verificação
+  estática das páginas ativas permanece em `tests/ui.test.js`. Não há navegador
+  automatizado nem prova de instalação offline.
+
+O runner inclui `tests/importer/` sem skips por falta de banco. O roteiro
+`backup_roundtrip.py` continua separado, executado por `scripts/test-backup.sh`.
+As tags são comentários/títulos reconhecidos pelo ONP. O `audit` 0.9.0 verifica
+sua presença, mas não substitui o resultado da suíte nem gera uma prova PASS
+individual de cada princípio; a saída Python continua sendo a saída do pytest.

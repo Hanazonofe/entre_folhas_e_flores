@@ -12,7 +12,9 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 from pdv import auth, models as m, schemas as s, services as svc
 from pdv.backup import generate
+from test_support import install_connection_guard
 
+install_connection_guard()
 url = make_url(os.environ["DATABASE_URL"])
 assert url.database == "pdv_test", "Disposable database required"
 owner = create_engine(url)

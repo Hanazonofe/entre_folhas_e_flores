@@ -2,11 +2,12 @@ import os
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import create_engine, event, func, select
+from sqlalchemy import event, func, select
 from sqlalchemy.exc import IntegrityError
 
 from pdv.import_products import main, parse_csv, price, run_import
 from pdv.models import Product
+from test_support import guarded_engine
 
 
 def csv_file(tmp_path, content):
@@ -15,6 +16,7 @@ def csv_file(tmp_path, content):
     return path
 
 
+# @principle:P-005
 def test_parse(tmp_path):
     report = parse_csv(csv_file(tmp_path, 'CODIGO,PRODUTO, VALOR,BARCODE,ESTOQUE,ATIVO\n001,Vaso," 62,00 ",0000123,"1,234",não\n002,Outro,4.50,,,sim\n'))
     assert report.rows[0][1] == dict(code='001', name='Vaso', price_cents=6200,
@@ -32,11 +34,13 @@ def test_defaults(tmp_path):
 
 
 @pytest.mark.parametrize('value,expected', [('62,00', 6200), ('R$ 1.234,56', 123456), ('0.01', 1), ('90071992547409,91', 9007199254740991)])
+# @principle:P-005
 def test_price(value, expected):
     assert price(value) == expected
 
 
 @pytest.mark.parametrize('value', ['NaN', 'Infinity', '1e3', '-1', '1.234', '12.34,56', '90071992547409,92', '', '0,001'])
+# @principle:P-005
 def test_bad_price(value):
     with pytest.raises(ValueError):
         price(value)
@@ -69,7 +73,7 @@ def db():
     url = os.getenv('IMPORT_TEST_DATABASE_URL')
     if not url:
         pytest.skip('Set IMPORT_TEST_DATABASE_URL to a disposable PostgreSQL database')
-    engine = create_engine(url)
+    engine = guarded_engine(url)
     assert engine.url.database == 'pdv_import_test'
     Product.__table__.create(engine, checkfirst=True)
     with engine.begin() as conn:

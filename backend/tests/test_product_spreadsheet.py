@@ -28,6 +28,7 @@ def upload(client, data, **params):
     )
 
 
+# @principle:P-005
 def test_operator_export_preview_apply_and_conflict(client, clean):
     login = client.post(
         "/api/auth/login", json={"login": "operator", "password": "test-password-123"}
@@ -142,6 +143,7 @@ def test_invalid_skip_and_optional_preservation(client):
         ["A", "Identifier", "1", 123, "0", "sim"],
     ],
 )
+# @principle:P-005
 def test_validation(client, row):
     result = upload(client, book([row]))
     assert result.status_code == 200 and result.json()["invalidos"] == 1
@@ -197,6 +199,7 @@ def test_stale_preview_and_security(client):
     assert upload(client, data).status_code == 401
 
 
+# @principle:P-005
 def test_export_exact_money_and_empty(client):
     data = client.get("/api/products/export").content
     assert load_workbook(io.BytesIO(data)).active.max_row == 1

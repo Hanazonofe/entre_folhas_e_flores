@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "sinais": {
+    "PRINCIPIO_VIOLADO::—::P-002": {
+      "codigo": "PRINCIPIO_VIOLADO",
+      "feature": "—",
+      "ref": "P-002",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-26T16:49:44.878Z",
+      "ultimaVez": "2026-09-26T18:21:47.617Z",
+      "gitRev": "4e5c620"
+    },
+    "PRINCIPIO_VIOLADO::—::P-003": {
+      "codigo": "PRINCIPIO_VIOLADO",
+      "feature": "—",
+      "ref": "P-003",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-26T16:49:44.878Z",
+      "ultimaVez": "2026-09-26T18:21:47.617Z",
+      "gitRev": "4e5c620"
+    },
+    "PRINCIPIO_VIOLADO::—::P-004": {
+      "codigo": "PRINCIPIO_VIOLADO",
+      "feature": "—",
+      "ref": "P-004",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-26T16:49:44.878Z",
+      "ultimaVez": "2026-09-26T18:21:47.617Z",
+      "gitRev": "4e5c620"
+    },
+    "PRINCIPIO_VIOLADO::—::P-005": {
+      "codigo": "PRINCIPIO_VIOLADO",
+      "feature": "—",
+      "ref": "P-005",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-26T16:49:44.878Z",
+      "ultimaVez": "2026-09-26T18:21:47.617Z",
+      "gitRev": "4e5c620"
+    },
+    "PRINCIPIO_VIOLADO::—::P-006": {
+      "codigo": "PRINCIPIO_VIOLADO",
+      "feature": "—",
+      "ref": "P-006",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-26T16:49:44.878Z",
+      "ultimaVez": "2026-09-26T18:21:47.617Z",
+      "gitRev": "4e5c620"
+    },
+    "PRINCIPIO_VIOLADO::—::P-007": {
+      "codigo": "PRINCIPIO_VIOLADO",
+      "feature": "—",
+      "ref": "P-007",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-26T16:49:44.878Z",
+      "ultimaVez": "2026-09-26T18:21:47.617Z",
+      "gitRev": "4e5c620"
+    }
+  }
+}

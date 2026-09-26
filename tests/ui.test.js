@@ -1,5 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 function context(fetch){const c=vm.createContext({Intl,Date,fetch,AbortController,setTimeout,clearTimeout,document:{querySelector:()=>null}});for(const file of ['api.js','payments.js','receipt.js'])vm.runInContext(fs.readFileSync(file,'utf8'),c);return c;}
+// @principle:P-005
 test('integer money and HTML escaping across receipt with split payments',()=>{
  const c=context();assert.equal(vm.runInContext("API.cents('123.45')",c),12345);
  for(const value of ['NaN','Infinity','-1','1.234','1e2'])assert.throws(()=>vm.runInContext(`API.cents(${JSON.stringify(value)})`,c));
@@ -14,6 +15,7 @@ test('network failure cannot become success; request key and body survive retry'
  assert.equal((await vm.runInContext("API.call('/sales',options)",c)).id,'saved-sale');
  assert.equal(requests[0].options.body,requests[1].options.body);assert.equal(requests[0].options.headers['Idempotency-Key'],requests[1].options.headers['Idempotency-Key']);
 });
+// @principle:P-007
 test('active pages do not load legacy persistence or external executable resources',()=>{
  for(const file of ['pdv.html','vendas.html','produtos.html','admin.html','login.html','receipt.html']){
  const html=fs.readFileSync(file,'utf8');assert.doesNotMatch(html,/<script[^>]+src=["']https?:|onclick=|src=["'](?:store|catalog|backup)\.js/);
