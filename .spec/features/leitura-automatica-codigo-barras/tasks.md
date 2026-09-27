@@ -35,8 +35,7 @@ antes de executar. Nenhuma execução, commit, push ou deploy está autorizado a
 - Dependências: T-002, T-003
 - Notas: Captura global e bloqueio por dialog; busca única; retirar adição por Enter; preservação textual e edição numérica provisória sem efeito financeiro. payments.js só muda se necessário para interceptar/confirmar efeitos. Publicar script em SAFE_FILES e check.
 
-## T-005 — Integrar fila e adição protegida ao carrinho [pendente]
-
+## T-005 — Integrar fila e adição protegida ao carrinho [concluida]
 - Refs: AC-002, AC-004, AC-007, AC-010, AC-011, AC-013, AC-014
 - Arquivos: pdv.js, pdv.html, test/leitura-automatica-codigo-barras.spec.test.js, tests/helpers/pdv-harness.js
 - Dependências: T-004

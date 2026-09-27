@@ -21,6 +21,18 @@ O script de banco usa Docker e porta loopback 55449, configurável por PDV_TEST_
 
 ## Cobertura automatizada
 
+As provas de aceitação da leitura automática de código de barras são
+determinísticas e executam `pdv.js` contra uma superfície de navegador simulada,
+com relógio e requisições controlados. Para executá-las diretamente, use:
+
+```sh
+node --test test/leitura-automatica-codigo-barras.spec.test.js
+```
+
+Elas cobrem os critérios AC-001 a AC-014, incluindo leitura sem foco na busca,
+fila de leituras, bloqueios da venda, janelas sobrepostas e preservação de
+campos financeiros. Não substituem o piloto com leitor físico.
+
 20 testes Python: pagamentos inválidos/zero/divididos, troco, desconto, rollback, histórico/autoria, edição/cancelamento/reativação, ciclos, estoque negativo, versões concorrentes, idempotência concorrente/resposta perdida, preço modificado, snapshots, código duplicado, permissões, cookies, CSRF, expiração/rate limit, último administrador, calendário São Paulo, fila offline, reenvio, upload retomável/resposta perdida e quota recusada e retenção de 30 arquivos sem apagar pendentes.
 
 40 testes JavaScript: 37 de preservação do módulo legado e backup JSON do PR #2; três da nova camada API/comprovante/recursos locais. Os testes legados não significam que as páginas novas usam localStorage. O adaptador de rede simula falha antes da repetição; a integração PostgreSQL prova a unicidade da operação após confirmação no servidor.

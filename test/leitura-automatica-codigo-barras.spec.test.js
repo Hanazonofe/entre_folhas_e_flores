@@ -50,10 +50,9 @@ test('AC-005: Suspender com janela aberta @spec:AC-005', () => {
 
 // US-001 — Adicionar produtos com o leitor
 test('AC-006: Resolver o código completo @spec:AC-006', () => {
-  // Dado: produtos cadastrados com códigos diferentes e captura ativa
-  // Quando: o leitor envia o código de barras completo de um deles
-  // Então: somente o produto correspondente ao código completo é adicionado; um prefixo ou primeiro resultado de busca não é usado como substituto
-  assert.fail('critério de aceite AC-006 ainda não provado — implemente este teste');
+  const harness = scannerHarness(); harness.type('00123'); harness.finish();
+  assert.deepEqual(harness.scans, ['00123']);
+  assert.doesNotMatch(harness.scans[0], /^0012$/);
 });
 
 // US-001 — Adicionar produtos com o leitor
@@ -107,4 +106,56 @@ test('AC-014: Cancelar leituras pendentes ao abrir janela @spec:AC-014', () => {
   assert.match(pdv, /Leituras pendentes canceladas\. Leia os produtos novamente\./);
   assert.match(pdv, /if \(generation !== scanGeneration \|\| dialogOpen\(\) \|\| pending \|\| busy\) return;/);
   assert.match(pdv, /new MutationObserver\(\(\)=>\{ if \(dialogOpen\(\)\) cancelPendingScans\(\); \}\)\.observe/);
+});
+
+// Regressões comportamentais: pdv.js é executado contra um DOM determinístico,
+// com relógio e API controlada. Estas provas exercitam o fluxo que o operador vê.
+const { createPdvHarness } = require('../tests/helpers/pdv-harness.js');
+const browserProduct = (id, code, extra = {}) => ({ id, code, name: `Produto ${code}`, price_cents: 100, active: true, ...extra });
+async function browserBoot(h) { await h.flush(); h.api.resolve(0, { items: [], count: 0 }); await h.flush(); }
+async function browserScan(h, code) { h.type(code); h.clock.advanceBy(60); await h.flush(); }
+function browserLookup(h, code) { return h.api.requests.findLast(request => request.path === `/products?code=${encodeURIComponent(code)}`); }
+function browserCart(h) { return h.elements.get('cartList').innerHTML; }
+
+test('navegador: leitura sem busca selecionada @spec:AC-001', async () => {
+  const h = createPdvHarness(); await browserBoot(h); h.focus('saleNotes'); await browserScan(h, '00042'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.match(browserCart(h), /Produto 00042/);
+});
+test('navegador: incrementa a linha existente @spec:AC-002', async () => {
+  const h = createPdvHarness(); await browserBoot(h); for (const code of ['00042', '00042']) { await browserScan(h, code); browserLookup(h, code).deferred.resolve({ items: [browserProduct('p1', code)], count: 1 }); await h.flush(); } assert.match(browserCart(h), />2</); assert.equal((browserCart(h).match(/Produto 00042/g) || []).length, 1);
+});
+test('navegador: preserva filtro ao ler produto fora da lista @spec:AC-003', async () => {
+  const h = createPdvHarness(); await browserBoot(h); const field = h.focus('productSearch'); field.value = 'Copo'; field.dispatch('input'); await h.flush(); h.api.requests.at(-1).deferred.resolve({ items: [browserProduct('other', '10001')], count: 1 }); await h.flush(); await browserScan(h, '00042'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.equal(field.value, 'Copo'); assert.match(browserCart(h), /Produto 00042/);
+});
+test('navegador: avisa código desconhecido e continua @spec:AC-004', async () => {
+  const h = createPdvHarness(); await browserBoot(h); await browserScan(h, '99999'); browserLookup(h, '99999').deferred.resolve({ items: [], count: 0 }); await h.flush(); assert.equal(h.elements.get('saleNotice').textContent, 'Produto não encontrado'); await browserScan(h, '00042'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.match(browserCart(h), /Produto 00042/);
+});
+test('navegador: ignora leitura durante janela sobreposta @spec:AC-005', async () => {
+  const h = createPdvHarness(); await browserBoot(h); h.openDialog(); await browserScan(h, '00042'); assert.equal(browserLookup(h, '00042'), undefined); h.closeDialog(); await browserScan(h, '00042'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.match(browserCart(h), /Produto 00042/);
+});
+test('navegador: consulta exclusivamente o código completo @spec:AC-006', async () => {
+  const h = createPdvHarness(); await browserBoot(h); await browserScan(h, '00123'); const request = browserLookup(h, '00123'); assert.equal(request.path, '/products?code=00123'); request.deferred.resolve({ items: [browserProduct('exact', '00123')], count: 1 }); await h.flush(); assert.match(browserCart(h), /Produto 00123/);
+});
+test('navegador: mantém duas leituras em fila @spec:AC-007', async () => {
+  const h = createPdvHarness(); await browserBoot(h); await browserScan(h, '00042'); await browserScan(h, '00043'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('one', '00042')], count: 1 }); await h.flush(); browserLookup(h, '00043').deferred.resolve({ items: [browserProduct('two', '00043')], count: 1 }); await h.flush(); assert.match(browserCart(h), /Produto 00042/); assert.match(browserCart(h), /Produto 00043/);
+});
+test('navegador: digitação manual filtra e Enter não adiciona @spec:AC-008', async () => {
+  const h = createPdvHarness(); await browserBoot(h); const field = h.focus('productSearch'); h.type('Copo', 50); h.keydown('Enter'); await h.flush(); assert.equal(field.value, 'Copo'); assert.match(browserCart(h), /Nenhum produto/);
+});
+test('navegador: digitação fora da busca não vira pesquisa @spec:AC-009', async () => {
+  const h = createPdvHarness(); await browserBoot(h); const field = h.focus('saleNotes'); h.type('12345', 50); assert.equal(field.value, '12345'); assert.equal(h.elements.get('productSearch').value, ''); assert.match(browserCart(h), /Nenhum produto/);
+});
+test('navegador: venda pendente bloqueia leitura @spec:AC-010', async () => {
+  const h = createPdvHarness({ pending: true }); await browserBoot(h); await browserScan(h, '00042'); assert.equal(browserLookup(h, '00042'), undefined); assert.match(browserCart(h), /Nenhum produto/);
+});
+test('navegador: produto inativo não entra no carrinho @spec:AC-011', async () => {
+  const h = createPdvHarness(); await browserBoot(h); await browserScan(h, '00044'); browserLookup(h, '00044').deferred.resolve({ items: [browserProduct('inactive', '00044', { active: false })], count: 1 }); await h.flush(); assert.equal(h.elements.get('saleNotice').textContent, 'Produto inativo'); assert.match(browserCart(h), /Nenhum produto/);
+});
+test('navegador: restaura desconto após scanner e aceita edição lenta @spec:AC-012', async () => {
+  const h = createPdvHarness(); await browserBoot(h); const field = h.focus('discount'); field.value = '12.34'; await browserScan(h, '00042'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.equal(field.value, '12.34'); assert.equal(h.elements.get('finalTotal').textContent, 'A confirmar'); h.type('5', 50, field); assert.equal(field.value, '12.345');
+});
+test('navegador: bloqueia conferência enquanto consulta leitura @spec:AC-013', async () => {
+  const h = createPdvHarness(); await browserBoot(h); await browserScan(h, '00042'); assert.equal(h.elements.get('quoteSale').disabled, true); assert.equal(h.elements.get('finishSale').disabled, true); assert.equal(h.elements.get('saleNotice').textContent, 'Leituras em processamento…'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.equal(h.elements.get('quoteSale').disabled, false);
+});
+test('navegador: cancela resposta antiga ao abrir janela @spec:AC-014', async () => {
+  const h = createPdvHarness(); await browserBoot(h); await browserScan(h, '00042'); const old = browserLookup(h, '00042'); h.openDialog(); old.deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.equal(h.elements.get('saleNotice').textContent, 'Leituras pendentes canceladas. Leia os produtos novamente.'); assert.match(browserCart(h), /Nenhum produto/); h.closeDialog(); await browserScan(h, '00043'); browserLookup(h, '00043').deferred.resolve({ items: [browserProduct('p2', '00043')], count: 1 }); await h.flush(); assert.match(browserCart(h), /Produto 00043/);
 });
