@@ -1,6 +1,7 @@
 (() => {
   const $ = selector => document.querySelector(selector), notice = $('#saleNotice');
   const cart = new Map(); let products = [], quote = null, pending = null, busy = false, searchSequence = 0;
+  let captureSnapshot = null;
   const payments = new PaymentEditor($('#paymentEditor'));
   function lock(value) { document.querySelectorAll('main input, main select, main textarea, main button').forEach(el => { el.disabled = value; }); $('#finishSale').disabled = busy || (!pending && !quote); }
   function invalidate() { quote = null; $('#finishSale').disabled = true; $('#quoteNotice').textContent = 'Confira os valores no servidor antes de fechar.'; }
@@ -19,12 +20,13 @@
     $('#catalogGrid').innerHTML = products.map(product=>`<article class="product-card"><strong>${API.esc(product.name)}</strong><p>Cód. ${API.esc(product.code)} · EAN ${API.esc(product.barcode || '-')}</p><strong>${API.money(product.price_cents)}</strong><button type="button" data-add="${product.id}">Adicionar</button></article>`).join('') || '<p>Nenhum produto cadastrado. Peça ao administrador para cadastrar.</p>';
     lock(!!pending || busy);
   }
-  function add(id) {
+  function addProduct(product) {
     if (pending || busy) return;
-    const product = products.find(row=>row.id===id); if (!product) return;
-    const row = cart.get(id) || {...product,quantity:0}; row.quantity++; cart.set(id,row);
+    if (!product) return;
+    const row = cart.get(product.id) || {...product,quantity:0}; row.quantity++; cart.set(product.id,row);
     invalidate(); renderCart();
   }
+  function add(id) { addProduct(products.find(row=>row.id===id)); }
   $('#catalogGrid').addEventListener('click', event => { const button=event.target.closest('[data-add]'); if(button) add(button.dataset.add); });
   $('#cartList').addEventListener('click', event => {
     const button=event.target.closest('[data-cart]'); if (!button || pending || busy) return;
@@ -32,10 +34,50 @@
     if(button.dataset.cart==='remove') cart.delete(row.id); else { row.quantity += button.dataset.cart==='more' ? 1 : -1; if(row.quantity<=0) cart.delete(row.id); }
     invalidate(); renderCart();
   });
-  $('#productSearch').addEventListener('input', ()=>API.run(notice, async()=>{await search();notice.textContent='';}));
-  $('#productSearch').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();add(products[0]?.id);}});
+  function isFinancialField(field) { return field === $('#discount') || !!field?.matches?.('[data-applied], [data-received]'); }
+  function captureField(field) {
+    if (!field || !field.matches?.('input, textarea')) return;
+    if (!captureSnapshot) captureSnapshot = { field, value: field.value, selectionStart: field.selectionStart, selectionEnd: field.selectionEnd };
+  }
+  function restoreCapture() {
+    const snapshot = captureSnapshot; captureSnapshot = null;
+    if (!snapshot) return;
+    snapshot.field.value = snapshot.value;
+    if (snapshot.field.setSelectionRange && snapshot.selectionStart !== null) snapshot.field.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd);
+    if (snapshot.field === $('#productSearch')) search();
+    if (isFinancialField(snapshot.field)) { invalidate(); renderCart(); }
+  }
+  function dialogOpen() { return !!document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]'); }
+  const scanner = new BarcodeScanner.TemporalBarcodeClassifier({
+    onScan: code => API.run(notice, async()=>{
+      restoreCapture();
+      if (dialogOpen() || pending || busy) return;
+      const result = await API.call('/products?code='+encodeURIComponent(code));
+      const product = result.items?.[0];
+      if (!product) { notice.textContent = 'Produto não encontrado'; return; }
+      if (!product.active) { notice.textContent = 'Produto inativo'; return; }
+      addProduct(product); notice.textContent = '';
+    }),
+    onManual: () => {
+      const snapshot = captureSnapshot; captureSnapshot = null;
+      if (!snapshot) return;
+      if (snapshot.field === $('#productSearch')) search();
+      if (isFinancialField(snapshot.field)) { invalidate(); renderCart(); }
+    }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey || event.isComposing) return;
+    if (dialogOpen()) { scanner.cancel(); captureSnapshot = null; return; }
+    if (/^\d$/.test(event.key)) captureField(document.activeElement);
+    const outcome = scanner.handleKey(event.key);
+    if (outcome.kind === 'scan' || outcome.kind === 'protected-enter') event.preventDefault();
+  });
+  $('#productSearch').addEventListener('input', ()=>{
+    if (!captureSnapshot) API.run(notice, async()=>{await search();notice.textContent='';});
+  });
+  $('#productSearch').addEventListener('keydown',event=>{if(event.key==='Enter') event.preventDefault();});
   $('#addFirstResult').addEventListener('click',()=>add(products[0]?.id));
-  $('#discount').addEventListener('input',()=>{invalidate();renderCart();});
+  $('#discount').addEventListener('input',()=>{if(!captureSnapshot){invalidate();renderCart();}});
   $('#quoteSale').addEventListener('click',()=>API.run(notice,async()=>{
     if(!cart.size) throw new Error('Adicione produtos ao carrinho.');
     busy=true; lock(true);

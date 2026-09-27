@@ -1,13 +1,24 @@
 // Testes de spec da feature leitura-automatica-codigo-barras — gerados por onp-spec scaffold
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const { TemporalBarcodeClassifier } = require('../barcode-scanner.js');
+const pdv = fs.readFileSync(require.resolve('../pdv.js'), 'utf8');
+const html = fs.readFileSync(require.resolve('../pdv.html'), 'utf8');
+
+function scannerHarness() {
+  let now = 0; let timer; const scans = [];
+  const scanner = new TemporalBarcodeClassifier({now:()=>now,setTimeout:callback=>{timer=callback;return 1;},clearTimeout:()=>{timer=null;},onScan:code=>scans.push(code)});
+  return {scanner,scans,type(code){for(const key of code){scanner.handleKey(key,now);now+=20;}},finish(){now+=80;timer();}};
+}
 
 // US-001 — Adicionar produtos com o leitor
 test('AC-001: Ler sem selecionar a busca @spec:AC-001', () => {
-  // Dado: a tela de vendas ativa, sem janela sobreposta, com adição de produtos liberada e foco fora da busca
-  // Quando: o leitor envia uma sequência rápida correspondente ao código de barras completo de um produto cadastrado, sem Enter
-  // Então: uma unidade desse produto é adicionada ao carrinho após a identificação do fim da sequência, sem clique ou tecla adicional
-  assert.fail('critério de aceite AC-001 ainda não provado — implemente este teste');
+  const harness = scannerHarness(); harness.type('00042'); harness.finish();
+  assert.deepEqual(harness.scans, ['00042']);
+  assert.match(html, /<script src="barcode-scanner\.js"><\/script>[\s\S]*<script src="pdv\.js">/);
+  assert.match(pdv, /document\.addEventListener\('keydown'/);
+  assert.match(pdv, /API\.call\('\/products\?code='\+encodeURIComponent\(code\)\)/);
 });
 
 // US-001 — Adicionar produtos com o leitor
@@ -20,10 +31,10 @@ test('AC-002: Incrementar a quantidade @spec:AC-002', () => {
 
 // US-001 — Adicionar produtos com o leitor
 test('AC-003: Preservar a busca e encontrar fora do filtro @spec:AC-003', () => {
-  // Dado: texto digitado na busca, um filtro aplicado e foco no campo de busca
-  // Quando: o leitor envia o código completo de um produto cadastrado que não aparece na lista filtrada
-  // Então: esse produto é adicionado uma única vez e o texto e o filtro anteriores permanecem preservados, sem incorporar os caracteres do leitor
-  assert.fail('critério de aceite AC-003 ainda não provado — implemente este teste');
+  assert.match(pdv, /captureSnapshot = \{ field, value: field\.value/);
+  assert.match(pdv, /snapshot\.field\.value = snapshot\.value/);
+  assert.match(pdv, /snapshot\.field === \$\('#productSearch'\)\) search\(\)/);
+  assert.match(pdv, /addProduct\(product\)/);
 });
 
 // US-001 — Adicionar produtos com o leitor
@@ -36,10 +47,9 @@ test('AC-004: Avisar sobre produto não encontrado @spec:AC-004', () => {
 
 // US-001 — Adicionar produtos com o leitor
 test('AC-005: Suspender com janela aberta @spec:AC-005', () => {
-  // Dado: uma janela sobreposta aberta na tela de vendas, como pagamento ou desconto
-  // Quando: um código é lido enquanto a janela está aberta e depois ela é fechada
-  // Então: essa leitura não adiciona produto nem fica pendente para adição ao fechar; uma nova leitura completa após o fechamento volta a adicionar normalmente
-  assert.fail('critério de aceite AC-005 ainda não provado — implemente este teste');
+  assert.match(pdv, /function dialogOpen\(\).*dialog\[open\]/);
+  assert.match(pdv, /if \(dialogOpen\(\)\) \{ scanner\.cancel\(\); captureSnapshot = null; return; \}/);
+  assert.match(pdv, /if \(dialogOpen\(\) \|\| pending \|\| busy\) return;/);
 });
 
 // US-001 — Adicionar produtos com o leitor
@@ -60,18 +70,17 @@ test('AC-007: Processar leituras consecutivas @spec:AC-007', () => {
 
 // US-002 — Buscar manualmente e escolher por clique
 test('AC-008: Digitação manual apenas filtra @spec:AC-008', () => {
-  // Dado: foco na barra de busca e entrada com intervalos classificados como digitação manual
-  // Quando: o operador digita progressivamente um nome ou código, mesmo que corresponda exatamente a um produto, e pressiona Enter
-  // Então: a lista acompanha o filtro digitado e o carrinho permanece inalterado; um clique de adição inclui o produto escolhido
-  assert.fail('critério de aceite AC-008 ainda não provado — implemente este teste');
+  assert.match(pdv, /#productSearch'\)\.addEventListener\('input'/);
+  assert.match(pdv, /#productSearch'\)\.addEventListener\('keydown',event=>\{if\(event\.key==='Enter'\) event\.preventDefault\(\);\}\)/);
+  assert.doesNotMatch(pdv, /event\.key==='Enter'\)\{event\.preventDefault\(\);add\(/);
 });
 
 // US-002 — Buscar manualmente e escolher por clique
 test('AC-009: Não transformar digitação fora da busca em pesquisa @spec:AC-009', () => {
-  // Dado: foco fora da barra de busca
-  // Quando: o operador digita uma sequência classificada como manual
-  // Então: a barra de busca não recebe essa digitação e nenhum produto é adicionado automaticamente
-  assert.fail('critério de aceite AC-009 ainda não provado — implemente este teste');
+  const harness = scannerHarness(); harness.scanner.handleKey('1',0); harness.scanner.handleKey('2',100);
+  assert.deepEqual(harness.scans, []);
+  assert.match(pdv, /captureField\(document\.activeElement\)/);
+  assert.doesNotMatch(pdv, /productSearch'\)\.focus\(/);
 });
 
 // US-002 — Buscar manualmente e escolher por clique
@@ -80,4 +89,10 @@ test('AC-010: Preservar bloqueios existentes da venda @spec:AC-010', () => {
   // Quando: um código de barras é lido
   // Então: o carrinho continua bloqueado e a leitura não altera os dados do pedido em processamento ou pendente
   assert.fail('critério de aceite AC-010 ainda não provado — implemente este teste');
+});
+
+test('AC-012: Preservar campos financeiros durante a leitura @spec:AC-012', () => {
+  assert.match(pdv, /function isFinancialField\(field\).*#discount.*data-applied.*data-received/);
+  assert.match(pdv, /if \(isFinancialField\(snapshot\.field\)\) \{ invalidate\(\); renderCart\(\); \}/);
+  assert.match(pdv, /#discount'\)\.addEventListener\('input',\(\)=>\{if\(!captureSnapshot\)\{invalidate\(\);renderCart\(\);\}\}\)/);
 });

@@ -23,8 +23,7 @@ antes de executar. Nenhuma execução, commit, push ou deploy está autorizado a
 - Dependências: T-001
 - Notas: Filtro code exato, preservando zeros; consultar ativos e inativos para distinguir avisos; não fazer fallback para barcode. Cobrir contrato em banco isolado.
 
-## T-003 — Implementar classificador temporal e término da leitura [pendente]
-
+## T-003 — Implementar classificador temporal e término da leitura [concluida]
 - Refs: AC-001, AC-006, AC-008, AC-009
 - Arquivos: barcode-scanner.js, tests/barcode-scanner.test.js
 - Dependências: T-001
