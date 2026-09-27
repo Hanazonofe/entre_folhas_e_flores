@@ -33,6 +33,59 @@ Elas cobrem os critérios AC-001 a AC-014, incluindo leitura sem foco na busca,
 fila de leituras, bloqueios da venda, janelas sobrepostas e preservação de
 campos financeiros. Não substituem o piloto com leitor físico.
 
+## Gate final — leitura automática de código de barras
+
+**Estado em 27/09/2026: pendente de piloto físico e de execução completa do
+runner em ambiente que permita processos-filhos do Node.** Não há evidência de
+leitor físico nesta estação; portanto esta entrega não declara compatibilidade
+com um modelo de hardware nem considera a feature pronta para operação.
+
+Os parâmetros efetivos em `barcode-scanner.js` a validar no piloto são: intervalo
+máximo entre caracteres de 35 ms, silêncio de 80 ms, mínimo de cinco dígitos,
+máximo de 100 caracteres e proteção de Enter tardio de 150 ms. Eles são uma
+heurística para leitores que emulam teclado, não garantia de compatibilidade
+universal.
+
+### Evidência automatizada registrada
+
+Em 27/09/2026 foi executado `./scripts/test-onp.sh`. A fase JavaScript aprovou
+cinco arquivos, incluindo `tests/barcode-scanner.test.js`, mas o gate parou no
+teste de segredos (`tests/secrets.test.js`) antes da etapa PostgreSQL. A causa
+reproduzida é `spawnSync git EPERM`: o sandbox impede que o processo Node invoque
+`git`. Não é uma falha atribuída à leitura de código de barras, mas impede um
+resultado PASS completo e, por isso, não foi criada prova em
+`.spec/verification/leitura-automatica-codigo-barras.json`.
+
+Reexecutar o comando acima em um ambiente que permita o processo-filho e somente
+aceitar o gate quando toda a suíte terminar com código zero. A prova JSON deve ser
+gerada pelo fluxo de verificação; não deve ser preenchida manualmente.
+
+### Roteiro do piloto físico pendente
+
+Registrar para cada execução: data/hora, responsável, navegador e versão,
+sistema operacional, modelo/configuração do leitor, código interno usado,
+resultado observado e evidência anexada. Repetir os casos abaixo sem alterar os
+parâmetros durante a rodada:
+
+- Ler sem foco na busca, reler o mesmo produto e ler dois produtos em sequência
+  (AC-001, AC-002 e AC-007).
+- Manter busca filtrada, ler código com zeros iniciais fora do filtro e confirmar
+  igualdade exata de `code`, sem usar prefixo, nome ou `barcode` (AC-003 e AC-006).
+- Confirmar os avisos e a continuidade após código desconhecido e produto inativo
+  (AC-004 e AC-011).
+- Abrir uma janela durante leituras pendentes, verificar o aviso para reler e
+  confirmar que respostas tardias não alteram o carrinho; fechar e reler (AC-005
+  e AC-014).
+- Digitar lentamente dentro e fora da busca, inclusive Enter, e confirmar que só
+  o clique adiciona produto (AC-008 e AC-009).
+- Repetir a leitura com venda bloqueada por processamento ou confirmação pendente
+  (AC-010).
+- Ler com foco em desconto e pagamento: o valor anterior deve voltar, totais não
+  podem receber valores provisórios e digitação lenta continua editável (AC-012).
+- Durante consulta/fila pendente, confirmar que conferir e fechar ficam bloqueados
+  enquanto novas leituras continuam sendo capturadas; ao terminar ou cancelar,
+  os bloqueios normais devem voltar (AC-013).
+
 20 testes Python: pagamentos inválidos/zero/divididos, troco, desconto, rollback, histórico/autoria, edição/cancelamento/reativação, ciclos, estoque negativo, versões concorrentes, idempotência concorrente/resposta perdida, preço modificado, snapshots, código duplicado, permissões, cookies, CSRF, expiração/rate limit, último administrador, calendário São Paulo, fila offline, reenvio, upload retomável/resposta perdida e quota recusada e retenção de 30 arquivos sem apagar pendentes.
 
 40 testes JavaScript: 37 de preservação do módulo legado e backup JSON do PR #2; três da nova camada API/comprovante/recursos locais. Os testes legados não significam que as páginas novas usam localStorage. O adaptador de rede simula falha antes da repetição; a integração PostgreSQL prova a unicidade da operação após confirmação no servidor.

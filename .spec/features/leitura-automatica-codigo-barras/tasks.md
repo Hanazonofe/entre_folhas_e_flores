@@ -41,8 +41,7 @@ antes de executar. Nenhuma execução, commit, push ou deploy está autorizado a
 - Dependências: T-004
 - Notas: FIFO sem usar busy para consulta; addProduct comum; geração para respostas antigas; bloqueio temporário de conferência/fechamento; cancelar com aviso ao abrir diálogo. Preservar mensagens contra respostas da busca.
 
-## T-006 — Completar provas de aceite e regressões no navegador [pendente]
-
+## T-006 — Completar provas de aceite e regressões no navegador [concluida]
 - Refs: US-001, US-002, US-003, AC-001, AC-002, AC-003, AC-004, AC-005, AC-006, AC-007, AC-008, AC-009, AC-010, AC-011, AC-012, AC-013, AC-014
 - Arquivos: test/leitura-automatica-codigo-barras.spec.test.js, tests/barcode-scanner.test.js, tests/helpers/pdv-harness.js, backend/tests/test_product_barcode.py, docs/TESTING.md
 - Dependências: T-005
