@@ -1,9 +1,10 @@
 (() => {
   const $ = selector => document.querySelector(selector), notice = $('#saleNotice');
   const cart = new Map(); let products = [], quote = null, pending = null, busy = false, searchSequence = 0;
+  let scanQueue = [], scanWorkerActive = false, scanGeneration = 0, noticeSequence = 0;
   let captureSnapshot = null;
   const payments = new PaymentEditor($('#paymentEditor'));
-  function lock(value) { document.querySelectorAll('main input, main select, main textarea, main button').forEach(el => { el.disabled = value; }); $('#finishSale').disabled = busy || (!pending && !quote); }
+  function lock(value) { const locked = value || scanWorkerActive; document.querySelectorAll('main input, main select, main textarea, main button').forEach(el => { el.disabled = locked; }); $('#finishSale').disabled = locked || busy || (!pending && !quote); }
   function invalidate() { quote = null; $('#finishSale').disabled = true; $('#quoteNotice').textContent = 'Confira os valores no servidor antes de fechar.'; }
   function renderCart() {
     $('#cartList').innerHTML = [...cart.values()].map(row => `<div class="cart-item"><div><strong>${API.esc(row.name)}</strong><p>${API.money(row.price_cents)} cada</p></div><div class="qty-controls"><button type="button" data-cart="less" data-id="${API.esc(row.id)}">−</button><span>${row.quantity}</span><button type="button" data-cart="more" data-id="${API.esc(row.id)}">+</button><button type="button" data-cart="remove" data-id="${API.esc(row.id)}">Remover</button></div></div>`).join('') || '<p>Nenhum produto no carrinho.</p>';
@@ -20,8 +21,8 @@
     $('#catalogGrid').innerHTML = products.map(product=>`<article class="product-card"><strong>${API.esc(product.name)}</strong><p>Cód. ${API.esc(product.code)} · EAN ${API.esc(product.barcode || '-')}</p><strong>${API.money(product.price_cents)}</strong><button type="button" data-add="${product.id}">Adicionar</button></article>`).join('') || '<p>Nenhum produto cadastrado. Peça ao administrador para cadastrar.</p>';
     lock(!!pending || busy);
   }
-  function addProduct(product) {
-    if (pending || busy) return;
+  function addProduct(product, {fromScanner = false} = {}) {
+    if (pending || busy || (scanWorkerActive && !fromScanner)) return;
     if (!product) return;
     const row = cart.get(product.id) || {...product,quantity:0}; row.quantity++; cart.set(product.id,row);
     invalidate(); renderCart();
@@ -29,7 +30,7 @@
   function add(id) { addProduct(products.find(row=>row.id===id)); }
   $('#catalogGrid').addEventListener('click', event => { const button=event.target.closest('[data-add]'); if(button) add(button.dataset.add); });
   $('#cartList').addEventListener('click', event => {
-    const button=event.target.closest('[data-cart]'); if (!button || pending || busy) return;
+    const button=event.target.closest('[data-cart]'); if (!button || pending || busy || scanWorkerActive) return;
     const row=cart.get(button.dataset.id); if (!row) return;
     if(button.dataset.cart==='remove') cart.delete(row.id); else { row.quantity += button.dataset.cart==='more' ? 1 : -1; if(row.quantity<=0) cart.delete(row.id); }
     invalidate(); renderCart();
@@ -48,16 +49,49 @@
     if (isFinancialField(snapshot.field)) { invalidate(); renderCart(); }
   }
   function dialogOpen() { return !!document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]'); }
+  function setScanNotice(message) { noticeSequence++; notice.textContent = message; }
+  function cancelPendingScans() {
+    const hadPendingScans = scanWorkerActive || scanQueue.length;
+    scanner.cancel();
+    if (!hadPendingScans) return;
+    scanGeneration++;
+    scanQueue = [];
+    scanWorkerActive = false;
+    captureSnapshot = null;
+    setScanNotice('Leituras pendentes canceladas. Leia os produtos novamente.');
+    renderCart();
+  }
+  function processScanQueue() {
+    if (scanWorkerActive || !scanQueue.length || dialogOpen() || pending || busy) return;
+    const entry = scanQueue.shift(), generation = scanGeneration;
+    scanWorkerActive = true;
+    setScanNotice('Leituras em processamento…');
+    renderCart();
+    (async()=>{
+      try {
+        const result = await API.call('/products?code='+encodeURIComponent(entry.code));
+        if (generation !== scanGeneration || dialogOpen() || pending || busy) return;
+        const product = result.items?.[0];
+        if (!product) { setScanNotice('Produto não encontrado'); return; }
+        if (!product.active) { setScanNotice('Produto inativo'); return; }
+        addProduct(product, {fromScanner:true}); setScanNotice('');
+      } catch (error) {
+        if (generation === scanGeneration) setScanNotice(error.message);
+      } finally {
+        if (generation !== scanGeneration) return;
+        scanWorkerActive = false;
+        if (scanQueue.length) processScanQueue(); else renderCart();
+      }
+    })();
+  }
+  function enqueueScan(code) {
+    restoreCapture();
+    if (dialogOpen() || pending || busy) return;
+    scanQueue.push({code});
+    processScanQueue();
+  }
   const scanner = new BarcodeScanner.TemporalBarcodeClassifier({
-    onScan: code => API.run(notice, async()=>{
-      restoreCapture();
-      if (dialogOpen() || pending || busy) return;
-      const result = await API.call('/products?code='+encodeURIComponent(code));
-      const product = result.items?.[0];
-      if (!product) { notice.textContent = 'Produto não encontrado'; return; }
-      if (!product.active) { notice.textContent = 'Produto inativo'; return; }
-      addProduct(product); notice.textContent = '';
-    }),
+    onScan: enqueueScan,
     onManual: () => {
       const snapshot = captureSnapshot; captureSnapshot = null;
       if (!snapshot) return;
@@ -67,18 +101,19 @@
   });
   document.addEventListener('keydown', event => {
     if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey || event.isComposing) return;
-    if (dialogOpen()) { scanner.cancel(); captureSnapshot = null; return; }
+    if (dialogOpen()) { cancelPendingScans(); scanner.cancel(); captureSnapshot = null; return; }
     if (/^\d$/.test(event.key)) captureField(document.activeElement);
     const outcome = scanner.handleKey(event.key);
     if (outcome.kind === 'scan' || outcome.kind === 'protected-enter') event.preventDefault();
   });
   $('#productSearch').addEventListener('input', ()=>{
-    if (!captureSnapshot) API.run(notice, async()=>{await search();notice.textContent='';});
+    if (!captureSnapshot) API.run(notice, async()=>{const sequence = noticeSequence;await search();if(sequence === noticeSequence) notice.textContent='';});
   });
   $('#productSearch').addEventListener('keydown',event=>{if(event.key==='Enter') event.preventDefault();});
   $('#addFirstResult').addEventListener('click',()=>add(products[0]?.id));
   $('#discount').addEventListener('input',()=>{if(!captureSnapshot){invalidate();renderCart();}});
   $('#quoteSale').addEventListener('click',()=>API.run(notice,async()=>{
+    if(scanWorkerActive || scanQueue.length) return;
     if(!cart.size) throw new Error('Adicione produtos ao carrinho.');
     busy=true; lock(true);
     try {
@@ -89,7 +124,7 @@
     } finally {busy=false;renderCart();}
   }));
   $('#finishSale').addEventListener('click',()=>API.run(notice,async()=>{
-    if(busy) return;
+    if(busy || scanWorkerActive || scanQueue.length) return;
     if(!pending) {
       if(!quote) throw new Error('Confira os valores primeiro.');
       const parts=payments.values();
@@ -117,4 +152,5 @@
     if(saved){pending=JSON.parse(saved);if(pending.preview){pending.preview.forEach(item=>cart.set(item.product_id,{...item,id:item.product_id,price_cents:item.unit_price_cents}));$('#discount').value=(pending.body.discount_cents/100).toFixed(2);$('#saleNotes').value=pending.body.notes;payments.set(pending.body.payments);}$('#quoteNotice').textContent='Pedido anterior aguardando confirmação. Os dados estão bloqueados para evitar duplicação.';}
     await search();renderCart();notice.textContent=pending?'Tente novamente para resolver a venda pendente.':'';
   });
+  new MutationObserver(()=>{ if (dialogOpen()) cancelPendingScans(); }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['open','aria-modal']});
 })();

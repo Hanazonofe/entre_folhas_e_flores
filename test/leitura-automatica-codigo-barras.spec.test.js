@@ -18,15 +18,13 @@ test('AC-001: Ler sem selecionar a busca @spec:AC-001', () => {
   assert.deepEqual(harness.scans, ['00042']);
   assert.match(html, /<script src="barcode-scanner\.js"><\/script>[\s\S]*<script src="pdv\.js">/);
   assert.match(pdv, /document\.addEventListener\('keydown'/);
-  assert.match(pdv, /API\.call\('\/products\?code='\+encodeURIComponent\(code\)\)/);
+  assert.match(pdv, /API\.call\('\/products\?code='\+encodeURIComponent\(entry\.code\)\)/);
 });
 
 // US-001 — Adicionar produtos com o leitor
 test('AC-002: Incrementar a quantidade @spec:AC-002', () => {
-  // Dado: um produto já no carrinho e captura automática ativa
-  // Quando: o mesmo código de barras é lido novamente
-  // Então: a quantidade desse produto aumenta em uma unidade, sem criar uma segunda linha para o mesmo produto
-  assert.fail('critério de aceite AC-002 ainda não provado — implemente este teste');
+  assert.match(pdv, /const row = cart\.get\(product\.id\) \|\| \{\.\.\.product,quantity:0\}; row\.quantity\+\+; cart\.set\(product\.id,row\);/);
+  assert.match(pdv, /addProduct\(product, \{fromScanner:true\}\)/);
 });
 
 // US-001 — Adicionar produtos com o leitor
@@ -34,21 +32,19 @@ test('AC-003: Preservar a busca e encontrar fora do filtro @spec:AC-003', () => 
   assert.match(pdv, /captureSnapshot = \{ field, value: field\.value/);
   assert.match(pdv, /snapshot\.field\.value = snapshot\.value/);
   assert.match(pdv, /snapshot\.field === \$\('#productSearch'\)\) search\(\)/);
-  assert.match(pdv, /addProduct\(product\)/);
+  assert.match(pdv, /addProduct\(product, \{fromScanner:true\}\)/);
 });
 
 // US-001 — Adicionar produtos com o leitor
 test('AC-004: Avisar sobre produto não encontrado @spec:AC-004', () => {
-  // Dado: captura automática ativa e um código de barras sem produto cadastrado
-  // Quando: o leitor envia esse código completo
-  // Então: a tela exibe “Produto não encontrado”, não altera o carrinho e permite a próxima leitura
-  assert.fail('critério de aceite AC-004 ainda não provado — implemente este teste');
+  assert.match(pdv, /if \(!product\) \{ setScanNotice\('Produto não encontrado'\); return; \}/);
+  assert.match(pdv, /scanWorkerActive = false;\n        if \(scanQueue\.length\) processScanQueue\(\); else renderCart\(\);/);
 });
 
 // US-001 — Adicionar produtos com o leitor
 test('AC-005: Suspender com janela aberta @spec:AC-005', () => {
   assert.match(pdv, /function dialogOpen\(\).*dialog\[open\]/);
-  assert.match(pdv, /if \(dialogOpen\(\)\) \{ scanner\.cancel\(\); captureSnapshot = null; return; \}/);
+  assert.match(pdv, /if \(dialogOpen\(\)\) \{ cancelPendingScans\(\); scanner\.cancel\(\); captureSnapshot = null; return; \}/);
   assert.match(pdv, /if \(dialogOpen\(\) \|\| pending \|\| busy\) return;/);
 });
 
@@ -62,10 +58,9 @@ test('AC-006: Resolver o código completo @spec:AC-006', () => {
 
 // US-001 — Adicionar produtos com o leitor
 test('AC-007: Processar leituras consecutivas @spec:AC-007', () => {
-  // Dado: captura ativa e carrinho editável
-  // Quando: duas leituras completas e distintas são identificadas em sequência, inclusive antes de terminar a consulta da primeira
-  // Então: cada leitura adiciona exatamente uma unidade do produto correspondente, sem perda nem duplicação
-  assert.fail('critério de aceite AC-007 ainda não provado — implemente este teste');
+  assert.match(pdv, /scanQueue\.push\(\{code\}\);\n    processScanQueue\(\);/);
+  assert.match(pdv, /const entry = scanQueue\.shift\(\), generation = scanGeneration;/);
+  assert.match(pdv, /if \(scanQueue\.length\) processScanQueue\(\); else renderCart\(\);/);
 });
 
 // US-002 — Buscar manualmente e escolher por clique
@@ -85,14 +80,31 @@ test('AC-009: Não transformar digitação fora da busca em pesquisa @spec:AC-00
 
 // US-002 — Buscar manualmente e escolher por clique
 test('AC-010: Preservar bloqueios existentes da venda @spec:AC-010', () => {
-  // Dado: a venda bloqueada por processamento ou pedido pendente de confirmação
-  // Quando: um código de barras é lido
-  // Então: o carrinho continua bloqueado e a leitura não altera os dados do pedido em processamento ou pendente
-  assert.fail('critério de aceite AC-010 ainda não provado — implemente este teste');
+  assert.match(pdv, /if \(dialogOpen\(\) \|\| pending \|\| busy\) return;/);
+  assert.match(pdv, /if \(pending \|\| busy \|\| \(scanWorkerActive && !fromScanner\)\) return;/);
+});
+
+test('AC-011: Informar produto inativo @spec:AC-011', () => {
+  assert.match(pdv, /if \(!product\.active\) \{ setScanNotice\('Produto inativo'\); return; \}/);
+  assert.match(pdv, /const product = result\.items\?\.\[0\];/);
 });
 
 test('AC-012: Preservar campos financeiros durante a leitura @spec:AC-012', () => {
   assert.match(pdv, /function isFinancialField\(field\).*#discount.*data-applied.*data-received/);
   assert.match(pdv, /if \(isFinancialField\(snapshot\.field\)\) \{ invalidate\(\); renderCart\(\); \}/);
   assert.match(pdv, /#discount'\)\.addEventListener\('input',\(\)=>\{if\(!captureSnapshot\)\{invalidate\(\);renderCart\(\);\}\}\)/);
+});
+
+test('AC-013: Aguardar leituras antes de conferir ou fechar @spec:AC-013', () => {
+  assert.match(pdv, /const locked = value \|\| scanWorkerActive;/);
+  assert.match(pdv, /if\(scanWorkerActive \|\| scanQueue\.length\) return;/);
+  assert.match(pdv, /if\(busy \|\| scanWorkerActive \|\| scanQueue\.length\) return;/);
+  assert.match(html, /id="quoteNotice" aria-live="polite"/);
+});
+
+test('AC-014: Cancelar leituras pendentes ao abrir janela @spec:AC-014', () => {
+  assert.match(pdv, /scanGeneration\+\+;\n    scanQueue = \[\];\n    scanWorkerActive = false;/);
+  assert.match(pdv, /Leituras pendentes canceladas\. Leia os produtos novamente\./);
+  assert.match(pdv, /if \(generation !== scanGeneration \|\| dialogOpen\(\) \|\| pending \|\| busy\) return;/);
+  assert.match(pdv, /new MutationObserver\(\(\)=>\{ if \(dialogOpen\(\)\) cancelPendingScans\(\); \}\)\.observe/);
 });

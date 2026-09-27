@@ -29,8 +29,7 @@ antes de executar. Nenhuma execução, commit, push ou deploy está autorizado a
 - Dependências: T-001
 - Notas: Mínimo cinco dígitos; parâmetros injetáveis; silêncio sem Enter, finalização única e proteção de sufixo. Testar limites sem tempo real.
 
-## T-004 — Integrar captura e preservar campos da tela [pendente]
-
+## T-004 — Integrar captura e preservar campos da tela [concluida]
 - Refs: AC-001, AC-003, AC-005, AC-008, AC-009, AC-012
 - Arquivos: pdv.js, pdv.html, payments.js, backend/pdv/app.py, package.json, test/leitura-automatica-codigo-barras.spec.test.js, tests/helpers/pdv-harness.js
 - Dependências: T-002, T-003
