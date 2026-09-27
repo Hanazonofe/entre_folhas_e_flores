@@ -1,0 +1,37 @@
+{
+  "feature": "leitura-automatica-codigo-barras",
+  "timestamp": "2026-09-27T19:25:55.800Z",
+  "gitRev": "b05a647",
+  "command": "./scripts/test-onp.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 50,
+  "results": {
+    "AC-001": {
+      "status": "pass",
+      "testName": "@spec:AC-001 reconhece uma leitura rápida sem foco na busca e sem Enter",
+      "method": "tap"
+    },
+    "AC-006": {
+      "status": "pass",
+      "testName": "@spec:AC-006 entrega o código interno completo, preservando zeros e sem prefixo",
+      "method": "tap"
+    },
+    "AC-008": {
+      "status": "pass",
+      "testName": "@spec:AC-008 classifica digitação lenta como manual e nunca como leitura",
+      "method": "tap"
+    },
+    "AC-009": {
+      "status": "pass",
+      "testName": "@spec:AC-009 não promove digitação manual fora da busca a leitura automática",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-002": {
+      "status": "pass",
+      "testName": "@principle:P-002 tracked files contain no detected operational secrets"
+    }
+  }
+}
