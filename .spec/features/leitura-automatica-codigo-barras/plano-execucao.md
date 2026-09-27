@@ -1,11 +1,11 @@
 # Plano de execução — leitura-automatica-codigo-barras
 
-> gerado por `onp-spec plano` em 2026-09-27 01:30 — NÃO edite à mão;
+> gerado por `onp-spec plano` em 2026-09-27 21:48 — NÃO edite à mão;
 > mudou tasks.md ou a config? Regenere: `onp-spec plano leitura-automatica-codigo-barras --sequencial`
 
 ## Resumo — o que vai acontecer
 
-- **modo SEQUENCIAL (escolha do usuário)**: 7 tarefa(s) pendente(s), UMA APÓS A OUTRA, na árvore principal
+- **modo SEQUENCIAL (escolha do usuário)**: 2 tarefa(s) pendente(s), UMA APÓS A OUTRA, na árvore principal (6 já concluída(s): T-001, T-002, T-003, T-004, T-005, T-006)
 - sem worktrees e sem paralelismo — cada tarefa roda numa janela de contexto limpa, na ordem do tasks.md
 - tudo acontece na branch de trabalho `spec/leitura-automatica-codigo-barras`; levar para a main é decisão sua
 
@@ -13,13 +13,8 @@
 
 | tarefa | título | modelo | esforço |
 |---|---|---|---|
-| T-001 | Preparar runner e harness determinístico | `gpt-5.6-terra` | medium |
-| T-002 | Consultar produto pelo código interno exato | `gpt-5.6-terra` | medium |
-| T-003 | Implementar classificador temporal e término da leitura | `gpt-5.6-terra` | medium |
-| T-004 | Integrar captura e preservar campos da tela | `gpt-5.6-terra` | medium |
-| T-005 | Integrar fila e adição protegida ao carrinho | `gpt-5.6-terra` | medium |
-| T-006 | Completar provas de aceite e regressões no navegador | `gpt-5.6-terra` | medium |
 | T-007 | Validar leitor físico e registrar o gate final | `gpt-5.6-terra` | medium |
+| T-008 | Corrigir runner e coleta de provas do ONP | `gpt-5.6-terra` | medium |
 
 ## Gestão de branches e commits
 

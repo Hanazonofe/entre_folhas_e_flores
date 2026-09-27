@@ -47,8 +47,15 @@ antes de executar. Nenhuma execução, commit, push ou deploy está autorizado a
 - Dependências: T-005
 - Notas: Converter scaffolds em testes reais com tags preservadas e novos ACs; cada tarefa anterior acompanha seus testes e esta fecha lacunas. Verificar edição/seleção/composição/Enter em navegador, além de mocks. Rodar suíte pertinente sem base operacional.
 
-## T-007 — Validar leitor físico e registrar o gate final [concluida]
+## T-007 — Validar leitor físico e registrar o gate final [pendente]
 - Refs: US-001, US-002, US-003, AC-001, AC-002, AC-003, AC-004, AC-005, AC-006, AC-007, AC-008, AC-009, AC-010, AC-011, AC-012, AC-013, AC-014
 - Arquivos: docs/TESTING.md, .spec/verification/leitura-automatica-codigo-barras.json
 - Dependências: T-006
 - Notas: Registrar piloto real, parâmetros efetivos e limitações; executar verify e audit --ci. Sem hardware, manter pendente e não alegar prova física. Falhas globais de rastreabilidade preexistentes devem ser reportadas, nunca mascaradas.
+
+## T-008 — Corrigir runner e coleta de provas do ONP 
+[pendente]
+- Refs: AC-001, AC-002, AC-003, AC-004, AC-005, AC-006, AC-007, AC-008, AC-009, AC-010, AC-011, AC-012, AC-013, AC-014
+- Arquivos: package.json, scripts/test-onp.sh, onpspec.config.json
+- Dependências: T-006
+- Notas: O gate revelou que os testes de aceite em test/*.test.js passam quando executados diretamente, mas não são executados pelo testCommand atual. Os testes Python de backend também passam, mas suas tags precisam ser reconhecidas corretamente pela coleta de provas. Corrigir o runner sem remover, ignorar ou enfraquecer testes existentes. A conclusão exige que onp-spec verify reconheça provas para os 14 critérios de aceite.

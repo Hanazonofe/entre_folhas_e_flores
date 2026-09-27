@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# executar-tarefas.sh — gerado por `onp-spec plano leitura-automatica-codigo-barras` em 2026-09-27 01:30
+# executar-tarefas.sh — gerado por `onp-spec plano leitura-automatica-codigo-barras` em 2026-09-27 21:48
 # NÃO edite à mão: mudou tasks.md ou a config, regenere o plano.
 #
 # uso:
@@ -14,7 +14,7 @@
 set -u
 set -o pipefail
 
-RUN_ID='projeto-leitura-automatica-codigo-barras-muj55w28'
+RUN_ID='projeto-leitura-automatica-codigo-barras-mukcoz0j'
 FEATURE='leitura-automatica-codigo-barras'
 BASE_BRANCH='spec/leitura-automatica-codigo-barras'
 ENGINE='/home/hanazono/.npm/_npx/587361b06739e587/node_modules/.bin/onp-spec'
@@ -168,198 +168,6 @@ iniciar_resumos() {
   trap 'parar_resumos; node "$ENGINE" resumo "$FEATURE" --gravar >/dev/null 2>&1 || true' EXIT
 }
 
-# ── sequencial T-001 (ordem do tasks.md) ──
-executar_seq_T_001() {
-  info 'sequencial T-001 — Preparar runner e harness determinístico'
-  if rodar_tarefa seq 'T-001' 'Você executa UMA tarefa da feature "leitura-automatica-codigo-barras" (fluxo onp-spec, spec-anchored).
-Leia primeiro: .spec/features/leitura-automatica-codigo-barras/spec.md, .spec/features/leitura-automatica-codigo-barras/tasks.md e .spec/constituicao.md.
-
-Sua tarefa (somente ela):
-T-001 — "Preparar runner e harness determinístico"
-  critérios/refs: US-001, US-002, US-003
-  arquivos permitidos (e seus testes): package.json, tests/helpers/pdv-harness.js
-  mensagem de commit: "T-001 leitura-automatica-codigo-barras: Preparar runner e harness determinístico"
-
-Regras inegociáveis:
-- Todo critério de aceite referenciado vira teste com @spec:AC-xxx no título.
-- NUNCA enfraqueça, pule (skip/todo) ou apague um teste para passar — teste pulado não é prova e o audit acusa.
-- Rode os testes localmente com `./scripts/test-onp.sh` até passarem.
-- NÃO edite tasks.md, NÃO rode onp-spec verify/audit e NÃO toque em outras tarefas — o orquestrador cuida disso.
-- Ao final de CADA tarefa: `git add` só no que você tocou e um commit próprio.' 'gpt-5.6-terra' medium >> "$LOG_DIR/seq.log" 2>&1; then
-    # commit de segurança se o agente esqueceu (rastreabilidade > perfeição)
-    if [ -n "$(git status --porcelain)" ]; then
-      git add -A && git commit -q -m 'T-001 leitura-automatica-codigo-barras: Preparar runner e harness determinístico (auto-commit do plano)'
-    fi
-    marcar_concluidas T-001
-    verde "✔ T-001 concluída"
-    return 0
-  fi
-  vermelho "✘ T-001 falhou (log: $LOG_DIR/seq.log)"
-  amarelo "  reexecute só ela: bash .spec/features/leitura-automatica-codigo-barras/executar-tarefas.sh --seq T-001"
-  FALHAS="$FALHAS T-001"
-  return 1
-}
-
-# ── sequencial T-002 (ordem do tasks.md) ──
-executar_seq_T_002() {
-  info 'sequencial T-002 — Consultar produto pelo código interno exato'
-  if rodar_tarefa seq 'T-002' 'Você executa UMA tarefa da feature "leitura-automatica-codigo-barras" (fluxo onp-spec, spec-anchored).
-Leia primeiro: .spec/features/leitura-automatica-codigo-barras/spec.md, .spec/features/leitura-automatica-codigo-barras/tasks.md e .spec/constituicao.md.
-
-Sua tarefa (somente ela):
-T-002 — "Consultar produto pelo código interno exato"
-  critérios/refs: AC-003 (Preservar a busca e encontrar fora do filtro), AC-004 (Avisar sobre produto não encontrado), AC-006 (Resolver o código completo), AC-011 (Informar produto inativo)
-  arquivos permitidos (e seus testes): backend/pdv/app.py, backend/tests/test_product_barcode.py
-  mensagem de commit: "T-002 leitura-automatica-codigo-barras: Consultar produto pelo código interno exato"
-
-Regras inegociáveis:
-- Todo critério de aceite referenciado vira teste com @spec:AC-xxx no título.
-- NUNCA enfraqueça, pule (skip/todo) ou apague um teste para passar — teste pulado não é prova e o audit acusa.
-- Rode os testes localmente com `./scripts/test-onp.sh` até passarem.
-- NÃO edite tasks.md, NÃO rode onp-spec verify/audit e NÃO toque em outras tarefas — o orquestrador cuida disso.
-- Ao final de CADA tarefa: `git add` só no que você tocou e um commit próprio.' 'gpt-5.6-terra' medium >> "$LOG_DIR/seq.log" 2>&1; then
-    # commit de segurança se o agente esqueceu (rastreabilidade > perfeição)
-    if [ -n "$(git status --porcelain)" ]; then
-      git add -A && git commit -q -m 'T-002 leitura-automatica-codigo-barras: Consultar produto pelo código interno exato (auto-commit do plano)'
-    fi
-    marcar_concluidas T-002
-    verde "✔ T-002 concluída"
-    return 0
-  fi
-  vermelho "✘ T-002 falhou (log: $LOG_DIR/seq.log)"
-  amarelo "  reexecute só ela: bash .spec/features/leitura-automatica-codigo-barras/executar-tarefas.sh --seq T-002"
-  FALHAS="$FALHAS T-002"
-  return 1
-}
-
-# ── sequencial T-003 (ordem do tasks.md) ──
-executar_seq_T_003() {
-  info 'sequencial T-003 — Implementar classificador temporal e término da leitura'
-  if rodar_tarefa seq 'T-003' 'Você executa UMA tarefa da feature "leitura-automatica-codigo-barras" (fluxo onp-spec, spec-anchored).
-Leia primeiro: .spec/features/leitura-automatica-codigo-barras/spec.md, .spec/features/leitura-automatica-codigo-barras/tasks.md e .spec/constituicao.md.
-
-Sua tarefa (somente ela):
-T-003 — "Implementar classificador temporal e término da leitura"
-  critérios/refs: AC-001 (Ler sem selecionar a busca), AC-006 (Resolver o código completo), AC-008 (Digitação manual apenas filtra), AC-009 (Não transformar digitação fora da busca em pesquisa)
-  arquivos permitidos (e seus testes): barcode-scanner.js, tests/barcode-scanner.test.js
-  mensagem de commit: "T-003 leitura-automatica-codigo-barras: Implementar classificador temporal e término da leitura"
-
-Regras inegociáveis:
-- Todo critério de aceite referenciado vira teste com @spec:AC-xxx no título.
-- NUNCA enfraqueça, pule (skip/todo) ou apague um teste para passar — teste pulado não é prova e o audit acusa.
-- Rode os testes localmente com `./scripts/test-onp.sh` até passarem.
-- NÃO edite tasks.md, NÃO rode onp-spec verify/audit e NÃO toque em outras tarefas — o orquestrador cuida disso.
-- Ao final de CADA tarefa: `git add` só no que você tocou e um commit próprio.' 'gpt-5.6-terra' medium >> "$LOG_DIR/seq.log" 2>&1; then
-    # commit de segurança se o agente esqueceu (rastreabilidade > perfeição)
-    if [ -n "$(git status --porcelain)" ]; then
-      git add -A && git commit -q -m 'T-003 leitura-automatica-codigo-barras: Implementar classificador temporal e término da leitura (auto-commit do plano)'
-    fi
-    marcar_concluidas T-003
-    verde "✔ T-003 concluída"
-    return 0
-  fi
-  vermelho "✘ T-003 falhou (log: $LOG_DIR/seq.log)"
-  amarelo "  reexecute só ela: bash .spec/features/leitura-automatica-codigo-barras/executar-tarefas.sh --seq T-003"
-  FALHAS="$FALHAS T-003"
-  return 1
-}
-
-# ── sequencial T-004 (ordem do tasks.md) ──
-executar_seq_T_004() {
-  info 'sequencial T-004 — Integrar captura e preservar campos da tela'
-  if rodar_tarefa seq 'T-004' 'Você executa UMA tarefa da feature "leitura-automatica-codigo-barras" (fluxo onp-spec, spec-anchored).
-Leia primeiro: .spec/features/leitura-automatica-codigo-barras/spec.md, .spec/features/leitura-automatica-codigo-barras/tasks.md e .spec/constituicao.md.
-
-Sua tarefa (somente ela):
-T-004 — "Integrar captura e preservar campos da tela"
-  critérios/refs: AC-001 (Ler sem selecionar a busca), AC-003 (Preservar a busca e encontrar fora do filtro), AC-005 (Suspender com janela aberta), AC-008 (Digitação manual apenas filtra), AC-009 (Não transformar digitação fora da busca em pesquisa), AC-012 (Preservar campos financeiros durante a leitura)
-  arquivos permitidos (e seus testes): pdv.js, pdv.html, payments.js, backend/pdv/app.py, package.json, test/leitura-automatica-codigo-barras.spec.test.js, tests/helpers/pdv-harness.js
-  mensagem de commit: "T-004 leitura-automatica-codigo-barras: Integrar captura e preservar campos da tela"
-
-Regras inegociáveis:
-- Todo critério de aceite referenciado vira teste com @spec:AC-xxx no título.
-- NUNCA enfraqueça, pule (skip/todo) ou apague um teste para passar — teste pulado não é prova e o audit acusa.
-- Rode os testes localmente com `./scripts/test-onp.sh` até passarem.
-- NÃO edite tasks.md, NÃO rode onp-spec verify/audit e NÃO toque em outras tarefas — o orquestrador cuida disso.
-- Ao final de CADA tarefa: `git add` só no que você tocou e um commit próprio.' 'gpt-5.6-terra' medium >> "$LOG_DIR/seq.log" 2>&1; then
-    # commit de segurança se o agente esqueceu (rastreabilidade > perfeição)
-    if [ -n "$(git status --porcelain)" ]; then
-      git add -A && git commit -q -m 'T-004 leitura-automatica-codigo-barras: Integrar captura e preservar campos da tela (auto-commit do plano)'
-    fi
-    marcar_concluidas T-004
-    verde "✔ T-004 concluída"
-    return 0
-  fi
-  vermelho "✘ T-004 falhou (log: $LOG_DIR/seq.log)"
-  amarelo "  reexecute só ela: bash .spec/features/leitura-automatica-codigo-barras/executar-tarefas.sh --seq T-004"
-  FALHAS="$FALHAS T-004"
-  return 1
-}
-
-# ── sequencial T-005 (ordem do tasks.md) ──
-executar_seq_T_005() {
-  info 'sequencial T-005 — Integrar fila e adição protegida ao carrinho'
-  if rodar_tarefa seq 'T-005' 'Você executa UMA tarefa da feature "leitura-automatica-codigo-barras" (fluxo onp-spec, spec-anchored).
-Leia primeiro: .spec/features/leitura-automatica-codigo-barras/spec.md, .spec/features/leitura-automatica-codigo-barras/tasks.md e .spec/constituicao.md.
-
-Sua tarefa (somente ela):
-T-005 — "Integrar fila e adição protegida ao carrinho"
-  critérios/refs: AC-002 (Incrementar a quantidade), AC-004 (Avisar sobre produto não encontrado), AC-007 (Processar leituras consecutivas), AC-010 (Preservar bloqueios existentes da venda), AC-011 (Informar produto inativo), AC-013 (Aguardar leituras antes de conferir ou fechar), AC-014 (Cancelar leituras pendentes ao abrir janela)
-  arquivos permitidos (e seus testes): pdv.js, pdv.html, test/leitura-automatica-codigo-barras.spec.test.js, tests/helpers/pdv-harness.js
-  mensagem de commit: "T-005 leitura-automatica-codigo-barras: Integrar fila e adição protegida ao carrinho"
-
-Regras inegociáveis:
-- Todo critério de aceite referenciado vira teste com @spec:AC-xxx no título.
-- NUNCA enfraqueça, pule (skip/todo) ou apague um teste para passar — teste pulado não é prova e o audit acusa.
-- Rode os testes localmente com `./scripts/test-onp.sh` até passarem.
-- NÃO edite tasks.md, NÃO rode onp-spec verify/audit e NÃO toque em outras tarefas — o orquestrador cuida disso.
-- Ao final de CADA tarefa: `git add` só no que você tocou e um commit próprio.' 'gpt-5.6-terra' medium >> "$LOG_DIR/seq.log" 2>&1; then
-    # commit de segurança se o agente esqueceu (rastreabilidade > perfeição)
-    if [ -n "$(git status --porcelain)" ]; then
-      git add -A && git commit -q -m 'T-005 leitura-automatica-codigo-barras: Integrar fila e adição protegida ao carrinho (auto-commit do plano)'
-    fi
-    marcar_concluidas T-005
-    verde "✔ T-005 concluída"
-    return 0
-  fi
-  vermelho "✘ T-005 falhou (log: $LOG_DIR/seq.log)"
-  amarelo "  reexecute só ela: bash .spec/features/leitura-automatica-codigo-barras/executar-tarefas.sh --seq T-005"
-  FALHAS="$FALHAS T-005"
-  return 1
-}
-
-# ── sequencial T-006 (ordem do tasks.md) ──
-executar_seq_T_006() {
-  info 'sequencial T-006 — Completar provas de aceite e regressões no navegador'
-  if rodar_tarefa seq 'T-006' 'Você executa UMA tarefa da feature "leitura-automatica-codigo-barras" (fluxo onp-spec, spec-anchored).
-Leia primeiro: .spec/features/leitura-automatica-codigo-barras/spec.md, .spec/features/leitura-automatica-codigo-barras/tasks.md e .spec/constituicao.md.
-
-Sua tarefa (somente ela):
-T-006 — "Completar provas de aceite e regressões no navegador"
-  critérios/refs: AC-001 (Ler sem selecionar a busca), AC-002 (Incrementar a quantidade), AC-003 (Preservar a busca e encontrar fora do filtro), AC-004 (Avisar sobre produto não encontrado), AC-005 (Suspender com janela aberta), AC-006 (Resolver o código completo), AC-007 (Processar leituras consecutivas), AC-008 (Digitação manual apenas filtra), AC-009 (Não transformar digitação fora da busca em pesquisa), AC-010 (Preservar bloqueios existentes da venda), AC-011 (Informar produto inativo), AC-012 (Preservar campos financeiros durante a leitura), AC-013 (Aguardar leituras antes de conferir ou fechar), AC-014 (Cancelar leituras pendentes ao abrir janela)
-  arquivos permitidos (e seus testes): test/leitura-automatica-codigo-barras.spec.test.js, tests/barcode-scanner.test.js, tests/helpers/pdv-harness.js, backend/tests/test_product_barcode.py, docs/TESTING.md
-  mensagem de commit: "T-006 leitura-automatica-codigo-barras: Completar provas de aceite e regressões no navegador"
-
-Regras inegociáveis:
-- Todo critério de aceite referenciado vira teste com @spec:AC-xxx no título.
-- NUNCA enfraqueça, pule (skip/todo) ou apague um teste para passar — teste pulado não é prova e o audit acusa.
-- Rode os testes localmente com `./scripts/test-onp.sh` até passarem.
-- NÃO edite tasks.md, NÃO rode onp-spec verify/audit e NÃO toque em outras tarefas — o orquestrador cuida disso.
-- Ao final de CADA tarefa: `git add` só no que você tocou e um commit próprio.' 'gpt-5.6-terra' medium >> "$LOG_DIR/seq.log" 2>&1; then
-    # commit de segurança se o agente esqueceu (rastreabilidade > perfeição)
-    if [ -n "$(git status --porcelain)" ]; then
-      git add -A && git commit -q -m 'T-006 leitura-automatica-codigo-barras: Completar provas de aceite e regressões no navegador (auto-commit do plano)'
-    fi
-    marcar_concluidas T-006
-    verde "✔ T-006 concluída"
-    return 0
-  fi
-  vermelho "✘ T-006 falhou (log: $LOG_DIR/seq.log)"
-  amarelo "  reexecute só ela: bash .spec/features/leitura-automatica-codigo-barras/executar-tarefas.sh --seq T-006"
-  FALHAS="$FALHAS T-006"
-  return 1
-}
-
 # ── sequencial T-007 (ordem do tasks.md) ──
 executar_seq_T_007() {
   info 'sequencial T-007 — Validar leitor físico e registrar o gate final'
@@ -389,6 +197,38 @@ Regras inegociáveis:
   vermelho "✘ T-007 falhou (log: $LOG_DIR/seq.log)"
   amarelo "  reexecute só ela: bash .spec/features/leitura-automatica-codigo-barras/executar-tarefas.sh --seq T-007"
   FALHAS="$FALHAS T-007"
+  return 1
+}
+
+# ── sequencial T-008 (ordem do tasks.md) ──
+executar_seq_T_008() {
+  info 'sequencial T-008 — Corrigir runner e coleta de provas do ONP'
+  if rodar_tarefa seq 'T-008' 'Você executa UMA tarefa da feature "leitura-automatica-codigo-barras" (fluxo onp-spec, spec-anchored).
+Leia primeiro: .spec/features/leitura-automatica-codigo-barras/spec.md, .spec/features/leitura-automatica-codigo-barras/tasks.md e .spec/constituicao.md.
+
+Sua tarefa (somente ela):
+T-008 — "Corrigir runner e coleta de provas do ONP"
+  critérios/refs: AC-001 (Ler sem selecionar a busca), AC-002 (Incrementar a quantidade), AC-003 (Preservar a busca e encontrar fora do filtro), AC-004 (Avisar sobre produto não encontrado), AC-005 (Suspender com janela aberta), AC-006 (Resolver o código completo), AC-007 (Processar leituras consecutivas), AC-008 (Digitação manual apenas filtra), AC-009 (Não transformar digitação fora da busca em pesquisa), AC-010 (Preservar bloqueios existentes da venda), AC-011 (Informar produto inativo), AC-012 (Preservar campos financeiros durante a leitura), AC-013 (Aguardar leituras antes de conferir ou fechar), AC-014 (Cancelar leituras pendentes ao abrir janela)
+  arquivos permitidos (e seus testes): package.json, scripts/test-onp.sh, onpspec.config.json
+  mensagem de commit: "T-008 leitura-automatica-codigo-barras: Corrigir runner e coleta de provas do ONP"
+
+Regras inegociáveis:
+- Todo critério de aceite referenciado vira teste com @spec:AC-xxx no título.
+- NUNCA enfraqueça, pule (skip/todo) ou apague um teste para passar — teste pulado não é prova e o audit acusa.
+- Rode os testes localmente com `./scripts/test-onp.sh` até passarem.
+- NÃO edite tasks.md, NÃO rode onp-spec verify/audit e NÃO toque em outras tarefas — o orquestrador cuida disso.
+- Ao final de CADA tarefa: `git add` só no que você tocou e um commit próprio.' 'gpt-5.6-terra' medium >> "$LOG_DIR/seq.log" 2>&1; then
+    # commit de segurança se o agente esqueceu (rastreabilidade > perfeição)
+    if [ -n "$(git status --porcelain)" ]; then
+      git add -A && git commit -q -m 'T-008 leitura-automatica-codigo-barras: Corrigir runner e coleta de provas do ONP (auto-commit do plano)'
+    fi
+    marcar_concluidas T-008
+    verde "✔ T-008 concluída"
+    return 0
+  fi
+  vermelho "✘ T-008 falhou (log: $LOG_DIR/seq.log)"
+  amarelo "  reexecute só ela: bash .spec/features/leitura-automatica-codigo-barras/executar-tarefas.sh --seq T-008"
+  FALHAS="$FALHAS T-008"
   return 1
 }
 
@@ -445,25 +285,15 @@ executar_tudo() {
   iniciar_resumos
   info "logs em: $LOG_DIR"
   info "resumo geral de andamento: a cada 1 min aqui no terminal (e via: onp-spec resumo)"
-  executar_seq_T_001 || true
-  executar_seq_T_002 || true
-  executar_seq_T_003 || true
-  executar_seq_T_004 || true
-  executar_seq_T_005 || true
-  executar_seq_T_006 || true
   executar_seq_T_007 || true
+  executar_seq_T_008 || true
   encerrar tudo
 }
 
 listar() {
   echo "execução: $RUN_ID (feature $FEATURE, branch $BASE_BRANCH)"
-  echo "  seq       T-001 (sequencial)"
-  echo "  seq       T-002 (sequencial)"
-  echo "  seq       T-003 (sequencial)"
-  echo "  seq       T-004 (sequencial)"
-  echo "  seq       T-005 (sequencial)"
-  echo "  seq       T-006 (sequencial)"
   echo "  seq       T-007 (sequencial)"
+  echo "  seq       T-008 (sequencial)"
   echo
   echo "reexecutar uma faixa:    --faixa <id>"
   echo "reexecutar sequencial:   --seq <T-xxx>"
@@ -498,13 +328,8 @@ case "$MODO" in
     esac ;;
   seq)
     case "$ALVO" in
-      T-001) evento --tipo inicio --escopo "seq:T-001"; iniciar_resumos; executar_seq_T_001 || true; encerrar "seq:T-001" ;;
-      T-002) evento --tipo inicio --escopo "seq:T-002"; iniciar_resumos; executar_seq_T_002 || true; encerrar "seq:T-002" ;;
-      T-003) evento --tipo inicio --escopo "seq:T-003"; iniciar_resumos; executar_seq_T_003 || true; encerrar "seq:T-003" ;;
-      T-004) evento --tipo inicio --escopo "seq:T-004"; iniciar_resumos; executar_seq_T_004 || true; encerrar "seq:T-004" ;;
-      T-005) evento --tipo inicio --escopo "seq:T-005"; iniciar_resumos; executar_seq_T_005 || true; encerrar "seq:T-005" ;;
-      T-006) evento --tipo inicio --escopo "seq:T-006"; iniciar_resumos; executar_seq_T_006 || true; encerrar "seq:T-006" ;;
       T-007) evento --tipo inicio --escopo "seq:T-007"; iniciar_resumos; executar_seq_T_007 || true; encerrar "seq:T-007" ;;
+      T-008) evento --tipo inicio --escopo "seq:T-008"; iniciar_resumos; executar_seq_T_008 || true; encerrar "seq:T-008" ;;
       *) falhar "tarefa sequencial desconhecida: '$ALVO' — veja as disponíveis com --listar" ;;
     esac ;;
 esac
