@@ -17,8 +17,7 @@ antes de executar. Nenhuma execução, commit, push ou deploy está autorizado a
 - Dependências: Nenhuma
 - Notas: Adicionar test/*.test.js ao runner; adaptar formato CommonJS do scaffold somente na etapa de testes em que ele for executado. Criar relógio e API com promessas controladas; documentar que scaffolds ainda falham. Não relaxar gates.
 
-## T-002 — Consultar produto pelo código interno exato [pendente]
-
+## T-002 — Consultar produto pelo código interno exato [concluida]
 - Refs: AC-003, AC-004, AC-006, AC-011
 - Arquivos: backend/pdv/app.py, backend/tests/test_product_barcode.py
 - Dependências: T-001
