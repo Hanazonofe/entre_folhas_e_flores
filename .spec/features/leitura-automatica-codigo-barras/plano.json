@@ -1,0 +1,173 @@
+{
+  "runId": "projeto-leitura-automatica-codigo-barras-muj55w28",
+  "feature": "leitura-automatica-codigo-barras",
+  "agent": "codex",
+  "modo": "sequencial",
+  "paralelizar": null,
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-09-27 01:30",
+  "branchTrabalho": "spec/leitura-automatica-codigo-barras",
+  "baseDir": ".spec/features/leitura-automatica-codigo-barras",
+  "specDir": ".spec",
+  "repoName": "projeto",
+  "logsDir": "../onp-worktrees/projeto-leitura-automatica-codigo-barras-logs",
+  "ondas": [],
+  "faixas": [],
+  "sequenciais": [
+    {
+      "id": "T-001",
+      "titulo": "Preparar runner e harness determinístico",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "package.json",
+        "tests/helpers/pdv-harness.js"
+      ],
+      "refs": [
+        "US-001",
+        "US-002",
+        "US-003"
+      ]
+    },
+    {
+      "id": "T-002",
+      "titulo": "Consultar produto pelo código interno exato",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "backend/pdv/app.py",
+        "backend/tests/test_product_barcode.py"
+      ],
+      "refs": [
+        "AC-003",
+        "AC-004",
+        "AC-006",
+        "AC-011"
+      ]
+    },
+    {
+      "id": "T-003",
+      "titulo": "Implementar classificador temporal e término da leitura",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "barcode-scanner.js",
+        "tests/barcode-scanner.test.js"
+      ],
+      "refs": [
+        "AC-001",
+        "AC-006",
+        "AC-008",
+        "AC-009"
+      ]
+    },
+    {
+      "id": "T-004",
+      "titulo": "Integrar captura e preservar campos da tela",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "pdv.js",
+        "pdv.html",
+        "payments.js",
+        "backend/pdv/app.py",
+        "package.json",
+        "test/leitura-automatica-codigo-barras.spec.test.js",
+        "tests/helpers/pdv-harness.js"
+      ],
+      "refs": [
+        "AC-001",
+        "AC-003",
+        "AC-005",
+        "AC-008",
+        "AC-009",
+        "AC-012"
+      ]
+    },
+    {
+      "id": "T-005",
+      "titulo": "Integrar fila e adição protegida ao carrinho",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "pdv.js",
+        "pdv.html",
+        "test/leitura-automatica-codigo-barras.spec.test.js",
+        "tests/helpers/pdv-harness.js"
+      ],
+      "refs": [
+        "AC-002",
+        "AC-004",
+        "AC-007",
+        "AC-010",
+        "AC-011",
+        "AC-013",
+        "AC-014"
+      ]
+    },
+    {
+      "id": "T-006",
+      "titulo": "Completar provas de aceite e regressões no navegador",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "test/leitura-automatica-codigo-barras.spec.test.js",
+        "tests/barcode-scanner.test.js",
+        "tests/helpers/pdv-harness.js",
+        "backend/tests/test_product_barcode.py",
+        "docs/TESTING.md"
+      ],
+      "refs": [
+        "US-001",
+        "US-002",
+        "US-003",
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-008",
+        "AC-009",
+        "AC-010",
+        "AC-011",
+        "AC-012",
+        "AC-013",
+        "AC-014"
+      ]
+    },
+    {
+      "id": "T-007",
+      "titulo": "Validar leitor físico e registrar o gate final",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "docs/TESTING.md",
+        ".spec/verification/leitura-automatica-codigo-barras.json"
+      ],
+      "refs": [
+        "US-001",
+        "US-002",
+        "US-003",
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-008",
+        "AC-009",
+        "AC-010",
+        "AC-011",
+        "AC-012",
+        "AC-013",
+        "AC-014"
+      ]
+    }
+  ],
+  "concluidas": [],
+  "avisos": []
+}
