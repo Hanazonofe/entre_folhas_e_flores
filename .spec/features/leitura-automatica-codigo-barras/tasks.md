@@ -11,8 +11,7 @@ T-002 e T-003 têm potencial de paralelismo após T-001; a recomendação inicia
 sequencial. Escolha de paralelismo, modelos e esforços pertence ao plano posterior,
 antes de executar. Nenhuma execução, commit, push ou deploy está autorizado aqui.
 
-## T-001 — Preparar runner e harness determinístico [pendente]
-
+## T-001 — Preparar runner e harness determinístico [concluida]
 - Refs: US-001, US-002, US-003
 - Arquivos: package.json, tests/helpers/pdv-harness.js
 - Dependências: Nenhuma
