@@ -70,11 +70,18 @@ test('AC-008: Digitação manual apenas filtra @spec:AC-008', () => {
 });
 
 // US-002 — Buscar manualmente e escolher por clique
-test('AC-009: Não transformar digitação fora da busca em pesquisa @spec:AC-009', () => {
+test('AC-009: Não transformar digitação fora da busca em pesquisa @spec:AC-009', async () => {
   const harness = scannerHarness(); harness.scanner.handleKey('1',0); harness.scanner.handleKey('2',100);
   assert.deepEqual(harness.scans, []);
   assert.match(pdv, /captureField\(document\.activeElement\)/);
-  assert.doesNotMatch(pdv, /productSearch'\)\.focus\(/);
+  const browser = createPdvHarness(); await browserBoot(browser);
+  const field = browser.focus('saleNotes');
+  const requestCount = browser.api.requests.length;
+  browser.type('12345', 100, field); await browser.flush();
+  assert.equal(browser.document.activeElement, field);
+  assert.equal(field.value, '12345');
+  assert.equal(browser.elements.get('productSearch').value, '');
+  assert.equal(browser.api.requests.length, requestCount);
 });
 
 // US-002 — Buscar manualmente e escolher por clique

@@ -16,3 +16,28 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f4f7f4; paddi
 .pagination { display:flex; gap:12px; align-items:center; margin-top:20px; }
 .admin-grid { display:grid; gap:24px; }
 @media(max-width:600px) { .payment-row { grid-template-columns:1fr; } }
+
+/* O PDV conserva as duas colunas no desktop e prioriza a venda no mobile. */
+.pdv-page #togglePayment { width: 100%; margin-top: 20px; }
+.pdv-page #paymentPanel { margin-top: 0; }
+@media (max-width: 920px) {
+  .pdv-page header { padding: 16px 16px 4px; }
+  .pdv-page .brand { font-size: 1.2rem; }
+  .pdv-page nav { gap: 6px; }
+  .pdv-page nav a { padding: 8px 10px; font-size: .85rem; }
+  .pdv-page #paymentPanel { margin-top: 20px; }
+  .pdv-page main { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .pdv-page .card { min-width: 0; padding: 18px; border-radius: 20px; }
+  .pdv-page .search-card h1 { font-size: 1.6rem; line-height: 1.15; }
+  .pdv-page .search-card > p { display: none; }
+  .pdv-page .search-area { margin-top: 16px; }
+  .pdv-page .search-line input { min-width: 0; }
+  .pdv-page .catalog-grid { grid-template-columns: minmax(0, 1fr); margin-top: 16px; }
+  .pdv-page .product-card { min-height: 0; }
+  .pdv-page .cart-item { grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere; }
+  .pdv-page .cart-item p { margin: 6px 0; }
+  .pdv-page .qty-controls { flex-wrap: wrap; }
+  .pdv-page .qty-controls button { min-height: 44px; min-width: 44px; }
+  .pdv-page .total-final { flex-wrap: wrap; }
+  .pdv-page textarea { width: 100%; max-width: 100%; min-height: 72px; font: inherit; }
+}

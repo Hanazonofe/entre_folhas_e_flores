@@ -48,3 +48,21 @@ operacional ou uma venda real.
 - Use `Tab`, `Shift+Tab`, `Enter` e `Espaço` no modal: nenhum controle de
   pagamento deve ficar inacessível ou ocultar o foco; o resumo e os erros
   devem continuar disponíveis após cada ação.
+
+
+## Layout do PDV no mobile — T-014
+
+Validação automatizada em Chrome headless com API simulada e os arquivos reais de HTML/CSS/JS:
+
+- [x] Catálogo oculto com busca vazia e resultados visíveis ao pesquisar.
+- [x] Adicionar limpa a busca, retorna foco e mostra o carrinho atualizado.
+- [x] Pagamento expande na mesma tela; sucesso recolhe e mantém comprovante.
+- [x] Erro de venda mantém carrinho e pagamento abertos.
+- [x] Larguras 320, 390, 600, 920, 921 e 1440 px sem overflow horizontal; troca de largura mantém itens.
+- [x] Desktop conserva catálogo e pagamento visíveis.
+- [x] Desconto temporariamente vazio não interrompe a renderização.
+- [ ] Conferência em aparelho físico com teclado virtual real (não emulado nesta validação).
+
+Provas automatizadas de comportamento: `tests/pdv-mobile.test.js`. Capturas da sessão em `/tmp/pdv-mobile-{cart,payment,desktop,narrow}.png` (temporárias, não versionadas).
+
+Validação manual: o usuário testou a feature no ambiente local e confirmou que está OK antes de solicitar o envio ao Git. Não foram informados aparelho, navegador ou detalhes específicos do teclado virtual.

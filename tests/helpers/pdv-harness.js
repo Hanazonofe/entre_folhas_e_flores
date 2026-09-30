@@ -135,7 +135,12 @@ class FakeElement {
     this.selectionEnd = 0;
     this.dataset = options.dataset || {};
     this.listeners = new Map();
+    this.attributes = new Map();
   }
+
+  setAttribute(name, value) { this.attributes.set(name, value); }
+
+  getAttribute(name) { return this.attributes.get(name); }
 
   addEventListener(type, listener) {
     const listeners = this.listeners.get(type) || [];
@@ -168,7 +173,7 @@ function createPdvHarness(options = {}) {
   const clock = createClock();
   const api = createControlledApi();
   const elements = new Map();
-  const ids = ['saleNotice', 'cartList', 'subtotal', 'finalTotal', 'finishSale', 'productSearch', 'catalogGrid', 'discount', 'paymentEditor', 'quoteNotice', 'quoteSale', 'addFirstResult', 'saleNotes', 'receiptLink'];
+  const ids = ['totalLabel', 'suggestions', 'togglePayment', 'paymentPanel', 'saleNotice', 'cartList', 'subtotal', 'finalTotal', 'finishSale', 'productSearch', 'catalogGrid', 'discount', 'paymentEditor', 'quoteNotice', 'quoteSale', 'addFirstResult', 'saleNotes', 'receiptLink'];
   for (const id of ids) elements.set(id, new FakeElement(id, { value: id === 'discount' ? '0' : '' }));
   const mainControls = [...elements.values()].filter(element => !['saleNotice', 'cartList', 'subtotal', 'finalTotal', 'catalogGrid', 'quoteNotice', 'receiptLink'].includes(element.id));
   const documentListeners = new Map();
@@ -190,6 +195,9 @@ function createPdvHarness(options = {}) {
       documentListeners.set(type, listeners);
     },
   };
+  for (const element of elements.values()) element.focus = () => { document.activeElement = element; };
+  const mediaListeners = [];
+  const media = { matches: !!options.mobile, addEventListener: (_type, listener) => mediaListeners.push(listener) };
   const payments = {
     rows: [], totalCents: null, calls: [], valuesError: null, summary: '',
     set(rows) { this.rows = rows.map(row => ({ ...row })); this.calls.push({ method: 'set', rows: this.rows.map(row => ({ ...row })) }); this.updateSummary(); },
@@ -202,6 +210,7 @@ function createPdvHarness(options = {}) {
   if (options.pending) session.set('pdv-pending-checkout', JSON.stringify({ userId: 'operator', preview: [], body: { discount_cents: 0, notes: '', payments: [] } }));
   const context = {
     document,
+    window: { matchMedia: () => media },
     console,
     setTimeout: clock.setTimeout,
     clearTimeout: clock.clearTimeout,
@@ -242,7 +251,7 @@ function createPdvHarness(options = {}) {
     return dialog;
   }
   function closeDialog() { elements.delete('dialog'); for (const observer of observers) observer.callback(); }
-  return { api, clock, document, elements, payments, flush, keydown, type, openDialog, closeDialog, focus(id) { document.activeElement = elements.get(id) || null; return document.activeElement; } };
+  return { setMobile(value) { media.matches = value; mediaListeners.forEach(listener => listener(media)); }, api, clock, document, elements, payments, flush, keydown, type, openDialog, closeDialog, focus(id) { document.activeElement = elements.get(id) || null; return document.activeElement; } };
 }
 
 module.exports = { createClock, createDeferred, createControlledApi, createPdvHarness, flush };

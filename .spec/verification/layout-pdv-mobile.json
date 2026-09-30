@@ -1,0 +1,57 @@
+{
+  "feature": "layout-pdv-mobile",
+  "timestamp": "2026-09-30T00:50:29.219Z",
+  "gitRev": "aa3e9fd",
+  "command": "./scripts/test-onp.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 135,
+  "results": {
+    "AC-032": {
+      "status": "pass",
+      "testName": "@spec:AC-032 mobile exibe carrinho e total sem catálogo e atualiza estimativa",
+      "method": "tap"
+    },
+    "AC-033": {
+      "status": "pass",
+      "testName": "@spec:AC-033 busca mobile mostra resultados e os oculta ao apagar",
+      "method": "tap"
+    },
+    "AC-034": {
+      "status": "pass",
+      "testName": "@spec:AC-034 ambos os botões limpam a busca nos dois layouts",
+      "method": "tap"
+    },
+    "AC-035": {
+      "status": "pass",
+      "testName": "@spec:AC-035 desktop mantém catálogo e pagamento e alternar largura preserva a venda",
+      "method": "tap"
+    },
+    "AC-036": {
+      "status": "pass",
+      "testName": "@spec:AC-036 pagamento começa recolhido com controle acessível",
+      "method": "tap"
+    },
+    "AC-037": {
+      "status": "pass",
+      "testName": "@spec:AC-037 expandir e recolher preserva o carrinho e os dados de pagamento",
+      "method": "tap"
+    },
+    "AC-038": {
+      "status": "pass",
+      "testName": "@spec:AC-038 venda confirmada recolhe pagamento, prepara busca e mantém comprovante",
+      "method": "tap"
+    },
+    "AC-039": {
+      "status": "pass",
+      "testName": "@spec:AC-039 erros de validação e rede mantêm carrinho e pagamento abertos",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-002": {
+      "status": "pass",
+      "testName": "@principle:P-002 tracked files contain no detected operational secrets"
+    }
+  }
+}

@@ -3,22 +3,56 @@
   const cart = new Map(); let products = [], quote = null, pending = null, busy = false, searchSequence = 0;
   let scanQueue = [], scanWorkerActive = false, scanGeneration = 0, noticeSequence = 0;
   let captureSnapshot = null;
+  const mobileLayout = window.matchMedia('(max-width: 920px)');
+  let paymentExpanded = false, catalogProducts = [];
+  function syncLayout() {
+    const mobile = mobileLayout.matches, expanded = paymentExpanded || !!pending;
+    $('#catalogGrid').hidden = mobile && !$('#productSearch').value.trim();
+    $('#togglePayment').hidden = !mobile;
+    $('#togglePayment').setAttribute('aria-expanded', String(expanded));
+    $('#togglePayment').textContent = expanded ? 'Recolher pagamento' : 'Ir para pagamento';
+    $('#paymentPanel').hidden = mobile && !expanded;
+  }
+  function renderProducts() {
+    $('#catalogGrid').innerHTML = products.map(product=>`<article class="product-card"><strong>${API.esc(product.name)}</strong><p>Cód. ${API.esc(product.code)} · EAN ${API.esc(product.barcode || '-')}</p><strong>${API.money(product.price_cents)}</strong><button type="button" data-add="${product.id}">Adicionar</button></article>`).join('') || '<p>Nenhum produto encontrado.</p>';
+    syncLayout();
+  }
+  function clearSearch({focus = true} = {}) {
+    ++searchSequence; // A resposta de uma busca anterior não pode reabrir os resultados.
+    $('#productSearch').value = '';
+    $('#suggestions').hidden = true;
+    products = catalogProducts;
+    renderProducts();
+    if (focus) $('#productSearch').focus({preventScroll: true});
+  }
+  $('#togglePayment').addEventListener('click', () => { paymentExpanded = !paymentExpanded; syncLayout(); });
+  mobileLayout.addEventListener('change', () => { syncLayout(); renderCart(); });
+  syncLayout();
   const payments = new PaymentEditor($('#paymentEditor'));
-  function lock(value) { const locked = value || scanWorkerActive; document.querySelectorAll('main input, main select, main textarea, main button').forEach(el => { el.disabled = locked; }); $('#finishSale').disabled = locked || busy || (!pending && !quote); }
+  function lock(value) { const locked = value || scanWorkerActive; document.querySelectorAll('main input, main select, main textarea, main button').forEach(el => { el.disabled = locked; }); $('#finishSale').disabled = scanWorkerActive || busy || (!pending && !quote); }
   function invalidate() { quote = null; $('#finishSale').disabled = true; $('#quoteNotice').textContent = 'Confira os valores no servidor antes de fechar.'; }
   function renderCart() {
     $('#cartList').innerHTML = [...cart.values()].map(row => `<div class="cart-item"><div><strong>${API.esc(row.name)}</strong><p>${API.money(row.price_cents)} cada</p></div><div class="qty-controls"><button type="button" data-cart="less" data-id="${API.esc(row.id)}">−</button><span>${row.quantity}</span><button type="button" data-cart="more" data-id="${API.esc(row.id)}">+</button><button type="button" data-cart="remove" data-id="${API.esc(row.id)}">Remover</button></div></div>`).join('') || '<p>Nenhum produto no carrinho.</p>';
     const subtotal = [...cart.values()].reduce((sum,row)=>sum+row.price_cents*row.quantity,0);
     $('#subtotal').textContent = API.money(subtotal);
-    $('#finalTotal').textContent = quote ? API.money(quote.total_cents) : 'A confirmar';
+    let estimatedTotal = null;
+    try { estimatedTotal = Math.max(0, subtotal - API.cents($('#discount').value)); } catch { /* A conferência exibirá o erro do desconto inválido. */ }
+    $('#totalLabel').textContent = mobileLayout.matches && !quote && cart.size ? 'Total estimado' : 'Total final';
+    $('#finalTotal').textContent = quote ? API.money(quote.total_cents) : mobileLayout.matches && estimatedTotal !== null ? API.money(estimatedTotal) : 'A confirmar';
     lock(!!pending || busy);
+    syncLayout();
   }
   async function search() {
     const sequence = ++searchSequence;
-    const result = await API.call('/products?active_only=true&limit=100&q='+encodeURIComponent($('#productSearch').value));
+    const query = $('#productSearch').value.trim();
+    products = [];
+    renderProducts();
+    $('#catalogGrid').textContent = 'Buscando produtos…';
+    const result = await API.call('/products?active_only=true&limit=100&q='+encodeURIComponent(query));
     if (sequence !== searchSequence) return;
     products = result.items;
-    $('#catalogGrid').innerHTML = products.map(product=>`<article class="product-card"><strong>${API.esc(product.name)}</strong><p>Cód. ${API.esc(product.code)} · EAN ${API.esc(product.barcode || '-')}</p><strong>${API.money(product.price_cents)}</strong><button type="button" data-add="${product.id}">Adicionar</button></article>`).join('') || '<p>Nenhum produto cadastrado. Peça ao administrador para cadastrar.</p>';
+    if (!query) catalogProducts = products;
+    renderProducts();
     lock(!!pending || busy);
   }
   function addProduct(product, {fromScanner = false} = {}) {
@@ -26,6 +60,7 @@
     if (!product) return;
     const row = cart.get(product.id) || {...product,quantity:0}; row.quantity++; cart.set(product.id,row);
     invalidate(); renderCart();
+    if (!fromScanner) clearSearch();
   }
   function add(id) { addProduct(products.find(row=>row.id===id)); }
   $('#catalogGrid').addEventListener('click', event => { const button=event.target.closest('[data-add]'); if(button) add(button.dataset.add); });
@@ -139,18 +174,19 @@
     try {
       const sale=await API.call('/sales',{method:'POST',headers:{'Idempotency-Key':pending.key},body:JSON.stringify(pending.body)});
       sessionStorage.removeItem('pdv-pending-checkout'); pending=null;quote=null;cart.clear();payments.set([]);$('#quoteNotice').textContent='Confira os valores antes de fechar a próxima venda.';$('#discount').value='0';$('#saleNotes').value='';
+      paymentExpanded = false; clearSearch({focus: false}); syncLayout();
       notice.textContent=`Venda #${sale.number} confirmada: ${API.money(sale.total_cents)}.`;
       $('#receiptLink').href=`receipt.html?id=${encodeURIComponent(sale.id)}`;$('#receiptLink').hidden=false;
     } catch(error) {
       if([400,409,422].includes(error.status)){sessionStorage.removeItem('pdv-pending-checkout');pending=null;invalidate();}
       else error.message+=' Use “Fechar venda / tentar novamente” para consultar o resultado do mesmo pedido. Não inicie outra venda em outro dispositivo.';
       throw error;
-    } finally {busy=false;renderCart();}
+    } finally {busy=false;renderCart();if(!pending && !cart.size) $('#productSearch').focus({preventScroll:true});}
   }));
   API.run(notice,async()=>{
     await API.ready();API.header();
     const saved=sessionStorage.getItem('pdv-pending-checkout');
-    if(saved){pending=JSON.parse(saved);if(pending.preview){pending.preview.forEach(item=>cart.set(item.product_id,{...item,id:item.product_id,price_cents:item.unit_price_cents}));$('#discount').value=(pending.body.discount_cents/100).toFixed(2);$('#saleNotes').value=pending.body.notes;payments.set(pending.body.payments);}$('#quoteNotice').textContent='Pedido anterior aguardando confirmação. Os dados estão bloqueados para evitar duplicação.';}
+    if(saved){paymentExpanded=true;syncLayout();pending=JSON.parse(saved);if(pending.preview){pending.preview.forEach(item=>cart.set(item.product_id,{...item,id:item.product_id,price_cents:item.unit_price_cents}));$('#discount').value=(pending.body.discount_cents/100).toFixed(2);$('#saleNotes').value=pending.body.notes;payments.set(pending.body.payments);}$('#quoteNotice').textContent='Pedido anterior aguardando confirmação. Os dados estão bloqueados para evitar duplicação.';}
     await search();renderCart();notice.textContent=pending?'Tente novamente para resolver a venda pendente.':'';
   });
   new MutationObserver(()=>{ if (dialogOpen()) cancelPendingScans(); }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['open','aria-modal']});
