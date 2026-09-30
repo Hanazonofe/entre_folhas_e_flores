@@ -8,8 +8,7 @@ Implementar primeiro o contrato do editor compartilhado, depois integrar os dois
 
 A tarefa T-009 pode ocorrer em paralelo com T-010. Após T-009, T-011 e T-012 podem ocorrer em paralelo entre si. T-013 depende de todas. O agrupamento automático por arquivos deve ser conferido contra essas dependências antes da execução.
 
-## T-009 — Ajustar distribuição e conferência no editor compartilhado [pendente]
-
+## T-009 — Ajustar distribuição e conferência no editor compartilhado [concluida]
 - Refs: US-004, AC-015, AC-016, AC-017, AC-018, AC-019, AC-020, AC-021, AC-022, AC-023, AC-024, AC-025, AC-029, AC-030
 - Arquivos: payments.js, ui.css, tests/payment-editor.test.js
 - Dependências: nenhuma.
@@ -20,8 +19,7 @@ A tarefa T-009 pode ocorrer em paralelo com T-010. Após T-009, T-011 e T-012 po
 - Entrega: impedir extração de pagamentos para conclusão quando houver valores não positivos ou divergência da soma; manter as validações existentes de dinheiro e troco.
 - Validação: testes comportamentais para todos os critérios referenciados, incluindo três meios, edição manual, remoção do primeiro, excesso e recuperação após correção; conferir layout nos dois contêineres existentes.
 
-## T-010 — Comprovar rejeição de pagamentos inválidos no servidor [pendente]
-
+## T-010 — Comprovar rejeição de pagamentos inválidos no servidor [concluida]
 - Refs: US-004, AC-024, AC-025, AC-026, AC-031
 - Arquivos: backend/tests/test_payment_validation.py, backend/pdv/schemas.py, backend/pdv/services.py
 - Dependências: nenhuma.
@@ -29,8 +27,7 @@ A tarefa T-009 pode ocorrer em paralelo com T-010. Após T-009, T-011 e T-012 po
 - Entrega: testar distribuição válida e manter regras de dinheiro, troco e integridade existentes. O schema já exige applied_cents positivo: alterar produção somente se os testes demonstrarem lacuna real.
 - Validação: executar testes de API em banco isolado conforme a constituição; nunca usar banco de produção. Não introduzir migration sem necessidade demonstrada.
 
-## T-011 — Preservar os pagamentos na confirmação do PDV [pendente]
-
+## T-011 — Preservar os pagamentos na confirmação do PDV [concluida]
 - Refs: US-004, AC-024, AC-025, AC-026, AC-027, AC-028
 - Arquivos: pdv.js, payments.js, tests/pdv-payments.test.js, tests/helpers/pdv-harness.js
 - Dependências: T-009 (contrato do editor estabilizado).
@@ -41,8 +38,7 @@ A tarefa T-009 pode ocorrer em paralelo com T-010. Após T-009, T-011 e T-012 po
 - Validação: testes com resposta de total igual, maior e menor, dinheiro recebido, linha zerada e repetição da confirmação; executar regressões do leitor de código de barras e pedido pendente afetadas pelo fluxo.
 - Notas: payments.js está mapeado para sinalizar a dependência de contrato ao agrupador; ajustes no editor pertencem prioritariamente a T-009.
 
-## T-012 — Aplicar as regras na edição administrativa [pendente]
-
+## T-012 — Aplicar as regras na edição administrativa [concluida]
 - Refs: US-004, AC-015, AC-016, AC-017, AC-018, AC-019, AC-020, AC-021, AC-022, AC-023, AC-024, AC-025, AC-029, AC-030, AC-031
 - Arquivos: vendas.js, payments.js, tests/admin-payments.test.js
 - Dependências: T-009 (contrato do editor estabilizado).
@@ -52,8 +48,7 @@ A tarefa T-009 pode ocorrer em paralelo com T-010. Após T-009, T-011 e T-012 po
 - Validação: testes comportamentais da abertura, distribuição, edição do primeiro, excesso, remoção e salvamento válido/inválido, verificando os dados enviados e a preservação do formulário quando houver erro.
 - Notas: payments.js sinaliza a dependência ao agrupador; caso esta tarefa e T-011 sejam paralelizadas após T-009, nenhuma delas deve alterar o editor compartilhado simultaneamente.
 
-## T-013 — Verificar cobertura, regressões e auditar a entrega [pendente]
-
+## T-013 — Verificar cobertura, regressões e auditar a entrega [em-andamento]
 - Refs: US-004, AC-015, AC-016, AC-017, AC-018, AC-019, AC-020, AC-021, AC-022, AC-023, AC-024, AC-025, AC-026, AC-027, AC-028, AC-029, AC-030, AC-031
 - Arquivos: tests/payment-editor.test.js, tests/pdv-payments.test.js, tests/admin-payments.test.js, backend/tests/test_payment_validation.py, tests/BROWSER-CHECKLIST.md, .spec/features/ajuste-meios-pagamento/spec.md, .spec/features/ajuste-meios-pagamento/tasks.md, .spec/verification/ajuste-meios-pagamento.json
 - Dependências: T-009, T-010, T-011, T-012.
@@ -65,3 +60,7 @@ A tarefa T-009 pode ocorrer em paralelo com T-010. Após T-009, T-011 e T-012 po
 ## Definição de conclusão
 
 Todos os critérios com testes aprovados, nenhuma gravação de pagamento zerado, distribuição válida nos dois fluxos, confirmação no servidor preservando o preenchimento e auditoria final sem erros. A etapa atual entrega somente o detalhamento; modelos, esforço e modo de execução devem ser definidos antes de executar.
+
+## Andamento da execução
+
+T-009 a T-012 implementadas. Verificação completa aprovada na árvore isolada e no projeto integrado: 17/17 critérios com prova PASS, 120 testes lidos e exit 0. Checagem de sintaxe aprovada. Auditoria global integrada: 31/31 critérios provados, 46 erros e nenhum aviso; nenhum achado específico desta feature. T-013 permanece em andamento porque a auditoria global acusa pendências de rastreabilidade e provas de outra feature. Não foram alterados os requisitos nem os testes para contornar o gate.

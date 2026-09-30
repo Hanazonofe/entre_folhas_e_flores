@@ -190,7 +190,14 @@ function createPdvHarness(options = {}) {
       documentListeners.set(type, listeners);
     },
   };
-  const payments = { set() {}, values() { return []; } };
+  const payments = {
+    rows: [], totalCents: null, calls: [], valuesError: null, summary: '',
+    set(rows) { this.rows = rows.map(row => ({ ...row })); this.calls.push({ method: 'set', rows: this.rows.map(row => ({ ...row })) }); this.updateSummary(); },
+    setTotal(totalCents) { this.totalCents = totalCents; this.calls.push({ method: 'setTotal', totalCents }); this.updateSummary(); },
+    hasPayments() { return this.rows.length > 0; },
+    values() { if (this.valuesError) throw this.valuesError; return this.rows.map(row => ({ ...row })); },
+    updateSummary() { const applied = this.rows.reduce((sum, row) => sum + row.applied_cents, 0), difference = this.totalCents - applied; this.summary = difference > 0 ? `Faltam R$ ${difference / 100}` : difference < 0 ? `Excedem R$ ${-difference / 100}` : 'Valores conferem'; }
+  };
   const session = new Map();
   if (options.pending) session.set('pdv-pending-checkout', JSON.stringify({ userId: 'operator', preview: [], body: { discount_cents: 0, notes: '', payments: [] } }));
   const context = {
@@ -235,7 +242,7 @@ function createPdvHarness(options = {}) {
     return dialog;
   }
   function closeDialog() { elements.delete('dialog'); for (const observer of observers) observer.callback(); }
-  return { api, clock, document, elements, flush, keydown, type, openDialog, closeDialog, focus(id) { document.activeElement = elements.get(id) || null; return document.activeElement; } };
+  return { api, clock, document, elements, payments, flush, keydown, type, openDialog, closeDialog, focus(id) { document.activeElement = elements.get(id) || null; return document.activeElement; } };
 }
 
 module.exports = { createClock, createDeferred, createControlledApi, createPdvHarness, flush };

@@ -1,7 +1,7 @@
 # Spec: Ajuste dos meios de pagamento
 
 > feature: ajuste-meios-pagamento
-> status: pronta
+> status: implementada
 
 ## Contexto
 
@@ -173,4 +173,4 @@ Nenhuma pendente. Histórico das decisões:
 
 ## Próxima etapa
 
-Detalhar tarefas e testes rastreáveis para o PDV e a edição administrativa. A especificação está pronta para planejamento; a implementação ainda não foi iniciada. Cada critério deverá ter teste anotado antes de a feature ser considerada implementada ou auditada.
+Detalhar tarefas e testes rastreáveis para o PDV e a edição administrativa. A implementação está concluída; a auditoria global ainda tem pendências registradas em tasks.md. Cada critério deverá ter teste anotado antes de a feature ser considerada implementada ou auditada.

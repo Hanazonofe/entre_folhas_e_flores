@@ -119,7 +119,8 @@
     try {
       quote=await API.call('/sales/quote',{method:'POST',body:JSON.stringify({items:[...cart.values()].map(row=>({product_id:row.id,quantity:row.quantity})),discount_cents:API.cents($('#discount').value)})});
       quote.items.forEach(item=>{const row=cart.get(item.product_id);row.price_cents=item.unit_price_cents;row.name=item.name;});
-      payments.set(quote.total_cents ? [{method:'credit',applied_cents:quote.total_cents,received_cents:quote.total_cents}] : []);
+      payments.setTotal(quote.total_cents);
+      if (!payments.hasPayments() && quote.total_cents) payments.set([{method:'credit',applied_cents:quote.total_cents,received_cents:quote.total_cents}]);
       $('#quoteNotice').textContent='Valores conferidos. Distribua os pagamentos e confirme.'; notice.textContent='';
     } finally {busy=false;renderCart();}
   }));

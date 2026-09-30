@@ -1,0 +1,102 @@
+{
+  "feature": "ajuste-meios-pagamento",
+  "timestamp": "2026-09-30T00:50:50.360Z",
+  "gitRev": "aa3e9fd",
+  "command": "./scripts/test-onp.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 135,
+  "results": {
+    "AC-015": {
+      "status": "pass",
+      "testName": "@spec:AC-015 edição administrativa adiciona meio zerado sem alterar o primeiro",
+      "method": "tap"
+    },
+    "AC-016": {
+      "status": "pass",
+      "testName": "@spec:AC-016 edição administrativa desconta preenchimento do primeiro meio",
+      "method": "tap"
+    },
+    "AC-017": {
+      "status": "pass",
+      "testName": "@spec:AC-017 edição administrativa considera todos os demais meios",
+      "method": "tap"
+    },
+    "AC-018": {
+      "status": "pass",
+      "testName": "@spec:AC-018 edição administrativa mantém ajuste manual do primeiro meio",
+      "method": "tap"
+    },
+    "AC-019": {
+      "status": "pass",
+      "testName": "@spec:AC-019 edição administrativa recalcula falta sem alterar valores",
+      "method": "tap"
+    },
+    "AC-020": {
+      "status": "pass",
+      "testName": "@spec:AC-020 edição administrativa recalcula excesso sem alterar valores",
+      "method": "tap"
+    },
+    "AC-021": {
+      "status": "pass",
+      "testName": "@spec:AC-021 edição administrativa informa soma correta ao recalcular",
+      "method": "tap"
+    },
+    "AC-022": {
+      "status": "pass",
+      "testName": "@spec:AC-022 edição administrativa informa valor individual acima do total",
+      "method": "tap"
+    },
+    "AC-023": {
+      "status": "pass",
+      "testName": "@spec:AC-023 edição administrativa preserva primeiro válido durante excesso dos demais",
+      "method": "tap"
+    },
+    "AC-024": {
+      "status": "pass",
+      "testName": "@spec:AC-024 edição administrativa bloqueia salvamento com meio zerado",
+      "method": "tap"
+    },
+    "AC-025": {
+      "status": "pass",
+      "testName": "@spec:AC-025 edição administrativa bloqueia salvamento com soma divergente",
+      "method": "tap"
+    },
+    "AC-026": {
+      "status": "pass",
+      "testName": "@spec:AC-026 distribuição válida permite concluir e envia os pagamentos informados",
+      "method": "tap"
+    },
+    "AC-027": {
+      "status": "pass",
+      "testName": "@spec:AC-027 confirmação do servidor preserva ordem, meios, valores recebidos e linha zerada",
+      "method": "tap"
+    },
+    "AC-028": {
+      "status": "pass",
+      "testName": "@spec:AC-028 novo total do servidor atualiza apenas a diferença sem redistribuir pagamentos",
+      "method": "tap"
+    },
+    "AC-029": {
+      "status": "pass",
+      "testName": "@spec:AC-029 edição administrativa recalcula primeiro após remover meio",
+      "method": "tap"
+    },
+    "AC-030": {
+      "status": "pass",
+      "testName": "@spec:AC-030 edição administrativa faz o único meio restante assumir o total",
+      "method": "tap"
+    },
+    "AC-031": {
+      "status": "pass",
+      "testName": "@spec:AC-031 edição administrativa envia uma distribuição válida calculada pelo editor",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-002": {
+      "status": "pass",
+      "testName": "@principle:P-002 tracked files contain no detected operational secrets"
+    }
+  }
+}

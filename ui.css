@@ -7,6 +7,8 @@ label { display: block; }
 dialog input { display: block; width: 100%; }
 .payment-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; border-bottom: 1px solid #bac8bd; padding: 12px 0; }
 .payment-row input,.payment-row select { width: 100%; }
+.payment-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
+.payment-error:empty { display:none; }
 .payment-summary,[role=alert] { overflow-wrap: anywhere; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f4f7f4; padding: 12px; }
 .preserve-lines { white-space: pre-wrap; overflow-wrap: anywhere; }
