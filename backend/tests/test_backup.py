@@ -1,3 +1,4 @@
+import pytest
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from uuid import uuid4
@@ -16,7 +17,8 @@ def test_schedule_boundary():
     )
 
 
-def test_offline_outbox_retry_and_retention(clean, tmp_path, monkeypatch):
+@pytest.mark.parametrize("_spec", ["@spec:AC-045 Backup pendente e retomada"])
+def test_offline_outbox_retry_and_retention(_spec, clean, tmp_path, monkeypatch):
     from sqlalchemy import create_engine
 
     worker_engine = create_engine(

@@ -124,7 +124,8 @@ def test_invalid_no_partial_import(db, tmp_path):
     assert result.errors and count(db) == 0
 
 
-def test_cli_defaults_to_dry_run(db, tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("_spec", ["@spec:AC-043 Importador CSV começa em simulação"])
+def test_cli_defaults_to_dry_run(_spec, db, tmp_path, monkeypatch, capsys):
     monkeypatch.setattr('pdv.db.engine', lambda: db)
     assert main([str(source(tmp_path))]) == 0
     assert count(db) == 0

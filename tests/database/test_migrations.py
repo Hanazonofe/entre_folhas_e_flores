@@ -1,3 +1,4 @@
+import pytest
 import os
 from pathlib import Path
 from alembic import command
@@ -10,7 +11,8 @@ from test_support import guarded_engine, install_connection_guard
 
 # Run once on the runner's fresh database, BEFORE backend fixtures or grants.
 # @principle:P-003
-def test_empty_database_is_rebuilt_by_migrations():
+@pytest.mark.parametrize("_spec", ["@spec:AC-044 Reconstrução do schema por migrations"])
+def test_empty_database_is_rebuilt_by_migrations(_spec):
     guard = install_connection_guard()
     owner = guarded_engine(os.environ["TEST_OWNER_URL"])
     config = Config(str(Path(__file__).resolve().parents[2] / "backend/alembic.ini"))

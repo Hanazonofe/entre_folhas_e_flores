@@ -45,7 +45,8 @@ def create(c, body=None, key=None):
 
 
 # @principle:P-006
-def test_sale_history_transitions_and_stock(client):
+@pytest.mark.parametrize("_spec", ["@spec:AC-041 Histórico íntegro de vendas"])
+def test_sale_history_transitions_and_stock(_spec, client):
     c = client
     r = create(c)
     assert r.status_code == 201, r.text
@@ -164,7 +165,8 @@ def test_free_sale_and_discount(client):
     )
 
 
-def test_permissions_csrf_cookie(client):
+@pytest.mark.parametrize("_spec", ["@spec:AC-040 Sessões e permissões locais"])
+def test_permissions_csrf_cookie(_spec, client):
     c = client
     r = c.post(
         "/api/auth/login", json={"login": "operator", "password": "test-password-123"}

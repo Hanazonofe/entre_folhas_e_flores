@@ -53,8 +53,7 @@ antes de executar. Nenhuma execução, commit, push ou deploy está autorizado a
 - Dependências: T-006
 - Notas: Registrar piloto real, parâmetros efetivos e limitações; executar verify e audit --ci. Sem hardware, manter pendente e não alegar prova física. Falhas globais de rastreabilidade preexistentes devem ser reportadas, nunca mascaradas.
 
-## T-008 — Corrigir runner e coleta de provas do ONP 
-[pendente]
+## T-008 — Corrigir runner e coleta de provas do ONP [concluida]
 - Refs: AC-001, AC-002, AC-003, AC-004, AC-005, AC-006, AC-007, AC-008, AC-009, AC-010, AC-011, AC-012, AC-013, AC-014
 - Arquivos: package.json, scripts/test-onp.sh, onpspec.config.json
 - Dependências: T-006

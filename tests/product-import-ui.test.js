@@ -9,7 +9,7 @@ function ui(){
  vm.runInContext(fs.readFileSync('produtos.js','utf8'),c);
  return {element,calls,set result(r){result=r;},set accepted(v){accepted=v;},async settle(){await Promise.all(pending.splice(0));}};
 }
-test('operator previews XLSX then explicitly confirms; changed file invalidates preview',async()=>{
+test('@spec:AC-042 operator previews XLSX then explicitly confirms; changed file invalidates preview',async()=>{
  const app=ui();await app.settle();assert.ok(app.calls.some(c=>c.path.startsWith('/products?')));
  const file={name:'products.xlsx',size:10};app.element('#importFile').files=[file];
  app.element('#previewImport').dispatch('click');await app.settle();assert.equal(app.element('#applyImport').disabled,false);

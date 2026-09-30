@@ -16,5 +16,18 @@
     "*.css",
     "deployment/**",
     "scripts/**"
+  ],
+  "ignoreGlobs": [
+    "node_modules/**",
+    ".git/**",
+    "dist/**",
+    "build/**",
+    "coverage/**",
+    ".spec/**",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "**/*.pyo",
+    ".pytest_cache/**",
+    "**/.pytest_cache/**"
   ]
 }
