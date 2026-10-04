@@ -61,7 +61,8 @@ services:
       PUBLIC_ORIGIN: ${HOMOL_PUBLIC_ORIGIN}
 
     ports:
-      - "${HOMOL_BIND_IP}:8081:8000"
+      - "192.168.18.31:8081:8000"
+      - "100.101.186.24:8081:8000"
 
     depends_on:
       migrate:
