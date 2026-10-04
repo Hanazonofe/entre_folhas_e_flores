@@ -1,0 +1,83 @@
+name: entre-folhas-pdv-homol
+
+services:
+  db:
+    image: postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pdv_owner
+      POSTGRES_DB: ${HOMOL_DB_NAME}
+      POSTGRES_PASSWORD: ${HOMOL_OWNER_PASSWORD}
+
+      # O script atual de inicialização espera estes nomes.
+      DEV_API_PASSWORD: ${HOMOL_API_PASSWORD}
+      DEV_BACKUP_PASSWORD: ${HOMOL_BACKUP_PASSWORD}
+
+    volumes:
+      - database_homol:/var/lib/postgresql
+      - ./deployment/dev/init-db.sh:/docker-entrypoint-initdb.d/01-homol-roles.sh:ro
+
+    networks:
+      - database
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U pdv_owner -d ${HOMOL_DB_NAME}"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.api
+
+    command:
+      - python
+      - /app/deployment/migrate.py
+
+    environment:
+      OWNER_DATABASE_URL: "postgresql+psycopg://pdv_owner:${HOMOL_OWNER_PASSWORD}@db:5432/${HOMOL_DB_NAME}"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    networks:
+      - database
+
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.api
+
+    environment:
+      DATABASE_URL: "postgresql+psycopg://pdv_api:${HOMOL_API_PASSWORD}@db:5432/${HOMOL_DB_NAME}"
+      PUBLIC_ORIGIN: ${HOMOL_PUBLIC_ORIGIN}
+
+    ports:
+      - "${HOMOL_BIND_IP}:8081:8000"
+
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+    networks:
+      - database
+      - ingress
+
+    restart: unless-stopped
+
+networks:
+  database:
+    internal: true
+
+  ingress: {}
+
+volumes:
+  database_homol:
