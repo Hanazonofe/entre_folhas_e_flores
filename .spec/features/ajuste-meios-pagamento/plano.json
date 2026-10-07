@@ -1,0 +1,150 @@
+{
+  "runId": "projeto-ajuste-meios-pagamento-mulkrwyn",
+  "feature": "ajuste-meios-pagamento",
+  "agent": "codex",
+  "modo": "sequencial",
+  "paralelizar": null,
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-09-28 18:22",
+  "branchTrabalho": "spec/ajuste-meios-pagamento",
+  "baseDir": ".spec/features/ajuste-meios-pagamento",
+  "specDir": ".spec",
+  "repoName": "projeto",
+  "logsDir": "../onp-worktrees/projeto-ajuste-meios-pagamento-logs",
+  "ondas": [],
+  "faixas": [],
+  "sequenciais": [
+    {
+      "id": "T-009",
+      "titulo": "Ajustar distribuição e conferência no editor compartilhado",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "payments.js",
+        "ui.css",
+        "tests/payment-editor.test.js"
+      ],
+      "refs": [
+        "US-004",
+        "AC-015",
+        "AC-016",
+        "AC-017",
+        "AC-018",
+        "AC-019",
+        "AC-020",
+        "AC-021",
+        "AC-022",
+        "AC-023",
+        "AC-024",
+        "AC-025",
+        "AC-029",
+        "AC-030"
+      ]
+    },
+    {
+      "id": "T-010",
+      "titulo": "Comprovar rejeição de pagamentos inválidos no servidor",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "backend/tests/test_payment_validation.py",
+        "backend/pdv/schemas.py",
+        "backend/pdv/services.py"
+      ],
+      "refs": [
+        "US-004",
+        "AC-024",
+        "AC-025",
+        "AC-026",
+        "AC-031"
+      ]
+    },
+    {
+      "id": "T-011",
+      "titulo": "Preservar os pagamentos na confirmação do PDV",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "pdv.js",
+        "payments.js",
+        "tests/pdv-payments.test.js",
+        "tests/helpers/pdv-harness.js"
+      ],
+      "refs": [
+        "US-004",
+        "AC-024",
+        "AC-025",
+        "AC-026",
+        "AC-027",
+        "AC-028"
+      ]
+    },
+    {
+      "id": "T-012",
+      "titulo": "Aplicar as regras na edição administrativa",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "vendas.js",
+        "payments.js",
+        "tests/admin-payments.test.js"
+      ],
+      "refs": [
+        "US-004",
+        "AC-015",
+        "AC-016",
+        "AC-017",
+        "AC-018",
+        "AC-019",
+        "AC-020",
+        "AC-021",
+        "AC-022",
+        "AC-023",
+        "AC-024",
+        "AC-025",
+        "AC-029",
+        "AC-030",
+        "AC-031"
+      ]
+    },
+    {
+      "id": "T-013",
+      "titulo": "Verificar cobertura, regressões e auditar a entrega",
+      "modelo": "gpt-5.6-terra",
+      "esforco": "medium",
+      "arquivos": [
+        "tests/payment-editor.test.js",
+        "tests/pdv-payments.test.js",
+        "tests/admin-payments.test.js",
+        "backend/tests/test_payment_validation.py",
+        "tests/BROWSER-CHECKLIST.md",
+        ".spec/features/ajuste-meios-pagamento/spec.md",
+        ".spec/features/ajuste-meios-pagamento/tasks.md",
+        ".spec/verification/ajuste-meios-pagamento.json"
+      ],
+      "refs": [
+        "US-004",
+        "AC-015",
+        "AC-016",
+        "AC-017",
+        "AC-018",
+        "AC-019",
+        "AC-020",
+        "AC-021",
+        "AC-022",
+        "AC-023",
+        "AC-024",
+        "AC-025",
+        "AC-026",
+        "AC-027",
+        "AC-028",
+        "AC-029",
+        "AC-030",
+        "AC-031"
+      ]
+    }
+  ],
+  "concluidas": [],
+  "avisos": []
+}

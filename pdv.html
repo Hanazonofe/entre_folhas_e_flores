@@ -229,7 +229,7 @@
   </style>
   <link rel="stylesheet" href="ui.css">
 </head>
-<body>
+<body class="pdv-page">
   <header>
     <div class="topbar">
       <div class="brand"><span>🌿</span> Entre Folhas e Flores</div>
@@ -242,7 +242,7 @@
   </header>
 
   <main>
-    <section class="card">
+    <section class="card search-card">
       <h1>Venda rápida no PDV</h1>
       <p>Leia um código de barras ou digite parte do nome. A busca encontra nomes, códigos e EAN e, ao repetir um item, aumenta a quantidade no carrinho automaticamente.</p>
 
@@ -258,7 +258,7 @@
       <div class="catalog-grid" id="catalogGrid" aria-label="Produtos em destaque"></div>
     </section>
 
-    <aside class="card">
+    <aside class="card cart-card">
       <h2>Carrinho</h2>
       <div id="cartList" class="cart-list"></div>
 
@@ -266,14 +266,17 @@
         <div class="row"><span>Subtotal</span><strong id="subtotal">R$ 0,00</strong></div>
         <label for="discount">Desconto em R$</label>
         <input id="discount" type="number" min="0" step="0.01" value="0" />
-        <div class="row total-final"><span>Total final</span><span id="finalTotal">R$ 0,00</span></div>
+        <div class="row total-final"><span id="totalLabel">Total final</span><span id="finalTotal" aria-live="polite">R$ 0,00</span></div>
       </div>
 
+      <button type="button" id="togglePayment" aria-expanded="false" aria-controls="paymentPanel" hidden>Ir para pagamento</button>
+      <div id="paymentPanel">
       <button type="button" id="quoteSale">Conferir valores no servidor</button>
       <p id="quoteNotice" aria-live="polite">Confira os valores antes de fechar.</p>
       <div id="paymentEditor"></div>
       <label for="saleNotes">Observações</label><textarea id="saleNotes" maxlength="10000"></textarea>
       <button type="button" id="finishSale" disabled>Fechar venda / tentar novamente</button>
+      </div>
       <p class="notice" id="saleNotice" role="status"></p>
       <a id="receiptLink" target="_blank" rel="noopener" hidden>Visualizar comprovante</a>
     </aside>
@@ -281,6 +284,7 @@
 
   <script src="api.js"></script>
   <script src="payments.js"></script>
+  <script src="barcode-scanner.js"></script>
   <script src="pdv.js"></script>
 </body>
 </html>

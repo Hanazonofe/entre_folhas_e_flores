@@ -17,16 +17,17 @@ until docker exec "$PDV_TEST_CONTAINER" pg_isready -U postgres -d pdv_test >/dev
   sleep 1
 done
 export PYTHONPATH=backend
+export PDV_TEST_TARGET="localhost:$PDV_TEST_PORT"
 export TEST_OWNER_URL="postgresql+psycopg://postgres:pdv-test-only@localhost:$PDV_TEST_PORT/pdv_test"
 export DATABASE_URL="$TEST_OWNER_URL"
-"$PYTHON" -m alembic -c backend/alembic.ini upgrade d8f9e685f9ae
-"$PYTHON" -m alembic -c backend/alembic.ini upgrade head
-"$PYTHON" -m alembic -c backend/alembic.ini check
+"$PYTHON" -m pytest tests/safety tests/database -v
 docker exec -i "$PDV_TEST_CONTAINER" psql -U postgres -d pdv_test -v ON_ERROR_STOP=1 <<'SQL'
+CREATE DATABASE pdv_import_test;
 CREATE ROLE pdv_api LOGIN PASSWORD 'pdv-api-test-only';
 CREATE ROLE pdv_backup LOGIN PASSWORD 'pdv-backup-test-only';
 SQL
 docker exec -i "$PDV_TEST_CONTAINER" psql -U postgres -d pdv_test -v ON_ERROR_STOP=1 < deployment/grants.sql
 export DATABASE_URL="postgresql+psycopg://pdv_api:pdv-api-test-only@localhost:$PDV_TEST_PORT/pdv_test"
-if [ "$#" -eq 0 ]; then set -- backend/tests; fi
+export IMPORT_TEST_DATABASE_URL="postgresql+psycopg://postgres:pdv-test-only@localhost:$PDV_TEST_PORT/pdv_import_test"
+if [ "$#" -eq 0 ]; then set -- backend/tests tests/importer; fi
 "$PYTHON" -m pytest "$@" -q

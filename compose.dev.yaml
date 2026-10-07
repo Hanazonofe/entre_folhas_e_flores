@@ -1,0 +1,51 @@
+name: entre-folhas-pdv-dev
+
+services:
+  db:
+    image: postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pdv_owner
+      POSTGRES_DB: ${DEV_DB_NAME}
+      POSTGRES_PASSWORD: ${DEV_OWNER_PASSWORD}
+      DEV_API_PASSWORD: ${DEV_API_PASSWORD}
+      DEV_BACKUP_PASSWORD: ${DEV_BACKUP_PASSWORD}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - database_dev:/var/lib/postgresql
+      - ./deployment/dev/init-db.sh:/docker-entrypoint-initdb.d/01-dev-roles.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pdv_owner -d ${DEV_DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.api
+    command: ["python", "/app/deployment/migrate.py"]
+    environment:
+      OWNER_DATABASE_URL: "postgresql+psycopg://pdv_owner:${DEV_OWNER_PASSWORD}@db:5432/${DEV_DB_NAME}"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.api
+    environment:
+      DATABASE_URL: "postgresql+psycopg://pdv_api:${DEV_API_PASSWORD}@db:5432/${DEV_DB_NAME}"
+      PUBLIC_ORIGIN: "http://localhost:8080"
+    ports:
+      - "127.0.0.1:8080:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  database_dev:

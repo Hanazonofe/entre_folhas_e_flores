@@ -1,0 +1,33 @@
+{
+  "testCommand": "./scripts/test-onp.sh",
+  "reporter": "tap",
+  "testGlobs": [
+    "backend/tests/test_*.py",
+    "tests/**/*test*.py",
+    "test/**/*.test.js",
+    "tests/**/*.test.js",
+    "*.test.js"
+  ],
+  "srcGlobs": [
+    "backend/pdv/**",
+    "backend/migrations/**",
+    "*.js",
+    "*.html",
+    "*.css",
+    "deployment/**",
+    "scripts/**"
+  ],
+  "ignoreGlobs": [
+    "node_modules/**",
+    ".git/**",
+    "dist/**",
+    "build/**",
+    "coverage/**",
+    ".spec/**",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "**/*.pyo",
+    ".pytest_cache/**",
+    "**/.pytest_cache/**"
+  ]
+}

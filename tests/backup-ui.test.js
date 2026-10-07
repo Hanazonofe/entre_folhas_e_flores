@@ -31,7 +31,7 @@ function ui() {
 const backup = { version: 1, exportedAt: '2026-08-30T12:00:00.000Z', products: [{ id:'new', name:'<img src=x onerror=alert(1)>', price:1, stock:2, status:'active' }], sales: [] };
 async function select(app, text) { app.element('#backupFile').files = [{ text: async () => text }]; await app.element('#backupFile').dispatch('change'); }
 
-test('backup UI previews counts, requires download and explicit confirmation before replacing', async () => {
+test('@spec:AC-046 backup UI previews counts, requires download and explicit confirmation before replacing', async () => {
   const app = ui(); await select(app, JSON.stringify(backup));
   assert.match(app.element('#backupPreview').textContent, /1 produto\(s\) e 0 venda/);
   assert.equal(app.element('#restoreBackup').disabled, true);

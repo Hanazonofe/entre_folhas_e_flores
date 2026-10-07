@@ -27,6 +27,7 @@ SAFE_FILES = {
     "api.js",
     "payments.js",
     "pdv.js",
+    "barcode-scanner.js",
     "vendas.js",
     "produtos.js",
     "receipt.js",
@@ -232,6 +233,7 @@ def edit_user(
 @app.get("/api/products")
 def products(
     active_only: bool = False,
+    code: str = Query("", max_length=100),
     q: str = Query("", max_length=200),
     offset: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=200),
@@ -241,6 +243,8 @@ def products(
     statement = select(m.Product)
     if active_only:
         statement = statement.where(m.Product.active.is_(True))
+    if code:
+        statement = statement.where(m.Product.code == code)
     if q:
         statement = statement.where(
             or_(

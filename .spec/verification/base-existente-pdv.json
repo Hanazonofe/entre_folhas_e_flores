@@ -1,0 +1,62 @@
+{
+  "feature": "base-existente-pdv",
+  "timestamp": "2026-10-07T15:27:12.182Z",
+  "gitRev": "4b95a10",
+  "command": "./scripts/test-onp.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 135,
+  "results": {
+    "AC-040": {
+      "status": "pass",
+      "testName": "pytest: @spec:AC-040 Sess\\xf5es e permiss\\xf5es locais",
+      "method": "tap"
+    },
+    "AC-041": {
+      "status": "pass",
+      "testName": "pytest: @spec:AC-041 Hist\\xf3rico \\xedntegro de vendas",
+      "method": "tap"
+    },
+    "AC-042": {
+      "status": "pass",
+      "testName": "@spec:AC-042 operator previews XLSX then explicitly confirms; changed file invalidates preview",
+      "method": "tap"
+    },
+    "AC-043": {
+      "status": "pass",
+      "testName": "pytest: @spec:AC-043 Importador CSV come\\xe7a em simula\\xe7\\xe3o",
+      "method": "tap"
+    },
+    "AC-044": {
+      "status": "pass",
+      "testName": "pytest: @spec:AC-044 Reconstru\\xe7\\xe3o do schema por migrations",
+      "method": "tap"
+    },
+    "AC-045": {
+      "status": "pass",
+      "testName": "pytest: @spec:AC-045 Backup pendente e retomada",
+      "method": "tap"
+    },
+    "AC-046": {
+      "status": "pass",
+      "testName": "@spec:AC-046 backup UI previews counts, requires download and explicit confirmation before replacing",
+      "method": "tap"
+    },
+    "AC-047": {
+      "status": "pass",
+      "testName": "@spec:AC-047 integer money and HTML escaping across receipt with split payments",
+      "method": "tap"
+    },
+    "AC-048": {
+      "status": "pass",
+      "testName": "@spec:AC-048 active pages do not load legacy persistence or external executable resources",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-002": {
+      "status": "pass",
+      "testName": "@principle:P-002 tracked files contain no detected operational secrets"
+    }
+  }
+}

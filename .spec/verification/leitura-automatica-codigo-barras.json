@@ -1,0 +1,87 @@
+{
+  "feature": "leitura-automatica-codigo-barras",
+  "timestamp": "2026-10-07T15:27:51.073Z",
+  "gitRev": "4b95a10",
+  "command": "./scripts/test-onp.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 135,
+  "results": {
+    "AC-001": {
+      "status": "pass",
+      "testName": "@spec:AC-001 reconhece uma leitura rápida sem foco na busca e sem Enter",
+      "method": "tap"
+    },
+    "AC-002": {
+      "status": "pass",
+      "testName": "AC-002: Incrementar a quantidade @spec:AC-002",
+      "method": "tap"
+    },
+    "AC-003": {
+      "status": "pass",
+      "testName": "AC-003: Preservar a busca e encontrar fora do filtro @spec:AC-003",
+      "method": "tap"
+    },
+    "AC-004": {
+      "status": "pass",
+      "testName": "AC-004: Avisar sobre produto não encontrado @spec:AC-004",
+      "method": "tap"
+    },
+    "AC-005": {
+      "status": "pass",
+      "testName": "AC-005: Suspender com janela aberta @spec:AC-005",
+      "method": "tap"
+    },
+    "AC-006": {
+      "status": "pass",
+      "testName": "@spec:AC-006 entrega o código interno completo, preservando zeros e sem prefixo",
+      "method": "tap"
+    },
+    "AC-007": {
+      "status": "pass",
+      "testName": "AC-007: Processar leituras consecutivas @spec:AC-007",
+      "method": "tap"
+    },
+    "AC-008": {
+      "status": "pass",
+      "testName": "@spec:AC-008 classifica digitação lenta como manual e nunca como leitura",
+      "method": "tap"
+    },
+    "AC-009": {
+      "status": "pass",
+      "testName": "@spec:AC-009 não promove digitação manual fora da busca a leitura automática",
+      "method": "tap"
+    },
+    "AC-010": {
+      "status": "pass",
+      "testName": "AC-010: Preservar bloqueios existentes da venda @spec:AC-010",
+      "method": "tap"
+    },
+    "AC-011": {
+      "status": "pass",
+      "testName": "AC-011: Informar produto inativo @spec:AC-011",
+      "method": "tap"
+    },
+    "AC-012": {
+      "status": "pass",
+      "testName": "AC-012: Preservar campos financeiros durante a leitura @spec:AC-012",
+      "method": "tap"
+    },
+    "AC-013": {
+      "status": "pass",
+      "testName": "AC-013: Aguardar leituras antes de conferir ou fechar @spec:AC-013",
+      "method": "tap"
+    },
+    "AC-014": {
+      "status": "pass",
+      "testName": "AC-014: Cancelar leituras pendentes ao abrir janela @spec:AC-014",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-002": {
+      "status": "pass",
+      "testName": "@principle:P-002 tracked files contain no detected operational secrets"
+    }
+  }
+}

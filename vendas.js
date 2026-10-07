@@ -27,14 +27,16 @@
   }
   function totals() {
     const subtotal=editedItems().reduce((sum,item)=>sum+item.quantity*item.unit_price_cents,0),discount=API.cents($('#editDiscount').value);
-    $('#editSubtotal').textContent=API.money(subtotal);$('#editTotal').textContent=API.money(subtotal-discount);
     if(discount>subtotal)throw new Error('Desconto maior que o subtotal.');
+    const total=subtotal-discount;
+    $('#editSubtotal').textContent=API.money(subtotal);$('#editTotal').textContent=API.money(total);payments.setTotal(total);
+    return total;
   }
   async function edit(id) {
     editing=await API.call('/sales/'+id);
     if(editing.status==='cancelled')throw new Error('Reative a venda antes de editar.');
     $('#editItems').innerHTML=editing.items.map((item,index)=>`<div class="edit-grid"><label>Produto ${index+1}<input data-edit-name="${index}" value="${API.esc(item.name)}" required></label><label>Quantidade ${index+1}<input data-edit-quantity="${index}" type="number" min="1" step="1" value="${item.quantity}" required></label><label>Preço ${index+1}<input data-edit-price="${index}" type="number" min="0" step="0.01" value="${(item.unit_price_cents/100).toFixed(2)}" required></label></div>`).join('');
-    $('#editDiscount').value=(editing.discount_cents/100).toFixed(2);$('#editNotes').value=editing.notes;payments.set(editing.payments);totals();$('#editNotice').textContent='';modal.classList.add('show');
+    $('#editDiscount').value=(editing.discount_cents/100).toFixed(2);$('#editNotes').value=editing.notes;payments.set(editing.payments,totals());$('#editNotice').textContent='';modal.classList.add('show');
   }
   $('#salesList').addEventListener('click',event=>{
     const button=event.target.closest('[data-action]');if(!button)return;

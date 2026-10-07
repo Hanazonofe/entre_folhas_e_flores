@@ -13,4 +13,4 @@ n=0
 until docker exec "$PDV_BACKUP_TEST_CONTAINER" pg_isready -U postgres -d pdv_test >/dev/null 2>&1; do
  n=$((n+1)); [ "$n" -lt 60 ] || exit 1; sleep 1
 done
-docker run --rm --network host --tmpfs /tmp -v "$PWD/backend:/app/backend:ro" -e "DATABASE_URL=postgresql+psycopg://postgres:pdv-test-only@localhost:$PDV_BACKUP_TEST_PORT/pdv_test" "$PDV_BACKUP_TEST_IMAGE" python /app/backend/tests/backup_roundtrip.py
+docker run --rm --network host --tmpfs /tmp -v "$PWD/backend:/app/backend:ro" -e "PDV_TEST_TARGET=localhost:$PDV_BACKUP_TEST_PORT" -e "DATABASE_URL=postgresql+psycopg://postgres:pdv-test-only@localhost:$PDV_BACKUP_TEST_PORT/pdv_test" "$PDV_BACKUP_TEST_IMAGE" python /app/backend/tests/backup_roundtrip.py
