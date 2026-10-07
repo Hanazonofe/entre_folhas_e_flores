@@ -225,7 +225,9 @@ Ele:
 6. executa:
 
 ```bash
-docker compose up -d --build db migrate api web
+docker compose build api migrate
+# Caddy é reconstruído se sua infraestrutura mudar ou a imagem local faltar.
+docker compose up -d --no-build db migrate api web
 ```
 
 7. aguarda a aplicação iniciar;
@@ -238,6 +240,13 @@ docker compose up -d --build db migrate api web
 9. considera o deploy concluído somente se o health check responder com sucesso.
 
 O serviço `backup` não faz parte desse deploy atualmente.
+
+Deploys que alteram apenas a aplicação reutilizam a imagem local
+`entre-folhas-pdv-caddy`. O pipeline reconstrói o serviço `web` quando a imagem
+está ausente ou quando mudam `deployment/Dockerfile.caddy`,
+`deployment/caddy-entrypoint.sh`, `.dockerignore`, `compose.yaml` ou
+`compose.override.yaml` em relação ao checkout anterior. Isso evita baixar e
+compilar novamente as dependências do Caddy/DuckDNS em uma release do PDV.
 
 ---
 

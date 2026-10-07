@@ -161,9 +161,22 @@ jobs:
 
               git reset --hard "$SHA"
 
-              echo "Construindo e atualizando containers..."
-              docker compose up -d --build \
-                db migrate api web
+              echo "Construindo API e migrações..."
+              docker compose build api migrate
+
+              if git diff --quiet "$PREVIOUS_SHA" "$SHA" -- \
+                deployment/Dockerfile.caddy deployment/caddy-entrypoint.sh \
+                .dockerignore compose.yaml compose.override.yaml \
+                && docker image inspect entre-folhas-pdv-caddy >/dev/null 2>&1
+              then
+                echo "Reutilizando imagem do Caddy: infraestrutura web sem alterações."
+              else
+                echo "Construindo Caddy: infraestrutura alterada ou imagem ausente."
+                docker compose build web
+              fi
+
+              echo "Atualizando containers..."
+              docker compose up -d --no-build db migrate api web
 
               echo "Aguardando aplicação ficar saudável..."
 
@@ -190,4 +203,4 @@ jobs:
               docker compose ps
               docker compose logs --tail=100 api web migrate db
               exit 1
-          EOF  
+          EOF
