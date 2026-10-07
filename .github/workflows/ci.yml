@@ -122,7 +122,16 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          for attempt in $(seq 1 10); do
+            if ssh-keyscan -T 10 -H "$DEPLOY_HOST" > ~/.ssh/deploy_hostkeys; then
+              cat ~/.ssh/deploy_hostkeys >> ~/.ssh/known_hosts
+              exit 0
+            fi
+            echo "Aguardando SSH do servidor: tentativa $attempt/10..."
+            sleep 3
+          done
+          echo "ERRO: servidor indisponível para obter a chave pública SSH."
+          exit 1
 
       - name: Deploy
         env:
