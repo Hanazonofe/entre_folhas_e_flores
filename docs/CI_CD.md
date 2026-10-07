@@ -248,6 +248,11 @@ está ausente ou quando mudam `deployment/Dockerfile.caddy`,
 `compose.override.yaml` em relação ao checkout anterior. Isso evita baixar e
 compilar novamente as dependências do Caddy/DuckDNS em uma release do PDV.
 
+A configuração SSH tenta obter a chave pública do servidor até dez vezes,
+com timeout de dez segundos por tentativa e intervalo de três segundos.
+Uma falha de conexão termina o job antes de atualizar a aplicação; a
+verificação de host SSH permanece habilitada.
+
 ---
 
 ## 7. Banco de dados

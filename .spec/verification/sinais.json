@@ -1121,19 +1121,19 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "leitura-automatica-codigo-barras",
       "ref": "—",
-      "ocorrencias": 4,
+      "ocorrencias": 5,
       "primeiraVez": "2026-09-28T19:03:57.971Z",
-      "ultimaVez": "2026-10-07T15:25:16.086Z",
-      "gitRev": "4b95a10"
+      "ultimaVez": "2026-10-07T16:33:24.745Z",
+      "gitRev": "01723d2"
     },
     "VERIFY_OBSOLETO::ajuste-meios-pagamento::—": {
       "codigo": "VERIFY_OBSOLETO",
       "feature": "ajuste-meios-pagamento",
       "ref": "—",
-      "ocorrencias": 3,
+      "ocorrencias": 4,
       "primeiraVez": "2026-09-29T12:43:26.529Z",
-      "ultimaVez": "2026-10-07T15:25:16.086Z",
-      "gitRev": "4b95a10"
+      "ultimaVez": "2026-10-07T16:33:24.745Z",
+      "gitRev": "01723d2"
     },
     "ARQUIVO_INEXISTENTE::layout-pdv-mobile::T-014": {
       "codigo": "ARQUIVO_INEXISTENTE",
@@ -1220,19 +1220,19 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "base-existente-pdv",
       "ref": "—",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-10-07T15:25:16.086Z",
-      "ultimaVez": "2026-10-07T15:25:16.086Z",
-      "gitRev": "4b95a10"
+      "ultimaVez": "2026-10-07T16:33:24.745Z",
+      "gitRev": "01723d2"
     },
     "VERIFY_OBSOLETO::layout-pdv-mobile::—": {
       "codigo": "VERIFY_OBSOLETO",
       "feature": "layout-pdv-mobile",
       "ref": "—",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-10-07T15:25:16.086Z",
-      "ultimaVez": "2026-10-07T15:25:16.086Z",
-      "gitRev": "4b95a10"
+      "ultimaVez": "2026-10-07T16:33:24.745Z",
+      "gitRev": "01723d2"
     }
   }
 }
