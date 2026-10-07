@@ -1,7 +1,7 @@
 {
   "feature": "leitura-automatica-codigo-barras",
-  "timestamp": "2026-09-30T00:51:10.297Z",
-  "gitRev": "aa3e9fd",
+  "timestamp": "2026-10-07T15:27:51.073Z",
+  "gitRev": "4b95a10",
   "command": "./scripts/test-onp.sh",
   "reporter": "tap",
   "exitCode": 0,

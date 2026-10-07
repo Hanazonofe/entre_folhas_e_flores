@@ -1,7 +1,7 @@
 {
   "feature": "ajuste-meios-pagamento",
-  "timestamp": "2026-09-30T00:50:50.360Z",
-  "gitRev": "aa3e9fd",
+  "timestamp": "2026-10-07T15:26:52.469Z",
+  "gitRev": "4b95a10",
   "command": "./scripts/test-onp.sh",
   "reporter": "tap",
   "exitCode": 0,

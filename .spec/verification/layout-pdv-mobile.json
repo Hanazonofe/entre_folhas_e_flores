@@ -1,7 +1,7 @@
 {
   "feature": "layout-pdv-mobile",
-  "timestamp": "2026-09-30T00:50:29.219Z",
-  "gitRev": "aa3e9fd",
+  "timestamp": "2026-10-07T15:27:31.596Z",
+  "gitRev": "4b95a10",
   "command": "./scripts/test-onp.sh",
   "reporter": "tap",
   "exitCode": 0,
