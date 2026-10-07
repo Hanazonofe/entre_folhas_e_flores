@@ -1,7 +1,7 @@
 {
   "feature": "base-existente-pdv",
-  "timestamp": "2026-10-07T15:27:12.182Z",
-  "gitRev": "4b95a10",
+  "timestamp": "2026-10-07T16:34:35.143Z",
+  "gitRev": "01723d2",
   "command": "./scripts/test-onp.sh",
   "reporter": "tap",
   "exitCode": 0,
