@@ -20,7 +20,11 @@ git cat-file -e "${SHA}^{commit}"
 git for-each-ref --contains "$SHA" --format='%(refname)' refs/remotes/origin/ | grep -q . || { echo 'Commit não pertence às branches remotas.' >&2; exit 1; }
 previous=$(git rev-parse HEAD)
 echo "Versão anterior: $previous; candidata: $SHA"
-git checkout --detach "$SHA"
+(umask 022; git checkout --detach "$SHA")
+# Repair source files from older deployments that checked out under umask 077.
+# Docker COPY preserves modes; the API drops to uid 10001 before importing.
+chmod -R u=rwX,go=rX backend deployment
+chmod a+r -- *.html *.js *.css
 export HOMOL_SHA=$SHA
 export HOMOL_CADDY_TAG
 HOMOL_CADDY_TAG=$(sha256sum deployment/Dockerfile.caddy deployment/caddy-entrypoint.sh | sha256sum | cut -c1-16)
