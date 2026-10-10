@@ -1,7 +1,7 @@
 # Spec: Sandbox de homologação
 
 > feature: homologacao-sandbox
-> status: em-andamento
+> status: em-implementacao
 
 ## Contexto
 
