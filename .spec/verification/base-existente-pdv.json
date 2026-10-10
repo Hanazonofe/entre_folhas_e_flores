@@ -1,11 +1,11 @@
 {
   "feature": "base-existente-pdv",
-  "timestamp": "2026-10-10T11:20:05.429Z",
-  "gitRev": "2d6d983",
+  "timestamp": "2026-10-10T11:29:51.306Z",
+  "gitRev": "e67d8c5",
   "command": "./scripts/test-onp.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 145,
+  "testsParsed": 146,
   "results": {
     "AC-040": {
       "status": "pass",
