@@ -1,11 +1,11 @@
 {
   "feature": "layout-pdv-mobile",
-  "timestamp": "2026-10-07T16:34:55.009Z",
-  "gitRev": "01723d2",
+  "timestamp": "2026-10-10T11:20:30.187Z",
+  "gitRev": "2d6d983",
   "command": "./scripts/test-onp.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 135,
+  "testsParsed": 145,
   "results": {
     "AC-032": {
       "status": "pass",

@@ -1,0 +1,52 @@
+{
+  "feature": "homologacao-sandbox",
+  "timestamp": "2026-10-10T11:18:54.950Z",
+  "gitRev": "f51d0d9",
+  "command": "./scripts/test-onp.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 145,
+  "results": {
+    "AC-060": {
+      "status": "pass",
+      "testName": "pytest: @spec:AC-060 exporta\\xe7\\xe3o sanitizada",
+      "method": "tap"
+    },
+    "AC-061": {
+      "status": "pass",
+      "testName": "pytest: @spec:AC-061 recusa destino operacional-production-postgresql://pdv_owner@db/pdv_homol",
+      "method": "tap"
+    },
+    "AC-062": {
+      "status": "pass",
+      "testName": "pytest: @spec:AC-062 hist\\xf3rico e sequ\\xeancia",
+      "method": "tap"
+    },
+    "AC-063": {
+      "status": "pass",
+      "testName": "pytest: @spec:AC-063 rollback integral",
+      "method": "tap"
+    },
+    "AC-064": {
+      "status": "pass",
+      "testName": "pytest: @spec:AC-064 faixa de homologa\\xe7\\xe3o",
+      "method": "tap"
+    },
+    "AC-065": {
+      "status": "pass",
+      "testName": "pytest: @spec:AC-065 SHA publicado",
+      "method": "tap"
+    },
+    "AC-066": {
+      "status": "pass",
+      "testName": "@spec:AC-066 provisionamento e Compose isolam o sandbox",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-002": {
+      "status": "pass",
+      "testName": "@principle:P-002 tracked files contain no detected operational secrets"
+    }
+  }
+}
