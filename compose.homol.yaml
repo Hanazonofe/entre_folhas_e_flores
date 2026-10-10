@@ -1,0 +1,110 @@
+name: entre-folhas-pdv-homol
+
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+
+services:
+  db:
+    image: postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+    restart: unless-stopped
+    cpus: 0.5
+    mem_limit: 512m
+    logging: *logging
+    environment:
+      POSTGRES_USER: pdv_owner
+      POSTGRES_DB: pdv_homol
+      POSTGRES_PASSWORD_FILE: /run/secrets/owner_password
+    secrets: [owner_password, api_password, backup_password]
+    volumes:
+      - sandbox_database:/var/lib/postgresql
+      - ./deployment/init-db.sh:/docker-entrypoint-initdb.d/01-pdv.sh:ro
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U pdv_owner -d pdv_homol"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  migrate:
+    build: {context: ., dockerfile: deployment/Dockerfile.api}
+    image: entre-folhas-pdv-homol-api:${HOMOL_SHA:?Set HOMOL_SHA}
+    command: [python, /app/deployment/migrate.py]
+    user: "0:0"
+    cpus: 0.5
+    mem_limit: 256m
+    logging: *logging
+    environment:
+      OWNER_DATABASE_URL_FILE: /run/secrets/owner_url
+    secrets: [owner_url]
+    depends_on:
+      db: {condition: service_healthy}
+    networks: [database]
+    restart: "no"
+  api:
+    image: entre-folhas-pdv-homol-api:${HOMOL_SHA:?Set HOMOL_SHA}
+    restart: unless-stopped
+    cpus: 0.5
+    mem_limit: 384m
+    logging: *logging
+    environment:
+      DATABASE_URL_FILE: /run/secrets/api_url
+      PUBLIC_ORIGIN: https://entre-folhas-homol.duckdns.org:8443
+      APP_ENV: homologation
+      RELEASE_SHA: ${HOMOL_SHA}
+    secrets: [api_url]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    read_only: true
+    tmpfs: [/tmp]
+    networks: [database, frontend]
+  web:
+    build: {context: ., dockerfile: deployment/Dockerfile.caddy}
+    image: entre-folhas-pdv-homol-caddy:${HOMOL_CADDY_TAG:-local}
+    restart: unless-stopped
+    cpus: 0.25
+    mem_limit: 128m
+    logging: *logging
+    environment:
+      PDV_HOST: entre-folhas-homol.duckdns.org
+    ports:
+      - "${HOMOL_LAN_IP:?Set HOMOL_LAN_IP}:8443:443"
+      - "${HOMOL_TAILNET_IP:-100.101.186.24}:8443:443"
+    volumes:
+      - ./deployment/Caddyfile:/etc/caddy/Caddyfile:ro
+      - sandbox_certificates:/data
+      - sandbox_caddy_config:/config
+    secrets: [duckdns_token]
+    entrypoint: [/usr/local/bin/caddy-entrypoint.sh]
+    depends_on: [api]
+    networks: [frontend, ingress]
+  seed:
+    profiles: [maintenance]
+    image: entre-folhas-pdv-homol-api:${HOMOL_SHA}
+    entrypoint: [python, -m, pdv.homologation, import]
+    user: "0:0"
+    cpus: 0.5
+    mem_limit: 384m
+    logging: *logging
+    environment:
+      APP_ENV: homologation
+      OWNER_DATABASE_URL_FILE: /run/secrets/owner_url
+      HOMOL_ADMIN_PASSWORD_FILE: /run/secrets/admin_password
+    secrets: [owner_url, admin_password]
+    networks: [database]
+
+networks:
+  database: {internal: true}
+  frontend: {internal: true}
+  ingress: {}
+volumes:
+  sandbox_database: {}
+  sandbox_certificates: {}
+  sandbox_caddy_config: {}
+secrets:
+  owner_password: {file: "${HOMOL_SECRETS_DIR:?}/owner_password"}
+  api_password: {file: "${HOMOL_SECRETS_DIR:?}/api_password"}
+  backup_password: {file: "${HOMOL_SECRETS_DIR:?}/backup_password"}
+  owner_url: {file: "${HOMOL_SECRETS_DIR:?}/owner_url"}
+  api_url: {file: "${HOMOL_SECRETS_DIR:?}/api_url"}
+  duckdns_token: {file: "${HOMOL_SECRETS_DIR:?}/duckdns_token"}
+  admin_password: {file: "${HOMOL_SECRETS_DIR:?}/admin_password"}
