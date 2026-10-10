@@ -16,6 +16,6 @@
 
 ## T-016 — Provisionar e publicar sandbox isolado [em-andamento]
 - Refs: US-007, AC-066
-- Arquivos: compose.homol.yaml, scripts/configure-homologation.py, scripts/deploy-homologation.sh, scripts/test-homologation-config.py, tests/homologation-config.test.js, .github/workflows/homologation.yml, .gitignore, docs/HOMOLOGATION.md, docs/HOMOLOGATION-RESUME.md
+- Arquivos: compose.homol.yaml, scripts/configure-homologation.py, scripts/deploy-homologation.sh, scripts/test-homologation-config.py, tests/homologation-config.test.js, tests/homologation-deploy.test.js, .github/workflows/homologation.yml, .gitignore, docs/HOMOLOGATION.md, docs/HOMOLOGATION-RESUME.md
 - Dependências: T-014, T-015
 - Notas: CI, integração, Environment, secrets, dois deploys, falha controlada, isolamento de produção e contas individuais ainda precisam de validação no servidor.
