@@ -42,7 +42,7 @@ docker ps -q --filter label=com.docker.compose.project=entre-folhas-pdv-homol \
   --filter label=com.docker.compose.service=web | xargs -r docker stop
 docker ps -q --filter label=com.docker.compose.project=entre-folhas-pdv-homol \
   --filter label=com.docker.compose.service=api | xargs -r docker stop
-"${compose[@]}" up -d --no-build db
+"${compose[@]}" up -d --wait --wait-timeout 120 --no-build db
 "${compose[@]}" run --rm --no-deps migrate
 # The one-off migration above is the gate; do not run it again through depends_on.
 "${compose[@]}" up -d --no-build --no-deps api web

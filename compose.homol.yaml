@@ -21,7 +21,8 @@ services:
       - ./deployment/init-db.sh:/docker-entrypoint-initdb.d/01-pdv.sh:ro
     networks: [database]
     healthcheck:
-      test: [CMD-SHELL, "pg_isready -U pdv_owner -d pdv_homol"]
+      # The init-only PostgreSQL listens on a Unix socket; require the final TCP server.
+      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U pdv_owner -d pdv_homol"]
       interval: 5s
       timeout: 3s
       retries: 20
