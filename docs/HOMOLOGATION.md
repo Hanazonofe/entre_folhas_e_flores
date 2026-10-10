@@ -1,7 +1,8 @@
 # Operação do sandbox de homologação
 
-Status em 10/10/2026: implementação local em revisão. Instalação do novo sandbox,
-integração no GitHub, acesso HTTPS e entrega de contas ainda pendentes.
+Status em 10/10/2026: sandbox instalado, com HTTPS na tailnet, catálogo
+sanitizado e administrador provisionado. Login e faixa visual validados por
+cliente externo. Acesso LAN em dispositivos sem Tailscale permanece pendente.
 
 ## Isolamento e acesso
 
@@ -99,15 +100,34 @@ Nunca executar `down -v` no servidor.
 
 ## Validação e promoção
 
-Provas locais: `bash scripts/test-onp.sh`, `npm run check`, `bash -n` nos scripts
-e `python3 scripts/test-homologation-config.py`. Os testes conferem remoção de
+Provas locais: `bash scripts/test-onp.sh`, `npm run check`, `bash -n` nos scripts,
+`python3 scripts/test-homologation-config.py` e, com a imagem `pdv-test-api`
+disponível, `python3 scripts/test-homologation-config.py --start-db`. Este último
+usa banco novo em tmpfs e inicialização atrasada para provar a espera por TCP
+antes da migration. Os testes conferem remoção de
 credenciais/observações, contas inativas, recusa de destinos operacionais,
 histórico completo, sequência de vendas, rollback e isolamento do Compose.
 
 Antes de liberar: registrar o SHA, CI, HTTPS, faixa visual, importação, contas
 individuais, produção saudável antes/depois, dois deploys e uma falha controlada.
 Validar clientes Tailscale e LAN e registrar limitações reais. Essas provas de
-instalação ainda não foram executadas para o novo sandbox.
+instalação devem ser registradas antes de considerar cada etapa concluída.
+
+Primeira publicação validada: `e51a09def63258690f6dac3677072b94bca51250`,
+[workflow 38049420494](https://github.com/Hanazonofe/entre_folhas_e_flores/actions/runs/38049420494).
+Health confirmado no servidor, runner e cliente Tailscale. Importação explícita:
+2.351 produtos e sete usuários históricos inativos, mais `homol-admin` ativo;
+a origem tinha zero vendas/itens/pagamentos/eventos. O histórico com vendas foi
+provado nos testes descartáveis; não houve histórico real para importar nessa
+execução. Login administrativo, consulta autenticada de catálogo/vendas e faixa
+em login/PDV/comprovante passaram. Produção respondeu saudável depois da cópia.
+
+A instalação revelou e corrigiu: checkout de branch única, ausência de espera
+pela disponibilidade TCP do banco, consumo do script SSH pelo stdin da migration
+e fontes ilegíveis ao abandonar root. O workflow agora exige também health HTTPS
+externo no runner. Nenhuma senha está neste documento; as credenciais entregues
+ficam fora do controle de versão. O usuário solicitou somente o administrador;
+as demais contas serão criadas por ele na aplicação.
 
 Promover significa integrar o código aprovado pelo processo de produção e
 acionar o workflow de produção. Nunca copiar banco, contas ou volumes de

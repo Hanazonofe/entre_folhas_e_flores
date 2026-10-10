@@ -2,13 +2,13 @@
 
 > feature: homologacao-sandbox
 
-## T-014 — Sanitizar e importar histórico [em-andamento]
+## T-014 — Sanitizar e importar histórico [concluida]
 - Refs: US-007, AC-060, AC-061, AC-062, AC-063
 - Arquivos: backend/pdv/homologation.py, backend/tests/test_homologation.py, scripts/refresh-homologation.sh
 - Dependências: Nenhuma
 - Notas: Exportação read only, validação restrita e substituição transacional; provar em banco descartável.
 
-## T-015 — Identificar ambiente e release [em-andamento]
+## T-015 — Identificar ambiente e release [concluida]
 - Refs: US-007, AC-064, AC-065
 - Arquivos: backend/pdv/app.py, backend/tests/test_homologation.py
 - Dependências: Nenhuma
@@ -18,4 +18,4 @@
 - Refs: US-007, AC-066
 - Arquivos: compose.homol.yaml, scripts/configure-homologation.py, scripts/deploy-homologation.sh, scripts/test-homologation-config.py, tests/homologation-config.test.js, tests/homologation-deploy.test.js, .github/workflows/homologation.yml, .gitignore, docs/HOMOLOGATION.md, docs/HOMOLOGATION-RESUME.md
 - Dependências: T-014, T-015
-- Notas: CI, integração, Environment, secrets, dois deploys, falha controlada, isolamento de produção e contas individuais ainda precisam de validação no servidor.
+- Notas: CI, Environment, secrets, primeira publicação HTTPS, cópia sanitizada e login administrativo validados em 10/10/2026. Segunda publicação e rejeição controlada em validação. Acesso LAN em cliente sem Tailscale permanece pendente. O usuário pediu somente administrador e criará as demais contas na aplicação.
