@@ -28,3 +28,21 @@ test('deploy encontra candidato em checkout que acompanha uma única branch anti
     fs.rmSync(folder, { recursive: true, force: true });
   }
 });
+
+test('migration não consome o restante do script recebido pelo SSH', () => {
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'pdv-homol-stdin-'));
+  try {
+    const migration = fs.readFileSync('scripts/deploy-homologation.sh', 'utf8')
+      .split('\n').find(line => line.startsWith('"${compose[@]}" run ') && /migrate/.test(line));
+    // Simulate a container client reading stdin, under the real bash -s transport.
+    const program = 'set -euo pipefail\ncompose=(cat)\n' +
+      'cat() { command cat > "$CAPTURE"; }\n' + migration + '\n' +
+      'printf "REMAINING_SCRIPT_EXECUTED\\n"\n';
+    const capture = path.join(folder, 'stdin');
+    const result = execFileSync('bash', ['-s'], { input: program, encoding: 'utf8', env: { ...process.env, CAPTURE: capture } });
+    assert.equal(result.trim(), 'REMAINING_SCRIPT_EXECUTED');
+    assert.equal(fs.readFileSync(capture, 'utf8'), '');
+  } finally {
+    fs.rmSync(folder, { recursive: true, force: true });
+  }
+});
