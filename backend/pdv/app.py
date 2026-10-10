@@ -1,10 +1,11 @@
 import os
+import re
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from uuid import UUID
 from zoneinfo import ZoneInfo
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy import func, or_, select, text
 from sqlalchemy.exc import IntegrityError, OperationalError
 from . import __version__, auth, models as m, schemas as s, services as svc
@@ -95,7 +96,9 @@ async def database_error(request, error):
 @app.get("/api/health")
 def health(db=Depends(get_db)):
     db.execute(text("SELECT 1"))
-    return {"status": "ok", "version": __version__}
+    return {"status": "ok", "version": __version__,
+            "environment": os.getenv("APP_ENV", "production"),
+            "release_sha": os.getenv("RELEASE_SHA", "")}
 
 
 @app.post("/api/auth/login")
@@ -557,4 +560,14 @@ def root():
 def static_file(file: str):
     if file not in SAFE_FILES:
         raise HTTPException(404)
+    if os.getenv("APP_ENV") == "homologation" and file.endswith(".html"):
+        content = (WEB_ROOT / file).read_text()
+        banner = ('<aside id="environmentBanner" role="status" '
+                  'style="position:sticky;top:0;z-index:9999;padding:12px;'
+                  'background:#fff1b8;color:#533600;text-align:center;'
+                  'font:700 14px Arial,sans-serif;border:2px solid #9a6700">'
+                  'HOMOLOGAÇÃO — dados de teste</aside>')
+        content = re.sub(r"(<body\b[^>]*>)", lambda match: match[0] + banner,
+                         content, count=1, flags=re.IGNORECASE)
+        return HTMLResponse(content)
     return FileResponse(WEB_ROOT / file)
