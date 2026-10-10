@@ -13,7 +13,9 @@ flock -n 9 || { echo 'Outra operação de homologação está em andamento.' >&2
 available=$(awk '/MemAvailable:/ {print int($2/1024)}' /proc/meminfo)
 disk=$(df -Pm . | awk 'NR==2 {print $4}')
 (( available >= 1536 && disk >= 3072 )) || { echo 'Sem margem de recursos para homologação.' >&2; exit 1; }
-git fetch --prune origin
+# Old installations may have been cloned with --single-branch (main only).
+# Fetch every branch explicitly before checking candidate reachability.
+git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
 git cat-file -e "${SHA}^{commit}"
 git for-each-ref --contains "$SHA" --format='%(refname)' refs/remotes/origin/ | grep -q . || { echo 'Commit não pertence às branches remotas.' >&2; exit 1; }
 previous=$(git rev-parse HEAD)
