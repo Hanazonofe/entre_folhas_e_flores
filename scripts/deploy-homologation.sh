@@ -13,12 +13,18 @@ flock -n 9 || { echo 'Outra operação de homologação está em andamento.' >&2
 available=$(awk '/MemAvailable:/ {print int($2/1024)}' /proc/meminfo)
 disk=$(df -Pm . | awk 'NR==2 {print $4}')
 (( available >= 1536 && disk >= 3072 )) || { echo 'Sem margem de recursos para homologação.' >&2; exit 1; }
-git fetch --prune origin
+# Old installations may have been cloned with --single-branch (main only).
+# Fetch every branch explicitly before checking candidate reachability.
+git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
 git cat-file -e "${SHA}^{commit}"
 git for-each-ref --contains "$SHA" --format='%(refname)' refs/remotes/origin/ | grep -q . || { echo 'Commit não pertence às branches remotas.' >&2; exit 1; }
 previous=$(git rev-parse HEAD)
 echo "Versão anterior: $previous; candidata: $SHA"
-git checkout --detach "$SHA"
+(umask 022; git checkout --detach "$SHA")
+# Repair source files from older deployments that checked out under umask 077.
+# Docker COPY preserves modes; the API drops to uid 10001 before importing.
+chmod -R u=rwX,go=rX backend deployment
+chmod a+r -- *.html *.js *.css
 export HOMOL_SHA=$SHA
 export HOMOL_CADDY_TAG
 HOMOL_CADDY_TAG=$(sha256sum deployment/Dockerfile.caddy deployment/caddy-entrypoint.sh | sha256sum | cut -c1-16)
@@ -40,8 +46,9 @@ docker ps -q --filter label=com.docker.compose.project=entre-folhas-pdv-homol \
   --filter label=com.docker.compose.service=web | xargs -r docker stop
 docker ps -q --filter label=com.docker.compose.project=entre-folhas-pdv-homol \
   --filter label=com.docker.compose.service=api | xargs -r docker stop
-"${compose[@]}" up -d --no-build db
-"${compose[@]}" run --rm --no-deps migrate
+"${compose[@]}" up -d --wait --wait-timeout 120 --no-build db
+# This script arrives over SSH stdin; containers must not consume its remainder.
+"${compose[@]}" run --rm --no-deps -T migrate </dev/null
 # The one-off migration above is the gate; do not run it again through depends_on.
 "${compose[@]}" up -d --no-build --no-deps api web
 for attempt in $(seq 1 60); do

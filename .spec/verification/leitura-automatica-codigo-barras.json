@@ -1,11 +1,11 @@
 {
   "feature": "leitura-automatica-codigo-barras",
-  "timestamp": "2026-10-10T11:20:53.435Z",
-  "gitRev": "2d6d983",
+  "timestamp": "2026-10-10T11:45:31.680Z",
+  "gitRev": "cdd8b28",
   "command": "./scripts/test-onp.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 145,
+  "testsParsed": 148,
   "results": {
     "AC-001": {
       "status": "pass",

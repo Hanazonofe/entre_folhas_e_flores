@@ -91,3 +91,12 @@ jobs:
           ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o IdentitiesOnly=yes \
             -i ~/.ssh/id_ed25519 "$DEPLOY_USER@$DEPLOY_HOST" \
             "bash -s -- '$CANDIDATE'" < scripts/deploy-homologation.sh
+      - name: Verify HTTPS from runner
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          CANDIDATE: ${{ inputs.sha }}
+        run: |
+          curl --max-time 20 --retry 3 --retry-delay 2 --retry-all-errors -fsS \
+            --resolve "entre-folhas-homol.duckdns.org:8443:$DEPLOY_HOST" \
+            https://entre-folhas-homol.duckdns.org:8443/api/health > /tmp/homol-health.json
+          python -c 'import json,sys; p=json.load(open("/tmp/homol-health.json")); assert p["status"]=="ok" and p["environment"]=="homologation" and p["release_sha"]==sys.argv[1]' "$CANDIDATE"

@@ -62,4 +62,12 @@ da pausa anterior; os avanços da retomada constam ao final.
 - Documentação operacional em `docs/HOMOLOGATION.md` e rastreabilidade em
   `.spec/features/homologacao-sandbox/`.
 - Acesso SSH confirmado novamente. Autenticação GitHub inicialmente inválida,
-  depois restabelecida. Instalação e validações reais continuam pendentes.
+  depois restabelecida. PR #9 integrado e branch padrão alterada para production.
+- Environment/secrets provisionados; correções de instalação no PR #10.
+- Publicação e HTTPS confirmados no workflow 38049420494. Cópia sanitizada
+  importada: 2.351 produtos, sete usuários históricos inativos e zero vendas.
+  Login de homol-admin e faixas em login/PDV/comprovante validados na tailnet;
+  produção saudável após a cópia. Usuário pediu somente o administrador.
+- Credenciais entregues fora de Git; segundo deploy confirmado no workflow
+  38050109524, SHA inválido recusado no workflow 38050139755, e cliente LAN sem
+  Tailscale ainda pendente.
