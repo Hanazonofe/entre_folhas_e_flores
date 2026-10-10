@@ -122,6 +122,14 @@ provado nos testes descartáveis; não houve histórico real para importar nessa
 execução. Login administrativo, consulta autenticada de catálogo/vendas e faixa
 em login/PDV/comprovante passaram. Produção respondeu saudável depois da cópia.
 
+Segunda publicação validada, sem atualizar a base:
+`ee10f6bf47ee53bb156600d36d4afbd2a6480e9e`,
+[workflow 38050109524](https://github.com/Hanazonofe/entre_folhas_e_flores/actions/runs/38050109524).
+O teste controlado com SHA inválido foi recusado em `Validate SHA syntax` e o
+job de deploy não executou:
+[workflow 38050139755](https://github.com/Hanazonofe/entre_folhas_e_flores/actions/runs/38050139755).
+Essa falha é esperada e prova a recusa da entrada inválida.
+
 A instalação revelou e corrigiu: checkout de branch única, ausência de espera
 pela disponibilidade TCP do banco, consumo do script SSH pelo stdin da migration
 e fontes ilegíveis ao abandonar root. O workflow agora exige também health HTTPS

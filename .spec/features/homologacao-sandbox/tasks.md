@@ -18,4 +18,4 @@
 - Refs: US-007, AC-066
 - Arquivos: compose.homol.yaml, scripts/configure-homologation.py, scripts/deploy-homologation.sh, scripts/test-homologation-config.py, tests/homologation-config.test.js, tests/homologation-deploy.test.js, .github/workflows/homologation.yml, .gitignore, docs/HOMOLOGATION.md, docs/HOMOLOGATION-RESUME.md
 - Dependências: T-014, T-015
-- Notas: CI, Environment, secrets, primeira publicação HTTPS, cópia sanitizada e login administrativo validados em 10/10/2026. Segunda publicação e rejeição controlada em validação. Acesso LAN em cliente sem Tailscale permanece pendente. O usuário pediu somente administrador e criará as demais contas na aplicação.
+- Notas: CI, Environment, secrets, duas publicações HTTPS, cópia sanitizada, login administrativo e rejeição controlada de SHA inválido validados em 10/10/2026. Acesso LAN em cliente sem Tailscale permanece pendente. O usuário pediu somente administrador e criará as demais contas na aplicação. Evidências: docs/HOMOLOGATION.md.

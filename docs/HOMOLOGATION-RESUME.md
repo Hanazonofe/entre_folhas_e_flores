@@ -68,5 +68,6 @@ da pausa anterior; os avanços da retomada constam ao final.
   importada: 2.351 produtos, sete usuários históricos inativos e zero vendas.
   Login de homol-admin e faixas em login/PDV/comprovante validados na tailnet;
   produção saudável após a cópia. Usuário pediu somente o administrador.
-- Credenciais entregues fora de Git; segundo deploy/rejeição controlada em
-  validação, e cliente LAN sem Tailscale ainda pendente.
+- Credenciais entregues fora de Git; segundo deploy confirmado no workflow
+  38050109524, SHA inválido recusado no workflow 38050139755, e cliente LAN sem
+  Tailscale ainda pendente.
