@@ -2,6 +2,7 @@
 
 PDV de uma loja com múltiplos operadores, banco PostgreSQL centralizado, API FastAPI e páginas servidas localmente por HTTPS. Logins e vendas independem de internet; conexão ao servidor local é obrigatória. O bot Telegram em `main.py` permanece separado e não foi alterado.
 
+- [Design system Garden — guia e componentes](docs/DESIGN_SYSTEM.md) · catálogo em `/design-system.html`
 - [Modelo, diagrama e dicionário de dados](docs/MODEL.md)
 - [Instalação Linux, Docker e HTTPS local](docs/INSTALL.md)
 - [Backup Google Drive e restauração](docs/BACKUP.md)

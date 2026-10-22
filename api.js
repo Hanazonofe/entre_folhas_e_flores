@@ -36,8 +36,8 @@ const API = (() => {
   async function authenticate() {
     if (authentication) return authentication;
     authentication = new Promise(resolve => {
-      const dialog = document.createElement('dialog'); dialog.className = 'auth-dialog';
-      dialog.innerHTML = '<form><h2>Entrar no sistema local</h2><label>Login<input name="login" required autocomplete="username"></label><label>Senha<input name="password" type="password" required autocomplete="current-password"></label><p role="alert"></p><button>Entrar</button></form>';
+      const dialog = document.createElement('dialog'); dialog.className = 'auth-dialog'; dialog.setAttribute('aria-labelledby', 'authTitle');
+      dialog.innerHTML = '<form><h2 id="authTitle">Entrar no sistema local</h2><label>Login<input name="login" required autocomplete="username"></label><label>Senha<input name="password" type="password" required autocomplete="current-password"></label><p role="alert"></p><button>Entrar</button></form>';
       document.body.append(dialog); dialog.showModal();
       dialog.addEventListener('cancel', event => event.preventDefault());
       dialog.querySelector('form').addEventListener('submit', async event => {
@@ -71,7 +71,8 @@ const API = (() => {
   function confirm(message) {
     return new Promise(resolve => {
       const dialog = document.createElement('dialog');
-      dialog.innerHTML = '<p></p><form method="dialog"><button value="no" class="secondary">Voltar</button> <button value="yes">Confirmar</button></form>';
+      dialog.setAttribute('aria-label', 'Confirmar ação');
+      dialog.innerHTML = '<p></p><form method="dialog"><button value="no" class="secondary" autofocus>Voltar</button> <button value="yes">Confirmar</button></form>';
       dialog.querySelector('p').textContent = message;
       document.body.append(dialog); dialog.addEventListener('close', () => { const yes = dialog.returnValue === 'yes'; dialog.remove(); resolve(yes); }); dialog.showModal();
     });
@@ -81,6 +82,8 @@ const API = (() => {
     if (!nav || document.querySelector('#accountBar')) return;
     const bar = document.createElement('span'); bar.id = 'accountBar';
     bar.innerHTML = `<span>${esc(user.name)} (${user.role === 'admin' ? 'administrador' : 'operador'})</span> <a href="admin.html">Minha conta${user.role === 'admin' ? ' / Administração' : ''}</a> <button type="button" id="logout">Sair</button>`;
+    nav.querySelector('a[href="admin.html"]')?.remove();
+    if (location.pathname.endsWith('/admin.html')) bar.querySelector('a').setAttribute('aria-current', 'page');
     nav.append(bar);
     bar.querySelector('button').addEventListener('click', async () => {
       if (sessionStorage.getItem('pdv-pending-checkout')) { if(await confirm('Há uma venda pendente. Para entrar na conta que iniciou esse pedido, confirme. A venda pendente será preservada.')){await authenticate();location.reload();}return; }

@@ -36,6 +36,11 @@ SAFE_FILES = {
     "login.js",
     "admin.js",
     "ui.css",
+    "garden-logo.jpg",
+    "design-system.html",
+    "design-system.css",
+    "design-tokens.css",
+    "design-system.js",
 }
 WEB_ROOT = Path(os.getenv("WEB_ROOT", str(Path(__file__).resolve().parents[2])))
 

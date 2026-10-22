@@ -35,7 +35,7 @@ Como operador, quero acompanhar os produtos adicionados e o total no mobile, bus
 
 - **Dado** o PDV no layout desktop
 - **Quando** o operador acessa a tela e adiciona produtos
-- **Então** o catálogo, o carrinho e o pagamento mantêm sua disposição e apresentação atuais, aplicando apenas a limpeza e o fechamento dos resultados da busca após adicionar
+- **Então** o catálogo, o carrinho e o pagamento mantêm sua disposição funcional em duas colunas; a aparência segue o design system Garden conforme redesign-telas-pdv, preservando a limpeza e o fechamento dos resultados da busca após adicionar
 
 #### AC-036 — Pagamento inicialmente recolhido no mobile
 
@@ -63,7 +63,7 @@ Como operador, quero acompanhar os produtos adicionados e o total no mobile, bus
 
 ## Restrições
 
-- Reorganização de catálogo, carrinho e pagamento exclusiva do mobile.
+- O fluxo de catálogo sob demanda e pagamento expansível permanece exclusivo do mobile. O redesenho visual do desktop foi autorizado na feature redesign-telas-pdv.
 - Limpar a busca e fechar seus resultados após adicionar também no desktop.
 - Exibir no mobile uma estimativa do total antes da conferência, identificada como “Total estimado”; após conferir, usar o total confirmado pelo servidor.
 - Preservar regras existentes de quantidade, desconto, conferência, meios de pagamento, validação e integridade da venda.
@@ -73,7 +73,7 @@ Como operador, quero acompanhar os produtos adicionados e o total no mobile, bus
 ## Fora de escopo
 
 - Leitura de código de barras pela câmera do celular: será refinada em uma feature futura, por decisão explícita do usuário.
-- Redesenho do desktop ou mudanças nas regras financeiras.
+- Mudanças nas regras financeiras. O redesenho do desktop pertence à feature redesign-telas-pdv.
 
 ## Suposições
 

@@ -128,7 +128,7 @@ test('navegador: leitura sem busca selecionada @spec:AC-001', async () => {
   const h = createPdvHarness(); await browserBoot(h); h.focus('saleNotes'); await browserScan(h, '00042'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.match(browserCart(h), /Produto 00042/);
 });
 test('navegador: incrementa a linha existente @spec:AC-002', async () => {
-  const h = createPdvHarness(); await browserBoot(h); for (const code of ['00042', '00042']) { await browserScan(h, code); browserLookup(h, code).deferred.resolve({ items: [browserProduct('p1', code)], count: 1 }); await h.flush(); } assert.match(browserCart(h), />2</); assert.equal((browserCart(h).match(/Produto 00042/g) || []).length, 1);
+  const h = createPdvHarness(); await browserBoot(h); for (const code of ['00042', '00042']) { await browserScan(h, code); browserLookup(h, code).deferred.resolve({ items: [browserProduct('p1', code)], count: 1 }); await h.flush(); } assert.match(browserCart(h), />2</); assert.equal((browserCart(h).match(/<div class="cart-item">/g) || []).length, 1);
 });
 test('navegador: preserva filtro ao ler produto fora da lista @spec:AC-003', async () => {
   const h = createPdvHarness(); await browserBoot(h); const field = h.focus('productSearch'); field.value = 'Copo'; field.dispatch('input'); await h.flush(); h.api.requests.at(-1).deferred.resolve({ items: [browserProduct('other', '10001')], count: 1 }); await h.flush(); await browserScan(h, '00042'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.equal(field.value, 'Copo'); assert.match(browserCart(h), /Produto 00042/);
