@@ -137,7 +137,7 @@
   document.addEventListener('keydown', event => {
     if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey || event.isComposing) return;
     if (dialogOpen()) { cancelPendingScans(); scanner.cancel(); captureSnapshot = null; return; }
-    if (/^\d$/.test(event.key)) captureField(document.activeElement);
+    if (/^[a-zA-Z0-9]$/.test(event.key)) captureField(document.activeElement);
     const outcome = scanner.handleKey(event.key);
     if (outcome.kind === 'scan' || outcome.kind === 'protected-enter') event.preventDefault();
   });

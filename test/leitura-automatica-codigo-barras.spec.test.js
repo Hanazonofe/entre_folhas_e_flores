@@ -124,6 +124,34 @@ async function browserScan(h, code) { h.type(code); h.clock.advanceBy(60); await
 function browserLookup(h, code) { return h.api.requests.findLast(request => request.path === `/products?code=${encodeURIComponent(code)}`); }
 function browserCart(h) { return h.elements.get('cartList').innerHTML; }
 
+test('leitor alfanumérico adiciona sem foco na busca e preserva o campo selecionado', async () => {
+  const h = createPdvHarness();
+  await browserBoot(h);
+  const field = h.focus('saleNotes');
+  field.value = 'Entregar amanhã';
+  await browserScan(h, 'PLA0486');
+  browserLookup(h, 'PLA0486').deferred.resolve({ items: [browserProduct('p1', 'PLA0486')], count: 1 });
+  await h.flush();
+  assert.equal(field.value, 'Entregar amanhã');
+  assert.equal(h.elements.get('productSearch').value, '');
+  assert.match(browserCart(h), /Produto PLA0486/);
+});
+
+test('leitor alfanumérico preserva a busca e incrementa o produto a cada leitura', async () => {
+  const h = createPdvHarness();
+  await browserBoot(h);
+  const field = h.focus('productSearch');
+  field.value = 'Copo';
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await browserScan(h, 'PLA0486');
+    browserLookup(h, 'PLA0486').deferred.resolve({ items: [browserProduct('p1', 'PLA0486')], count: 1 });
+    await h.flush();
+    assert.equal(field.value, 'Copo');
+  }
+  assert.match(browserCart(h), /Produto PLA0486/);
+  assert.match(browserCart(h), />2</);
+});
+
 test('navegador: leitura sem busca selecionada @spec:AC-001', async () => {
   const h = createPdvHarness(); await browserBoot(h); h.focus('saleNotes'); await browserScan(h, '00042'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.match(browserCart(h), /Produto 00042/);
 });

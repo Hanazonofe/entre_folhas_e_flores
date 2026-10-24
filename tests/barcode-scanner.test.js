@@ -72,6 +72,22 @@ test('@spec:AC-006 entrega o código interno completo, preservando zeros e sem p
   assert.notEqual(scans[0], '00012');
 });
 
+test('reconhece código interno alfanumérico completo sem alterar letras ou zeros', () => {
+  const { clock, scanner, scans } = setup();
+  type(scanner, clock, 'PLA0486', 20);
+  clock.advance(80);
+  scanner.handleKey('Enter');
+  assert.deepEqual(scans, ['PLA0486']);
+});
+
+test('mantém digitação lenta de código alfanumérico como busca manual', () => {
+  const { clock, scanner, scans } = setup();
+  type(scanner, clock, 'PLA0486', 100);
+  clock.advance(80);
+  scanner.handleKey('Enter');
+  assert.deepEqual(scans, []);
+});
+
 test('@spec:AC-008 classifica digitação lenta como manual e nunca como leitura', () => {
   const { clock, scanner, scans, manual } = setup();
   type(scanner, clock, '12345', 36);
