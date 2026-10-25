@@ -148,6 +148,8 @@ class FakeElement {
     this.listeners.set(type, listeners);
   }
 
+  dispatchEvent(event) { this.dispatch(event.type, event); }
+
   dispatch(type, event = {}) {
     for (const listener of this.listeners.get(type) || []) listener({ target: this, ...event });
   }
@@ -223,7 +225,8 @@ function createPdvHarness(options = {}) {
         constructor(options) { super({ ...options, now: clock.now, setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout }); }
       }
     },
-    PaymentEditor: function PaymentEditor() { return payments; },
+    Event: class { constructor(type, options) { this.type = type; Object.assign(this, options); } },
+    PaymentEditor: function PaymentEditor() { payments.rows = []; payments.totalCents = null; payments.valuesError = null; return payments; },
     MutationObserver: class { constructor(callback) { this.callback = callback; observers.push(this); } observe() {} },
     sessionStorage: { getItem: key => session.get(key) || null, setItem: (key, value) => session.set(key, value), removeItem: key => session.delete(key) },
     crypto: { randomUUID: () => 'test-key' },
@@ -245,7 +248,7 @@ function createPdvHarness(options = {}) {
   function type(text, interval = 20, field = document.activeElement) {
     for (const char of text) {
       const event = keydown(char);
-      if (field && !event.defaultPrevented) { field.value += char; field.selectionStart = field.selectionEnd = field.value.length; field.dispatch('input'); }
+      if (field && !event.defaultPrevented) { field.value += char; field.selectionStart = field.selectionEnd = field.value.length; let stopped = false; const inputEvent = {target:field,stopImmediatePropagation(){stopped=true;}}; for(const listener of documentListeners.get('input') || []) listener(inputEvent); if(!stopped) field.dispatch('input'); }
       clock.advanceBy(interval);
     }
   }

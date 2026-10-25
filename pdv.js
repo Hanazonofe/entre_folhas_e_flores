@@ -14,12 +14,16 @@
   function openPayment() {
     if (!cart.size || busy || pending || paymentDialog.open) return;
     cancelPendingScans();
+    resetBilling();
     paymentDialog.showModal();
     $('#closePayment').focus({preventScroll:true});
   }
   function closePayment() {
     if (busy || pending) { $('#paymentNotice').textContent = 'Aguarde a confirmação do pedido antes de sair do pagamento.'; return; }
+    resetBilling();
+    resetModalCapture();
     paymentDialog.close();
+    renderCart();
     $('#togglePayment').focus({preventScroll:true});
   }
   function renderProducts() {
@@ -40,7 +44,19 @@
   paymentDialog.addEventListener('cancel', event => { event.preventDefault(); closePayment(); });
   mobileLayout.addEventListener('change', () => { syncLayout(); renderCart(); });
   syncLayout();
-  const payments = new PaymentEditor($('#paymentEditor'));
+  let payments = new PaymentEditor($('#paymentEditor'));
+  function resetBilling() {
+    if (pending || busy) return false;
+    $('#discount').value = '0';
+    $('#saleNotes').value = '';
+    payments = new PaymentEditor($('#paymentEditor'));
+    invalidate();
+    $('#paymentNotice').textContent = '';
+    return true;
+  }
+  function runFinancial(action) {
+    return API.run(notice, action).finally(() => { $('#paymentNotice').textContent = notice.textContent; });
+  }
   function lock(value) { const locked = value || scanWorkerActive; document.querySelectorAll('main input, main select, main textarea, main button, #paymentDialog input, #paymentDialog select, #paymentDialog textarea, #paymentDialog button').forEach(el => { el.disabled = locked; }); $('#finishSale').disabled = scanWorkerActive || busy || (!pending && !quote); }
   function invalidate() { quote = null; $('#finishSale').disabled = true; $('#quoteNotice').textContent = 'Confira os valores no servidor antes de fechar.'; }
   function renderCart() {
@@ -93,7 +109,7 @@
     const snapshot = captureSnapshot; captureSnapshot = null;
     if (!snapshot) return;
     snapshot.field.value = snapshot.value;
-    if (snapshot.field.setSelectionRange && snapshot.selectionStart !== null) snapshot.field.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd);
+    if (snapshot.field.setSelectionRange && snapshot.selectionStart !== null) { try { snapshot.field.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd); } catch { /* number inputs have no selection API */ } }
     if (snapshot.field === $('#productSearch')) search();
     if (isFinancialField(snapshot.field)) { invalidate(); renderCart(); }
   }
@@ -148,21 +164,54 @@
       if (isFinancialField(snapshot.field)) { invalidate(); renderCart(); }
     }
   });
+  // The modal classifier discards scanner input without adding or queuing products.
+  // Defer input handlers until manual typing is established, so PaymentEditor cannot
+  // redistribute money from the temporary scanner characters before restoration.
+  let modalSnapshot = null;
+  function releaseModalManual() {
+    const snapshot = modalSnapshot; modalSnapshot = null;
+    if (snapshot) snapshot.field.dispatchEvent(new Event('input', {bubbles:true}));
+  }
+  const modalScanner = new BarcodeScanner.TemporalBarcodeClassifier({
+    onScan: () => {
+      const snapshot = modalSnapshot; modalSnapshot = null;
+      if (!snapshot) return;
+      snapshot.field.value = snapshot.value;
+      if (snapshot.selectionStart !== null && snapshot.field.setSelectionRange) {
+        try { snapshot.field.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd); } catch { /* number input */ }
+      }
+    },
+    onManual: releaseModalManual
+  });
+  function resetModalCapture() { modalScanner.cancel(); modalSnapshot = null; scanner.cancel(); captureSnapshot = null; }
+  document.addEventListener('input', event => {
+    if (modalSnapshot?.field === event.target) event.stopImmediatePropagation();
+  }, true);
   document.addEventListener('keydown', event => {
     if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey || event.isComposing) return;
-    if (dialogOpen()) { cancelPendingScans(); scanner.cancel(); captureSnapshot = null; return; }
+    if (dialogOpen()) {
+      cancelPendingScans(); scanner.cancel(); captureSnapshot = null;
+      const field = document.activeElement;
+      if (/^[a-zA-Z0-9]$/.test(event.key) && field?.matches?.('input, textarea') && !modalSnapshot) {
+        modalSnapshot = {field,value:field.value,selectionStart:field.selectionStart,selectionEnd:field.selectionEnd};
+      }
+      const outcome = modalScanner.handleKey(event.key);
+      if (outcome.kind === 'scan' || outcome.kind === 'protected-enter') event.preventDefault();
+      return;
+    }
+    modalScanner.cancel(); modalSnapshot = null;
     if (/^[a-zA-Z0-9]$/.test(event.key)) captureField(document.activeElement);
     const outcome = scanner.handleKey(event.key);
     if (outcome.kind === 'scan' || outcome.kind === 'protected-enter') event.preventDefault();
-  });
+  }, true);
   $('#productSearch').addEventListener('input', ()=>{
     if (!captureSnapshot) API.run(notice, async()=>{const sequence = noticeSequence;await search();if(sequence === noticeSequence) notice.textContent='';});
   });
   $('#productSearch').addEventListener('keydown',event=>{if(event.key==='Enter') event.preventDefault();});
   $('#addFirstResult').addEventListener('click',()=>add(products[0]?.id));
   $('#discount').addEventListener('input',()=>{if(!captureSnapshot){invalidate();renderCart();}});
-  $('#quoteSale').addEventListener('click',()=>API.run(notice,async()=>{
-    if(scanWorkerActive || scanQueue.length) return;
+  $('#quoteSale').addEventListener('click',()=>runFinancial(async()=>{
+    if(busy || pending || scanWorkerActive || scanQueue.length) return;
     if(!cart.size) throw new Error('Adicione produtos ao carrinho.');
     busy=true; lock(true);
     try {
@@ -173,7 +222,7 @@
       $('#quoteNotice').textContent='Valores conferidos. Distribua os pagamentos e confirme.'; notice.textContent='';
     } finally {busy=false;renderCart();}
   }));
-  $('#finishSale').addEventListener('click',()=>API.run(notice,async()=>{
+  $('#finishSale').addEventListener('click',()=>runFinancial(async()=>{
     if(busy || scanWorkerActive || scanQueue.length) return;
     if(!pending) {
       if(!quote) throw new Error('Confira os valores primeiro.');
@@ -188,7 +237,7 @@
     try {
       const sale=await API.call('/sales',{method:'POST',headers:{'Idempotency-Key':pending.key},body:JSON.stringify(pending.body)});
       sessionStorage.removeItem('pdv-pending-checkout'); pending=null;quote=null;cart.clear();payments.set([]);$('#quoteNotice').textContent='Confira os valores antes de fechar a próxima venda.';$('#discount').value='0';$('#saleNotes').value='';
-      paymentDialog.close(); clearSearch({focus: false}); syncLayout();
+      payments = new PaymentEditor($('#paymentEditor')); resetModalCapture(); paymentDialog.close(); clearSearch({focus: false}); syncLayout();
       notice.textContent=`Venda #${sale.number} confirmada: ${API.money(sale.total_cents)}.`;
       $('#receiptLink').href=`receipt.html?id=${encodeURIComponent(sale.id)}`;$('#receiptLink').hidden=false;
     } catch(error) {

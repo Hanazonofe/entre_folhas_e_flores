@@ -44,7 +44,7 @@ test('AC-004: Avisar sobre produto não encontrado @spec:AC-004', () => {
 // US-001 — Adicionar produtos com o leitor
 test('AC-005: Suspender com janela aberta @spec:AC-005', () => {
   assert.match(pdv, /function dialogOpen\(\).*dialog\[open\]/);
-  assert.match(pdv, /if \(dialogOpen\(\)\) \{ cancelPendingScans\(\); scanner\.cancel\(\); captureSnapshot = null; return; \}/);
+  assert.match(pdv, /if \(dialogOpen\(\)\) \{[\s\S]*cancelPendingScans\(\); scanner\.cancel\(\); captureSnapshot = null;[\s\S]*modalScanner\.handleKey\(event\.key\)/);
   assert.match(pdv, /if \(dialogOpen\(\) \|\| pending \|\| busy\) return;/);
 });
 
@@ -103,7 +103,7 @@ test('AC-012: Preservar campos financeiros durante a leitura @spec:AC-012', () =
 
 test('AC-013: Aguardar leituras antes de conferir ou fechar @spec:AC-013', () => {
   assert.match(pdv, /const locked = value \|\| scanWorkerActive;/);
-  assert.match(pdv, /if\(scanWorkerActive \|\| scanQueue\.length\) return;/);
+  assert.match(pdv, /if\(busy \|\| pending \|\| scanWorkerActive \|\| scanQueue\.length\) return;/);
   assert.match(pdv, /if\(busy \|\| scanWorkerActive \|\| scanQueue\.length\) return;/);
   assert.match(html, /id="quoteNotice" aria-live="polite"/);
 });
@@ -186,7 +186,7 @@ test('navegador: produto inativo não entra no carrinho @spec:AC-011', async () 
   const h = createPdvHarness(); await browserBoot(h); await browserScan(h, '00044'); browserLookup(h, '00044').deferred.resolve({ items: [browserProduct('inactive', '00044', { active: false })], count: 1 }); await h.flush(); assert.equal(h.elements.get('saleNotice').textContent, 'Produto inativo'); assert.match(browserCart(h), /Nenhum produto/);
 });
 test('navegador: restaura desconto após scanner e aceita edição lenta @spec:AC-012', async () => {
-  const h = createPdvHarness(); await browserBoot(h); const field = h.focus('discount'); field.value = '12.34'; await browserScan(h, '00042'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.equal(field.value, '12.34'); assert.equal(h.elements.get('finalTotal').textContent, 'A confirmar'); h.type('5', 50, field); assert.equal(field.value, '12.345');
+  const h = createPdvHarness(); await browserBoot(h); const field = h.focus('discount'); field.value = '12.34'; await browserScan(h, '00042'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.equal(field.value, '12.34'); assert.equal(h.elements.get('finalTotal').textContent, 'R$ 0'); assert.equal(h.elements.get('totalLabel').textContent, 'Total estimado'); h.type('5', 50, field); assert.equal(field.value, '12.345');
 });
 test('navegador: bloqueia conferência enquanto consulta leitura @spec:AC-013', async () => {
   const h = createPdvHarness(); await browserBoot(h); await browserScan(h, '00042'); assert.equal(h.elements.get('quoteSale').disabled, true); assert.equal(h.elements.get('finishSale').disabled, true); assert.equal(h.elements.get('saleNotice').textContent, 'Leituras em processamento…'); browserLookup(h, '00042').deferred.resolve({ items: [browserProduct('p1', '00042')], count: 1 }); await h.flush(); assert.equal(h.elements.get('quoteSale').disabled, false);
