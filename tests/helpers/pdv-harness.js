@@ -173,7 +173,7 @@ function createPdvHarness(options = {}) {
   const clock = createClock();
   const api = createControlledApi();
   const elements = new Map();
-  const ids = ['totalLabel', 'suggestions', 'togglePayment', 'paymentPanel', 'saleNotice', 'cartList', 'subtotal', 'finalTotal', 'finishSale', 'productSearch', 'catalogGrid', 'discount', 'paymentEditor', 'quoteNotice', 'quoteSale', 'addFirstResult', 'saleNotes', 'receiptLink'];
+  const ids = ['totalLabel', 'suggestions', 'togglePayment', 'paymentPanel', 'saleNotice', 'cartList', 'subtotal', 'finalTotal', 'finishSale', 'productSearch', 'catalogGrid', 'discount', 'paymentEditor', 'quoteNotice', 'quoteSale', 'addFirstResult', 'saleNotes', 'receiptLink', 'paymentDialog', 'closePayment', 'backToCart', 'summaryLabel', 'summaryTotal', 'emptyCartHelp', 'paymentNotice'];
   for (const id of ids) elements.set(id, new FakeElement(id, { value: id === 'discount' ? '0' : '' }));
   const mainControls = [...elements.values()].filter(element => !['saleNotice', 'cartList', 'subtotal', 'finalTotal', 'catalogGrid', 'quoteNotice', 'receiptLink'].includes(element.id));
   const documentListeners = new Map();
@@ -187,7 +187,7 @@ function createPdvHarness(options = {}) {
       return null;
     },
     querySelectorAll(selector) {
-      return selector === 'main input, main select, main textarea, main button' ? mainControls : [];
+      return selector.startsWith('main input, main select, main textarea, main button') ? mainControls : [];
     },
     addEventListener(type, listener) {
       const listeners = documentListeners.get(type) || [];
@@ -195,7 +195,11 @@ function createPdvHarness(options = {}) {
       documentListeners.set(type, listeners);
     },
   };
-  for (const element of elements.values()) element.focus = () => { document.activeElement = element; };
+  for (const element of elements.values()) {
+    element.focus = () => { document.activeElement = element; };
+    element.showModal = () => { element.open = true; };
+    element.close = () => { element.open = false; element.dispatch('close'); };
+  }
   const mediaListeners = [];
   const media = { matches: !!options.mobile, addEventListener: (_type, listener) => mediaListeners.push(listener) };
   const payments = {
@@ -240,8 +244,8 @@ function createPdvHarness(options = {}) {
   }
   function type(text, interval = 20, field = document.activeElement) {
     for (const char of text) {
-      keydown(char);
-      if (field) { field.value += char; field.selectionStart = field.selectionEnd = field.value.length; field.dispatch('input'); }
+      const event = keydown(char);
+      if (field && !event.defaultPrevented) { field.value += char; field.selectionStart = field.selectionEnd = field.value.length; field.dispatch('input'); }
       clock.advanceBy(interval);
     }
   }
