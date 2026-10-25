@@ -31,7 +31,7 @@ const API = (() => {
   }
   async function login(login, password) {
     const result = await request('/auth/login', {method:'POST', body:JSON.stringify({login,password})});
-    user = result.user; csrf = result.csrf_token; return user;
+    user = result.user; csrf = result.csrf_token; if (typeof SaleNavigation !== 'undefined') await SaleNavigation.identify(user.id); return user;
   }
   async function authenticate() {
     if (authentication) return authentication;
@@ -52,6 +52,7 @@ const API = (() => {
   async function ready() {
     try { const result = await request('/auth/me'); user = result.user; csrf = result.csrf_token; }
     catch (error) { if (error.status === 401) await authenticate(); else throw error; }
+    if (typeof SaleNavigation !== 'undefined') await SaleNavigation.identify(user.id);
     return user;
   }
   async function call(path, options = {}) {
@@ -87,7 +88,7 @@ const API = (() => {
     nav.append(bar);
     bar.querySelector('button').addEventListener('click', async () => {
       if (sessionStorage.getItem('pdv-pending-checkout')) { if(await confirm('Há uma venda pendente. Para entrar na conta que iniciou esse pedido, confirme. A venda pendente será preservada.')){await authenticate();location.reload();}return; }
-      try { await call('/auth/logout', {method:'POST', body:'{}'}); location.href = 'login.html'; }
+      try { await call('/auth/logout', {method:'POST', body:'{}'}); if (typeof SaleNavigation !== 'undefined') SaleNavigation.logout(); location.href = 'login.html'; }
       catch (error) { await confirm(error.message); }
     });
   }

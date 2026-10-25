@@ -28,6 +28,7 @@ SAFE_FILES = {
     "api.js",
     "payments.js",
     "pdv.js",
+    "sale-navigation.js",
     "barcode-scanner.js",
     "vendas.js",
     "produtos.js",

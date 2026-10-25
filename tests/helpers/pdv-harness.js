@@ -212,10 +212,11 @@ function createPdvHarness(options = {}) {
     values() { if (this.valuesError) throw this.valuesError; return this.rows.map(row => ({ ...row })); },
     updateSummary() { const applied = this.rows.reduce((sum, row) => sum + row.applied_cents, 0), difference = this.totalCents - applied; this.summary = difference > 0 ? `Faltam R$ ${difference / 100}` : difference < 0 ? `Excedem R$ ${-difference / 100}` : 'Valores conferem'; }
   };
-  const session = new Map();
+  const session = options.session || new Map();
   if (options.pending) session.set('pdv-pending-checkout', JSON.stringify({ userId: 'operator', preview: [], body: { discount_cents: 0, notes: '', payments: [] } }));
   const context = {
     document,
+    URL, location: options.location || {href:'http://garden.test/pdv.html',origin:'http://garden.test',pathname:'/pdv.html'},
     window: { matchMedia: () => media },
     console,
     setTimeout: clock.setTimeout,
@@ -232,12 +233,14 @@ function createPdvHarness(options = {}) {
     crypto: { randomUUID: () => 'test-key' },
     API: {
       call: api.call,
-      ready: async () => {}, header() {}, user: { id: 'operator' },
+      ready: async () => {}, header() {}, user: { id: options.userId || 'operator' },
+      confirm: options.confirm || (async () => false),
       esc: value => String(value), money: cents => `R$ ${Number(cents) / 100}`,
       cents: value => Math.round(Number(value) * 100),
       run: (_notice, action) => Promise.resolve().then(action).catch(error => { elements.get('saleNotice').textContent = error.message; }),
     },
   };
+  if (options.navigation) context.SaleNavigation = options.navigation;
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../../pdv.js'), 'utf8'), context, { filename: 'pdv.js' });
 
   function keydown(key, extra = {}) {
@@ -258,7 +261,7 @@ function createPdvHarness(options = {}) {
     return dialog;
   }
   function closeDialog() { elements.delete('dialog'); for (const observer of observers) observer.callback(); }
-  return { setMobile(value) { media.matches = value; mediaListeners.forEach(listener => listener(media)); }, api, clock, document, elements, payments, flush, keydown, type, openDialog, closeDialog, focus(id) { document.activeElement = elements.get(id) || null; return document.activeElement; } };
+  return { session, location:context.location, dispatchDocument: async (type,event) => { for(const listener of documentListeners.get(type)||[]) await listener(event); }, setMobile(value) { media.matches = value; mediaListeners.forEach(listener => listener(media)); }, api, clock, document, elements, payments, flush, keydown, type, openDialog, closeDialog, focus(id) { document.activeElement = elements.get(id) || null; return document.activeElement; } };
 }
 
 module.exports = { createClock, createDeferred, createControlledApi, createPdvHarness, flush };

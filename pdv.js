@@ -2,7 +2,8 @@
   const $ = selector => document.querySelector(selector), notice = $('#saleNotice');
   const cart = new Map(); let products = [], quote = null, pending = null, busy = false, searchSequence = 0;
   let scanQueue = [], scanWorkerActive = false, scanGeneration = 0, noticeSequence = 0;
-  let captureSnapshot = null;
+  let quoteGeneration = 0;
+  let captureSnapshot = null, navigationReady = false, navigationInProgress = false;
   const mobileLayout = window.matchMedia('(max-width: 920px)');
   let catalogProducts = [];
   const paymentDialog = $('#paymentDialog');
@@ -57,8 +58,8 @@
   function runFinancial(action) {
     return API.run(notice, action).finally(() => { $('#paymentNotice').textContent = notice.textContent; });
   }
-  function lock(value) { const locked = value || scanWorkerActive; document.querySelectorAll('main input, main select, main textarea, main button, #paymentDialog input, #paymentDialog select, #paymentDialog textarea, #paymentDialog button').forEach(el => { el.disabled = locked; }); $('#finishSale').disabled = scanWorkerActive || busy || (!pending && !quote); }
-  function invalidate() { quote = null; $('#finishSale').disabled = true; $('#quoteNotice').textContent = 'Confira os valores no servidor antes de fechar.'; }
+  function lock(value) { const locked = value || scanWorkerActive; document.querySelectorAll('main input, main select, main textarea, main button, #paymentDialog input, #paymentDialog select, #paymentDialog textarea, #paymentDialog button').forEach(el => { el.disabled = locked; }); $('#finishSale').disabled = scanWorkerActive || busy || (!pending && !quote); syncLayout(); }
+  function invalidate() { quoteGeneration++; quote = null; $('#finishSale').disabled = true; $('#quoteNotice').textContent = 'Confira os valores no servidor antes de fechar.'; }
   function renderCart() {
     $('#cartList').innerHTML = [...cart.values()].map(row => `<div class="cart-item"><div><strong>${API.esc(row.name)}</strong><p>${API.money(row.price_cents)} cada</p></div><div class="qty-controls"><button type="button" aria-label="Diminuir quantidade de ${API.esc(row.name)}" class="secondary" data-cart="less" data-id="${API.esc(row.id)}">−</button><span>${row.quantity}</span><button type="button" aria-label="Aumentar quantidade de ${API.esc(row.name)}" class="secondary" data-cart="more" data-id="${API.esc(row.id)}">+</button><button type="button" aria-label="Remover ${API.esc(row.name)} do carrinho" class="danger" data-cart="remove" data-id="${API.esc(row.id)}">Remover</button></div></div>`).join('') || '<div class="empty"><strong>Nenhum produto no carrinho.</strong><p>Busque um produto ou use o leitor de barras para começar.</p></div>';
     const subtotal = [...cart.values()].reduce((sum,row)=>sum+row.price_cents*row.quantity,0);
@@ -71,6 +72,7 @@
     $('#summaryTotal').textContent = API.money(quote ? quote.total_cents : estimatedTotal === null ? subtotal : estimatedTotal);
     lock(!!pending || busy);
     syncLayout();
+    if (navigationReady && !pending && !busy && typeof SaleNavigation !== 'undefined') SaleNavigation.save([...cart.values()]);
   }
   async function search() {
     const sequence = ++searchSequence;
@@ -214,8 +216,11 @@
     if(busy || pending || scanWorkerActive || scanQueue.length) return;
     if(!cart.size) throw new Error('Adicione produtos ao carrinho.');
     busy=true; lock(true);
+    const generation = ++quoteGeneration; quote = null;
     try {
-      quote=await API.call('/sales/quote',{method:'POST',body:JSON.stringify({items:[...cart.values()].map(row=>({product_id:row.id,quantity:row.quantity})),discount_cents:API.cents($('#discount').value)})});
+      const response = await API.call('/sales/quote',{method:'POST',body:JSON.stringify({items:[...cart.values()].map(row=>({product_id:row.id,quantity:row.quantity})),discount_cents:API.cents($('#discount').value)})});
+      if (generation !== quoteGeneration) return;
+      quote = response;
       quote.items.forEach(item=>{const row=cart.get(item.product_id);row.price_cents=item.unit_price_cents;row.name=item.name;});
       payments.setTotal(quote.total_cents);
       if (!payments.hasPayments() && quote.total_cents) payments.set([{method:'credit',applied_cents:quote.total_cents,received_cents:quote.total_cents}]);
@@ -236,7 +241,7 @@
     busy=true; lock(true);
     try {
       const sale=await API.call('/sales',{method:'POST',headers:{'Idempotency-Key':pending.key},body:JSON.stringify(pending.body)});
-      sessionStorage.removeItem('pdv-pending-checkout'); pending=null;quote=null;cart.clear();payments.set([]);$('#quoteNotice').textContent='Confira os valores antes de fechar a próxima venda.';$('#discount').value='0';$('#saleNotes').value='';
+      sessionStorage.removeItem('pdv-pending-checkout'); if (typeof SaleNavigation !== 'undefined') SaleNavigation.clear(); pending=null;quote=null;cart.clear();payments.set([]);$('#quoteNotice').textContent='Confira os valores antes de fechar a próxima venda.';$('#discount').value='0';$('#saleNotes').value='';
       payments = new PaymentEditor($('#paymentEditor')); resetModalCapture(); paymentDialog.close(); clearSearch({focus: false}); syncLayout();
       notice.textContent=`Venda #${sale.number} confirmada: ${API.money(sale.total_cents)}.`;
       $('#receiptLink').href=`receipt.html?id=${encodeURIComponent(sale.id)}`;$('#receiptLink').hidden=false;
@@ -250,7 +255,43 @@
     await API.ready();API.header();
     const saved=sessionStorage.getItem('pdv-pending-checkout');
     if(saved){pending=JSON.parse(saved);paymentDialog.showModal();if(pending.preview){pending.preview.forEach(item=>cart.set(item.product_id,{...item,id:item.product_id,price_cents:item.unit_price_cents}));$('#discount').value=(pending.body.discount_cents/100).toFixed(2);$('#saleNotes').value=pending.body.notes;payments.set(pending.body.payments);}$('#quoteNotice').textContent='Pedido anterior aguardando confirmação. Os dados estão bloqueados para evitar duplicação.';}
-    await search();renderCart();notice.textContent=pending?'Tente novamente para resolver a venda pendente.':'';
+    if (typeof SaleNavigation !== 'undefined') {
+      const restored = await SaleNavigation.connect(API.user.id, recovered => {
+        if (pending) return;
+        quote = null; $('#discount').value = '0'; $('#saleNotes').value = '';
+        payments = new PaymentEditor($('#paymentEditor'));
+        invalidate(); resetModalCapture(); cancelPendingScans();
+        if (paymentDialog.open) paymentDialog.close();
+        cart.clear(); recovered.forEach(row => cart.set(row.id,row));
+        renderCart();
+      });
+      if (!pending) restored.forEach(row => cart.set(row.id,row));
+      navigationReady = true;
+      if (!SaleNavigation.available && !pending) notice.textContent = 'Recuperação do carrinho indisponível nesta aba. Mantenha a venda aberta.';
+    }
+    await search();renderCart();if(pending)notice.textContent='Tente novamente para resolver a venda pendente.';
   });
+  document.addEventListener('click', async event => {
+    const link = event.target.closest?.('a[href]');
+    if (!link || event.defaultPrevented || event.button > 0 || event.ctrlKey || event.shiftKey || event.altKey || event.metaKey || link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
+    const destination = new URL(link.href, location.href);
+    if (destination.origin !== location.origin || (destination.pathname === location.pathname && destination.search === location.search) || !/\/(pdv|produtos|vendas|admin|receipt)\.html$/.test(destination.pathname)) return;
+    if (pending || busy) { event.preventDefault(); $('#paymentNotice').textContent = notice.textContent = 'Resolva a operação em andamento antes de sair da venda.'; return; }
+    if (!cart.size) return;
+    event.preventDefault();
+    if (navigationInProgress) return;
+    navigationInProgress = true;
+    cancelPendingScans(); resetModalCapture();
+    try {
+      const confirmed = await API.confirm('Os produtos serão mantidos ao voltar. Desconto, pagamentos e observações serão descartados. Deseja sair?');
+      resetModalCapture();
+      if (!confirmed) return;
+      if (typeof SaleNavigation === 'undefined' || !SaleNavigation.save([...cart.values()])) throw new Error('Não foi possível preservar o carrinho. A navegação foi cancelada; mantenha esta venda aberta.');
+      resetBilling();
+      if (paymentDialog.open) paymentDialog.close();
+      location.href = destination.href;
+    } catch (error) { notice.textContent = $('#paymentNotice').textContent = error.message; }
+    finally { navigationInProgress = false; }
+  }, true);
   new MutationObserver(()=>{ if (dialogOpen()) cancelPendingScans(); }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['open','aria-modal']});
 })();
