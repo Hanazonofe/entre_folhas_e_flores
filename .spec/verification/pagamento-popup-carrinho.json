@@ -1,0 +1,16 @@
+{
+  "feature": "pagamento-popup-carrinho",
+  "timestamp": "2026-10-25T00:50:50.103Z",
+  "gitRev": "0622dac",
+  "command": "./scripts/test-onp.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 161,
+  "results": {},
+  "principles": {
+    "P-002": {
+      "status": "pass",
+      "testName": "@principle:P-002 tracked files contain no detected operational secrets"
+    }
+  }
+}

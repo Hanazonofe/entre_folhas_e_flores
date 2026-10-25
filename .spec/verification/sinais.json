@@ -1121,19 +1121,19 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "leitura-automatica-codigo-barras",
       "ref": "—",
-      "ocorrencias": 5,
+      "ocorrencias": 6,
       "primeiraVez": "2026-09-28T19:03:57.971Z",
-      "ultimaVez": "2026-10-07T16:33:24.745Z",
-      "gitRev": "01723d2"
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
     },
     "VERIFY_OBSOLETO::ajuste-meios-pagamento::—": {
       "codigo": "VERIFY_OBSOLETO",
       "feature": "ajuste-meios-pagamento",
       "ref": "—",
-      "ocorrencias": 4,
+      "ocorrencias": 5,
       "primeiraVez": "2026-09-29T12:43:26.529Z",
-      "ultimaVez": "2026-10-07T16:33:24.745Z",
-      "gitRev": "01723d2"
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
     },
     "ARQUIVO_INEXISTENTE::layout-pdv-mobile::T-014": {
       "codigo": "ARQUIVO_INEXISTENTE",
@@ -1220,19 +1220,217 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "base-existente-pdv",
       "ref": "—",
-      "ocorrencias": 2,
+      "ocorrencias": 3,
       "primeiraVez": "2026-10-07T15:25:16.086Z",
-      "ultimaVez": "2026-10-07T16:33:24.745Z",
-      "gitRev": "01723d2"
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
     },
     "VERIFY_OBSOLETO::layout-pdv-mobile::—": {
       "codigo": "VERIFY_OBSOLETO",
       "feature": "layout-pdv-mobile",
       "ref": "—",
-      "ocorrencias": 2,
+      "ocorrencias": 3,
       "primeiraVez": "2026-10-07T15:25:16.086Z",
-      "ultimaVez": "2026-10-07T16:33:24.745Z",
-      "gitRev": "01723d2"
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "VERIFY_OBSOLETO::homologacao-sandbox::—": {
+      "codigo": "VERIFY_OBSOLETO",
+      "feature": "homologacao-sandbox",
+      "ref": "—",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "ARQUIVO_INEXISTENTE::pagamento-popup-carrinho::T-030": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "T-030",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "ARQUIVO_INEXISTENTE::pagamento-popup-carrinho::T-031": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "T-031",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "ARQUIVO_INEXISTENTE::pagamento-popup-carrinho::T-032": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "T-032",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "ARQUIVO_INEXISTENTE::pagamento-popup-carrinho::T-033": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "T-033",
+      "ocorrencias": 3,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-075": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-075",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-076": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-076",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-077": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-077",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-078": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-078",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-079": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-079",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-080": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-080",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-081": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-081",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-082": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-082",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-083": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-083",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-084": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-084",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-085": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-085",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-086": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-086",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-087": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-087",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-088": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-088",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-089": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-089",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "AC_SEM_TESTE::pagamento-popup-carrinho::AC-090": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "pagamento-popup-carrinho",
+      "ref": "AC-090",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
+    },
+    "VERIFY_OBSOLETO::redesign-telas-pdv::—": {
+      "codigo": "VERIFY_OBSOLETO",
+      "feature": "redesign-telas-pdv",
+      "ref": "—",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-25T00:50:50.350Z",
+      "ultimaVez": "2026-10-25T00:50:50.350Z",
+      "gitRev": "0622dac"
     }
   }
 }
