@@ -7,6 +7,8 @@ const vm = require('node:vm');
 
 class Element {
   constructor(document) { this.document=document; this.value=''; this.textContent=''; this.hidden=false; this.required=false; this.disabled=false; this.className=''; this.children=[]; this.listeners=new Map(); this.parent=null; this.nodes={}; this.classList={add:()=>{},remove:()=>{}}; }
+  showModal() { this.open=true; }
+  close() { this.open=false; this.dispatch('close'); }
   addEventListener(type, listener) { this.listeners.set(type,[...(this.listeners.get(type)||[]),listener]); }
   dispatch(type, event={}) { for(const listener of this.listeners.get(type)||[]) listener({target:this,preventDefault(){},...event}); }
   append(child) { child.parent=this; this.children.push(child); }
@@ -65,3 +67,5 @@ test('@spec:AC-025 edição administrativa bloqueia salvamento com soma divergen
 test('@spec:AC-029 edição administrativa recalcula primeiro após remover meio',async()=>{ const h=harness(); await h.open({...sale,payments:[{method:'credit',applied_cents:5000},{method:'pix',applied_cents:3000},{method:'debit',applied_cents:2000}]}); h.rows()[0].querySelector('[data-remove]').dispatch('click'); assert.deepEqual(amounts(h.rows()),['80.00','20.00']); });
 test('@spec:AC-030 edição administrativa faz o único meio restante assumir o total',async()=>{ const h=harness(); await h.open({...sale,payments:[{method:'credit',applied_cents:7000},{method:'pix',applied_cents:3000}]}); h.rows()[0].querySelector('[data-remove]').dispatch('click'); assert.deepEqual(amounts(h.rows()),['100.00']); assert.equal(h.rows()[0].querySelector('[data-method]').value,'pix'); });
 test('@spec:AC-031 edição administrativa envia uma distribuição válida calculada pelo editor',async()=>{ const h=harness(); await h.open(); h.elements.get('editPayments').querySelector('[data-add-payment]').dispatch('click'); input(h.rows()[1],'30.00'); h.elements.get('editForm').dispatch('submit'); await flush(); const request=h.requests.find(candidate=>candidate.options.method==='PUT'); assert.deepEqual(JSON.parse(request.options.body).payments,[{method:'credit',applied_cents:7000,received_cents:7000},{method:'credit',applied_cents:3000,received_cents:3000}]); });
+
+test('@spec:AC-071 edição abre diálogo, preserva pagamentos e fecha pelo controle',async()=>{const h=harness();await h.open();assert.equal(h.elements.get('editModal').open,true);assert.deepEqual(amounts(h.rows()),['100.00']);h.elements.get('closeModal').dispatch('click');assert.equal(h.elements.get('editModal').open,false);});

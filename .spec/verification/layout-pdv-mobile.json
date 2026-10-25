@@ -1,11 +1,11 @@
 {
   "feature": "layout-pdv-mobile",
-  "timestamp": "2026-10-10T11:45:09.560Z",
-  "gitRev": "cdd8b28",
+  "timestamp": "2026-10-25T01:08:44.412Z",
+  "gitRev": "9d90672",
   "command": "./scripts/test-onp.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 148,
+  "testsParsed": 189,
   "results": {
     "AC-032": {
       "status": "pass",
@@ -24,17 +24,17 @@
     },
     "AC-035": {
       "status": "pass",
-      "testName": "@spec:AC-035 desktop mantém catálogo e pagamento e alternar largura preserva a venda",
+      "testName": "@spec:AC-035 desktop mantém catálogo e alternar largura preserva a venda e o diálogo",
       "method": "tap"
     },
     "AC-036": {
       "status": "pass",
-      "testName": "@spec:AC-036 pagamento começa recolhido com controle acessível",
+      "testName": "@spec:AC-036 pagamento começa fechado com controle de diálogo acessível",
       "method": "tap"
     },
     "AC-037": {
       "status": "pass",
-      "testName": "@spec:AC-037 expandir e recolher preserva o carrinho e os dados de pagamento",
+      "testName": "@spec:AC-037 abrir pagamento mantém carrinho e sair limpa cobrança conforme decisão posterior",
       "method": "tap"
     },
     "AC-038": {

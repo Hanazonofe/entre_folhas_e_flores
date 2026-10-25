@@ -7,6 +7,10 @@
 
 No mobile, o catálogo aparece abaixo da busca e empurra o carrinho para o final da lista. O operador precisa percorrer os produtos disponíveis para conferir os itens adicionados e o total. Escopo refinado via /grill e confirmado pelo usuário: priorizar carrinho e total, pesquisar produtos sob demanda e expandir pagamento na mesma tela.
 
+## Atualização do contrato — 24/10/2026
+
+A decisão posterior confirmada em [pagamento-popup-carrinho](../pagamento-popup-carrinho/spec.md) substitui somente a apresentação inline da cobrança e a preservação da cobrança ao recolher: desktop e mobile usam diálogo separado; sair limpa desconto, pagamentos, observações e conferência, preservando produtos e quantidades. As regras de busca, valores, erros e pedido pendente continuam vigentes.
+
 ## Histórias
 
 ### US-005 — Operar a venda com o carrinho acessível
@@ -35,19 +39,19 @@ Como operador, quero acompanhar os produtos adicionados e o total no mobile, bus
 
 - **Dado** o PDV no layout desktop
 - **Quando** o operador acessa a tela e adiciona produtos
-- **Então** o catálogo, o carrinho e o pagamento mantêm sua disposição e apresentação atuais, aplicando apenas a limpeza e o fechamento dos resultados da busca após adicionar
+- **Então** o catálogo e o carrinho mantêm sua disposição funcional em duas colunas, com pagamento em diálogo separado conforme pagamento-popup-carrinho; a aparência segue o design system Garden conforme redesign-telas-pdv, preservando a limpeza e o fechamento dos resultados da busca após adicionar
 
 #### AC-036 — Pagamento inicialmente recolhido no mobile
 
 - **Dado** uma nova venda no mobile
 - **Quando** o operador visualiza o carrinho
-- **Então** os campos de pagamento ficam recolhidos abaixo do total e há um botão “Ir para pagamento”
+- **Então** os campos de pagamento ficam ocultos em diálogo inicialmente fechado e há um botão “Ir para pagamento” acima do carrinho
 
-#### AC-037 — Expandir pagamento na mesma tela
+#### AC-037 — Abrir pagamento sem navegar
 
 - **Dado** uma venda em andamento no mobile
 - **Quando** o operador aciona “Ir para pagamento”
-- **Então** os campos e ações necessários ao pagamento ficam acessíveis na própria tela, sem navegação e sem ocultar ou perder os itens do carrinho e o total
+- **Então** os campos e ações necessários ao pagamento ficam acessíveis em diálogo na própria página, sem navegação e sem perder os itens do carrinho e o total; ao sair, a cobrança é descartada conforme AC-080 e reabrir exige nova conferência
 
 #### AC-038 — Preparar nova venda após sucesso
 
@@ -63,7 +67,7 @@ Como operador, quero acompanhar os produtos adicionados e o total no mobile, bus
 
 ## Restrições
 
-- Reorganização de catálogo, carrinho e pagamento exclusiva do mobile.
+- O catálogo sob demanda permanece exclusivo do mobile. A cobrança em diálogo atende mobile e desktop conforme pagamento-popup-carrinho; o redesenho visual do desktop foi autorizado em redesign-telas-pdv.
 - Limpar a busca e fechar seus resultados após adicionar também no desktop.
 - Exibir no mobile uma estimativa do total antes da conferência, identificada como “Total estimado”; após conferir, usar o total confirmado pelo servidor.
 - Preservar regras existentes de quantidade, desconto, conferência, meios de pagamento, validação e integridade da venda.
@@ -73,7 +77,7 @@ Como operador, quero acompanhar os produtos adicionados e o total no mobile, bus
 ## Fora de escopo
 
 - Leitura de código de barras pela câmera do celular: será refinada em uma feature futura, por decisão explícita do usuário.
-- Redesenho do desktop ou mudanças nas regras financeiras.
+- Mudanças nas regras financeiras. O redesenho do desktop pertence à feature redesign-telas-pdv.
 
 ## Suposições
 

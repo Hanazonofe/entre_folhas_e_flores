@@ -33,7 +33,7 @@
 
       if (key === 'Enter') return this._handleEnter(at);
 
-      if (!/^\d$/.test(key)) {
+      if (!/^[a-zA-Z0-9]$/.test(key)) {
         this._finishManual();
         this.protectEnterUntil = null;
         return { kind: 'manual' };

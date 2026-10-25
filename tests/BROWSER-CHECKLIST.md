@@ -66,3 +66,14 @@ Validação automatizada em Chrome headless com API simulada e os arquivos reais
 Provas automatizadas de comportamento: `tests/pdv-mobile.test.js`. Capturas da sessão em `/tmp/pdv-mobile-{cart,payment,desktop,narrow}.png` (temporárias, não versionadas).
 
 Validação manual: o usuário testou a feature no ambiente local e confirmou que está OK antes de solicitar o envio ao Git. Não foram informados aparelho, navegador ou detalhes específicos do teclado virtual.
+
+## Garden — revisão visual em 21/10/2026
+
+Feature `redesign-telas-pdv`, Chrome conectado via ferramenta de navegador, API simulada em memória sem banco operacional. Não houve uso de credenciais reais ou publicação.
+
+- Login, caixa, produtos, vendas, administração e comprovante carregados em 360, 768 e 1440 px; largura do documento igual à área útil, sem overflow horizontal. Logo original carregado em todas as páginas.
+- Desktop: catálogo e carrinho/pagamento em duas colunas; cadastro e planilha em seções próprias; filtros, totais e registros de venda visíveis.
+- Celular: formulário em uma coluna, navegação quebrando linhas e catálogo oculto até busca. Busca por manjericão, adição, expansão, conferência e segundo pagamento exercitados. Duas parcelas visíveis sem overflow.
+- Edição: abertura de venda expandida, dialog visível, foco inicial em `closeModal`; Escape fecha e devolve foco ao botão `data-action="edit"`.
+- Conferidos visualmente textos longos de produto, campos, estado vazio, controles desabilitados, resumo e comprovante concluído. Variantes de comprovante alterado/cancelado cobertas no teste de renderização. Pagamentos e recuperação após falha cobertos pelos harnesses executando os controladores reais.
+- Impressão térmica: contrato CSS de 80 mm, conteúdo de 72 mm e ocultação dos controles testados; não houve impressão em impressora física. Teclado virtual e hardware de leitura continuam sujeitos ao piloto existente.

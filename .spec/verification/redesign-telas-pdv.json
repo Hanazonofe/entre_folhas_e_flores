@@ -1,0 +1,57 @@
+{
+  "feature": "redesign-telas-pdv",
+  "timestamp": "2026-10-25T01:09:33.310Z",
+  "gitRev": "9d90672",
+  "command": "./scripts/test-onp.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 189,
+  "results": {
+    "AC-067": {
+      "status": "pass",
+      "testName": "@spec:AC-067 login envia credenciais, conserva falha e só navega após sucesso; marca e navegação são locais",
+      "method": "tap"
+    },
+    "AC-068": {
+      "status": "pass",
+      "testName": "@spec:AC-068 caixa mantém item e controles acessíveis ao alternar desktop e celular",
+      "method": "tap"
+    },
+    "AC-069": {
+      "status": "pass",
+      "testName": "@spec:AC-069 falha após conferência preserva pedido e repete a mesma chave antes de confirmar",
+      "method": "tap"
+    },
+    "AC-070": {
+      "status": "pass",
+      "testName": "@spec:AC-070 produtos mantém busca, edição, validação e confirmação de importação",
+      "method": "tap"
+    },
+    "AC-071": {
+      "status": "pass",
+      "testName": "@spec:AC-071 edição abre diálogo, preserva pagamentos e fecha pelo controle",
+      "method": "tap"
+    },
+    "AC-072": {
+      "status": "pass",
+      "testName": "@spec:AC-072 administração preserva restrição por papel e seções de conta, usuários e backup",
+      "method": "tap"
+    },
+    "AC-073": {
+      "status": "pass",
+      "testName": "@spec:AC-073 comprovante preserva valores, escape e situação nas três variantes com print independente",
+      "method": "tap"
+    },
+    "AC-074": {
+      "status": "pass",
+      "testName": "@spec:AC-074 recursos locais compartilham tokens, têm contraste e controles de 44 pixels",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-002": {
+      "status": "pass",
+      "testName": "@principle:P-002 tracked files contain no detected operational secrets"
+    }
+  }
+}

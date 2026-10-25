@@ -148,6 +148,8 @@ class FakeElement {
     this.listeners.set(type, listeners);
   }
 
+  dispatchEvent(event) { this.dispatch(event.type, event); }
+
   dispatch(type, event = {}) {
     for (const listener of this.listeners.get(type) || []) listener({ target: this, ...event });
   }
@@ -173,10 +175,10 @@ function createPdvHarness(options = {}) {
   const clock = createClock();
   const api = createControlledApi();
   const elements = new Map();
-  const ids = ['totalLabel', 'suggestions', 'togglePayment', 'paymentPanel', 'saleNotice', 'cartList', 'subtotal', 'finalTotal', 'finishSale', 'productSearch', 'catalogGrid', 'discount', 'paymentEditor', 'quoteNotice', 'quoteSale', 'addFirstResult', 'saleNotes', 'receiptLink'];
+  const ids = ['totalLabel', 'suggestions', 'togglePayment', 'paymentPanel', 'saleNotice', 'cartList', 'subtotal', 'finalTotal', 'finishSale', 'productSearch', 'catalogGrid', 'discount', 'paymentEditor', 'quoteNotice', 'quoteSale', 'addFirstResult', 'saleNotes', 'receiptLink', 'paymentDialog', 'closePayment', 'backToCart', 'summaryLabel', 'summaryTotal', 'emptyCartHelp', 'paymentNotice'];
   for (const id of ids) elements.set(id, new FakeElement(id, { value: id === 'discount' ? '0' : '' }));
   const mainControls = [...elements.values()].filter(element => !['saleNotice', 'cartList', 'subtotal', 'finalTotal', 'catalogGrid', 'quoteNotice', 'receiptLink'].includes(element.id));
-  const documentListeners = new Map();
+  const documentListeners = new Map(), windowListeners = new Map();
   const observers = [];
   const document = {
     activeElement: null,
@@ -187,7 +189,7 @@ function createPdvHarness(options = {}) {
       return null;
     },
     querySelectorAll(selector) {
-      return selector === 'main input, main select, main textarea, main button' ? mainControls : [];
+      return selector.startsWith('main input, main select, main textarea, main button') ? mainControls : [];
     },
     addEventListener(type, listener) {
       const listeners = documentListeners.get(type) || [];
@@ -195,7 +197,11 @@ function createPdvHarness(options = {}) {
       documentListeners.set(type, listeners);
     },
   };
-  for (const element of elements.values()) element.focus = () => { document.activeElement = element; };
+  for (const element of elements.values()) {
+    element.focus = () => { document.activeElement = element; };
+    element.showModal = () => { element.open = true; };
+    element.close = () => { element.open = false; element.dispatch('close'); };
+  }
   const mediaListeners = [];
   const media = { matches: !!options.mobile, addEventListener: (_type, listener) => mediaListeners.push(listener) };
   const payments = {
@@ -206,11 +212,12 @@ function createPdvHarness(options = {}) {
     values() { if (this.valuesError) throw this.valuesError; return this.rows.map(row => ({ ...row })); },
     updateSummary() { const applied = this.rows.reduce((sum, row) => sum + row.applied_cents, 0), difference = this.totalCents - applied; this.summary = difference > 0 ? `Faltam R$ ${difference / 100}` : difference < 0 ? `Excedem R$ ${-difference / 100}` : 'Valores conferem'; }
   };
-  const session = new Map();
+  const session = options.session || new Map();
   if (options.pending) session.set('pdv-pending-checkout', JSON.stringify({ userId: 'operator', preview: [], body: { discount_cents: 0, notes: '', payments: [] } }));
   const context = {
     document,
-    window: { matchMedia: () => media },
+    URL, location: options.location || {href:'http://garden.test/pdv.html',origin:'http://garden.test',pathname:'/pdv.html'},
+    window: { matchMedia: () => media, addEventListener(type,listener){windowListeners.set(type,listener);} },
     console,
     setTimeout: clock.setTimeout,
     clearTimeout: clock.clearTimeout,
@@ -219,18 +226,21 @@ function createPdvHarness(options = {}) {
         constructor(options) { super({ ...options, now: clock.now, setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout }); }
       }
     },
-    PaymentEditor: function PaymentEditor() { return payments; },
+    Event: class { constructor(type, options) { this.type = type; Object.assign(this, options); } },
+    PaymentEditor: function PaymentEditor() { payments.rows = []; payments.totalCents = null; payments.valuesError = null; return payments; },
     MutationObserver: class { constructor(callback) { this.callback = callback; observers.push(this); } observe() {} },
     sessionStorage: { getItem: key => session.get(key) || null, setItem: (key, value) => session.set(key, value), removeItem: key => session.delete(key) },
     crypto: { randomUUID: () => 'test-key' },
     API: {
       call: api.call,
-      ready: async () => {}, header() {}, user: { id: 'operator' },
+      ready: async () => {}, header() {}, user: { id: options.userId || 'operator' },
+      confirm: options.confirm || (async () => false),
       esc: value => String(value), money: cents => `R$ ${Number(cents) / 100}`,
       cents: value => Math.round(Number(value) * 100),
-      run: (_notice, action) => Promise.resolve().then(action).catch(error => { elements.get('saleNotice').textContent = error.message; }),
+      run: (notice, action) => { notice.textContent='Carregando…'; return Promise.resolve().then(action).catch(error => { notice.textContent = error.message; }); },
     },
   };
+  if (options.navigation) context.SaleNavigation = options.navigation;
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../../pdv.js'), 'utf8'), context, { filename: 'pdv.js' });
 
   function keydown(key, extra = {}) {
@@ -240,8 +250,8 @@ function createPdvHarness(options = {}) {
   }
   function type(text, interval = 20, field = document.activeElement) {
     for (const char of text) {
-      keydown(char);
-      if (field) { field.value += char; field.selectionStart = field.selectionEnd = field.value.length; field.dispatch('input'); }
+      const event = keydown(char);
+      if (field && !event.defaultPrevented) { field.value += char; field.selectionStart = field.selectionEnd = field.value.length; let stopped = false; const inputEvent = {target:field,stopImmediatePropagation(){stopped=true;}}; for(const listener of documentListeners.get('input') || []) listener(inputEvent); if(!stopped) field.dispatch('input'); }
       clock.advanceBy(interval);
     }
   }
@@ -251,7 +261,7 @@ function createPdvHarness(options = {}) {
     return dialog;
   }
   function closeDialog() { elements.delete('dialog'); for (const observer of observers) observer.callback(); }
-  return { setMobile(value) { media.matches = value; mediaListeners.forEach(listener => listener(media)); }, api, clock, document, elements, payments, flush, keydown, type, openDialog, closeDialog, focus(id) { document.activeElement = elements.get(id) || null; return document.activeElement; } };
+  return { createField(id,dataset={}) { const field=new FakeElement(id,{dataset}); field.focus=()=>{document.activeElement=field;};elements.set(id,field);return field; }, session, windowEvent:(type,event={})=>windowListeners.get(type)?.(event), location:context.location, dispatchDocument: async (type,event) => { for(const listener of documentListeners.get(type)||[]) await listener(event); }, setMobile(value) { media.matches = value; mediaListeners.forEach(listener => listener(media)); }, api, clock, document, elements, payments, flush, keydown, type, openDialog, closeDialog, focus(id) { document.activeElement = elements.get(id) || null; return document.activeElement; } };
 }
 
 module.exports = { createClock, createDeferred, createControlledApi, createPdvHarness, flush };

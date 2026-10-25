@@ -52,13 +52,13 @@ test('fontes continuam legíveis pela API sem root e secrets permanecem restrito
   try {
     fs.mkdirSync(path.join(folder, 'backend'), { mode: 0o700 });
     fs.mkdirSync(path.join(folder, 'deployment'), { mode: 0o700 });
-    for (const file of ['backend/app.py', 'deployment/start.py', 'login.html', 'api.js', 'style.css', '.env.homol-sandbox']) {
+    for (const file of ['backend/app.py', 'deployment/start.py', 'login.html', 'api.js', 'style.css', 'garden-logo.jpg', '.env.homol-sandbox']) {
       fs.writeFileSync(path.join(folder, file), 'fixture', { mode: 0o600 });
     }
     const normalize = fs.readFileSync('scripts/deploy-homologation.sh', 'utf8')
       .split('\n').filter(line => line.startsWith('chmod ')).join('\n');
     execFileSync('bash', ['-c', normalize], { cwd: folder, stdio: 'pipe' });
-    for (const file of ['backend/app.py', 'deployment/start.py', 'login.html', 'api.js', 'style.css']) {
+    for (const file of ['backend/app.py', 'deployment/start.py', 'login.html', 'api.js', 'style.css', 'garden-logo.jpg']) {
       assert.equal(fs.statSync(path.join(folder, file)).mode & 0o444, 0o444);
     }
     assert.equal(fs.statSync(path.join(folder, 'backend')).mode & 0o555, 0o555);

@@ -1,0 +1,97 @@
+{
+  "feature": "pagamento-popup-carrinho",
+  "timestamp": "2026-10-25T01:06:00.340Z",
+  "gitRev": "9d90672",
+  "command": "./scripts/test-onp.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 189,
+  "results": {
+    "AC-075": {
+      "status": "pass",
+      "testName": "@spec:AC-075 resumo precede carrinho em região sticky de altura completa",
+      "method": "tap"
+    },
+    "AC-076": {
+      "status": "pass",
+      "testName": "@spec:AC-076 total acompanha itens e cobrança inicia fechada",
+      "method": "tap"
+    },
+    "AC-077": {
+      "status": "pass",
+      "testName": "@spec:AC-077 total é identificado como estimado antes da conferência",
+      "method": "tap"
+    },
+    "AC-078": {
+      "status": "pass",
+      "testName": "@spec:AC-078 abrir cobrança única não envia nem confere venda",
+      "method": "tap"
+    },
+    "AC-079": {
+      "status": "pass",
+      "testName": "@spec:AC-079 vazio impede abrir cobrança e orienta adicionar produtos",
+      "method": "tap"
+    },
+    "AC-080": {
+      "status": "pass",
+      "testName": "@spec:AC-080 Fechar, Voltar e Escape descartam cobrança e mantêm produtos",
+      "method": "tap"
+    },
+    "AC-081": {
+      "status": "pass",
+      "testName": "@spec:AC-081 reabrir exige nova conferência antes do envio",
+      "method": "tap"
+    },
+    "AC-082": {
+      "status": "pass",
+      "testName": "@spec:AC-082 scanner modal preserva campos, Enter e digitação manual, cancelando resposta antiga",
+      "method": "tap"
+    },
+    "AC-083": {
+      "status": "pass",
+      "testName": "@spec:AC-083 rascunho de navegação não sobrescreve pedido pendente",
+      "method": "tap"
+    },
+    "AC-084": {
+      "status": "pass",
+      "testName": "@spec:AC-084 venda confirmada remove snapshot recuperável",
+      "method": "tap"
+    },
+    "AC-085": {
+      "status": "pass",
+      "testName": "@spec:AC-085 cancelar aviso mantém carrinho e cobrança sem navegar",
+      "method": "tap"
+    },
+    "AC-086": {
+      "status": "pass",
+      "testName": "@spec:AC-086 navegação confirmada transporta somente produtos e substitui recuperação",
+      "method": "tap"
+    },
+    "AC-087": {
+      "status": "pass",
+      "testName": "@spec:AC-087 recarga descarta rascunho e retornos seguintes não ressuscitam",
+      "method": "tap"
+    },
+    "AC-088": {
+      "status": "pass",
+      "testName": "@spec:AC-088 cópia da aba recebe novo contexto sem alterar a original",
+      "method": "tap"
+    },
+    "AC-089": {
+      "status": "pass",
+      "testName": "@spec:AC-089 diálogo nativo associa título, descrição, foco e Escape",
+      "method": "tap"
+    },
+    "AC-090": {
+      "status": "pass",
+      "testName": "@spec:AC-090 composição usa tokens Garden e ações operacionais acessíveis",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-002": {
+      "status": "pass",
+      "testName": "@principle:P-002 tracked files contain no detected operational secrets"
+    }
+  }
+}

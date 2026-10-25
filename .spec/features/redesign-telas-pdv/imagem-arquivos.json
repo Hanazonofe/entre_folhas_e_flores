@@ -1,0 +1,14 @@
+{
+  "design-tokens.css": "26eb91996a2d0cfd050feaa60581151ddc3b566c3724d328e304aadc121fbdb7",
+  "ui.css": "6cadb67915ab961a40a80b5e9295f23195b2718d03b033b0f53487d8f2eb63ab",
+  "garden-logo.jpg": "fa2ae74053597f09954826fbfbf70480f2b64983be9137fa8d17dd40ea3d314d",
+  "design-system.html": "6874a00cabc3032ee14fe807ea693fc1bbaf39f57bb81690a3be2e9c28e80fc4",
+  "design-system.css": "131e117a463bee5822f4cb559b887f6d326f2ffc84cda4d081c0009a5193182d",
+  "design-system.js": "3f9bed7ec81f42688de37356d634d41842c1519bd297bc0e70eb20ed30f0f212",
+  "login.html": "a7fa4c6f128c72af944628a2ec429e113f1fff35dc6cee0c9aa224b144a665f7",
+  "pdv.html": "ff2dfd1146efce2d655ecf581a4b65d7153339cfaee640f8c26dd41133b77f69",
+  "produtos.html": "25b32f021437550ac47d7ad133935fdb828078f3e1c71d08e22273360d3e7584",
+  "vendas.html": "6bdec9b2098139f71d32606afe9f18a54c1aa73bde5c8866e9fcb3ecb4cc7e72",
+  "admin.html": "db9c2d2edfbbc987cb6df79bcfe365acc0b34e603406a94e391755015ec9aaaa",
+  "receipt.html": "2a9240614dd68c32adf484531b5050a46fd60a72dbb556ff49aa84dbb3a00e2f"
+}

@@ -158,3 +158,31 @@ O runner inclui `tests/importer/` sem skips por falta de banco. O roteiro
 As tags são comentários/títulos reconhecidos pelo ONP. O `audit` 0.9.0 verifica
 sua presença, mas não substitui o resultado da suíte nem gera uma prova PASS
 individual de cada princípio; a saída Python continua sendo a saída do pytest.
+
+
+## Cobrança em popup e carrinho de navegação
+
+`tests/pdv-payment-dialog.test.js` executa abertura/abandono/reabertura, valores,
+conferência, pedido desconhecido, conclusão e isolamento temporal do scanner em
+observações, desconto, valor aplicado e recebido. `tests/pdv-navigation.test.js`
+exercita transferência de Web Locks, snapshot por conta/aba, cópia de aba,
+recarga, histórico/BFCache, falhas de armazenamento e respostas tardias.
+São testes de DOM determinístico; não substituem foco e geometria nativos.
+
+Para verificação local sem dependências novas:
+
+```bash
+node tests/pdv-payment-dialog.test.js
+node tests/pdv-navigation.test.js
+npm test
+npm run check
+```
+
+No Chrome, validar 360/768/1440 px, total sticky com carrinho longo, corpo do
+diálogo rolável com ações acessíveis, Escape e retorno de foco, link interno
+cancelado/confirmado, retorno por histórico e comparação com recarga normal e
+forçada. A identidade requer Web Locks; páginas autenticadas transferem a lease
+em pagehide e reconciliam conta/snapshot em pageshow. Sem suporte/armazenamento,
+a interface deve bloquear uma saída que prometa recuperação sem conseguir gravar.
+As evidências e limites desta entrega estão em
+`.spec/features/pagamento-popup-carrinho/validacao.md`.

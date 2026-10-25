@@ -2,6 +2,8 @@
   const $=selector=>document.querySelector(selector), notice=$('#notice'), modal=$('#editModal');
   const payments=new PaymentEditor($('#editPayments'));
   let sales=[],offset=0,count=0,editing=null,sequence=0;
+  function restoreEditFocus() { if (editing) document.querySelector(`[data-action="edit"][data-id="${editing.id}"]`)?.focus?.(); }
+  modal.addEventListener('close', restoreEditFocus);
   const expanded=new Set();
   const status=sale=>sale.status==='cancelled'?'Cancelada':sale.edited?'Alterada':'Concluída';
   async function load() {
@@ -36,7 +38,7 @@
     editing=await API.call('/sales/'+id);
     if(editing.status==='cancelled')throw new Error('Reative a venda antes de editar.');
     $('#editItems').innerHTML=editing.items.map((item,index)=>`<div class="edit-grid"><label>Produto ${index+1}<input data-edit-name="${index}" value="${API.esc(item.name)}" required></label><label>Quantidade ${index+1}<input data-edit-quantity="${index}" type="number" min="1" step="1" value="${item.quantity}" required></label><label>Preço ${index+1}<input data-edit-price="${index}" type="number" min="0" step="0.01" value="${(item.unit_price_cents/100).toFixed(2)}" required></label></div>`).join('');
-    $('#editDiscount').value=(editing.discount_cents/100).toFixed(2);$('#editNotes').value=editing.notes;payments.set(editing.payments,totals());$('#editNotice').textContent='';modal.classList.add('show');
+    $('#editDiscount').value=(editing.discount_cents/100).toFixed(2);$('#editNotes').value=editing.notes;payments.set(editing.payments,totals());$('#editNotice').textContent='';modal.showModal();
   }
   $('#salesList').addEventListener('click',event=>{
     const button=event.target.closest('[data-action]');if(!button)return;
@@ -57,9 +59,9 @@
   $('#editForm').addEventListener('input',()=>API.run($('#editNotice'),async()=>{totals();$('#editNotice').textContent='';}));
   $('#editForm').addEventListener('submit',event=>{event.preventDefault();const button=event.submitter;API.run($('#editNotice'),async()=>{
     if(button)button.disabled=true;
-    try{await API.call('/sales/'+editing.id,{method:'PUT',body:JSON.stringify({version:editing.version,items:editedItems(),discount_cents:API.cents($('#editDiscount').value),payments:payments.values(),notes:$('#editNotes').value})});modal.classList.remove('show');await load();notice.textContent='Venda alterada com sucesso.';}finally{if(button)button.disabled=false;}
+    try{await API.call('/sales/'+editing.id,{method:'PUT',body:JSON.stringify({version:editing.version,items:editedItems(),discount_cents:API.cents($('#editDiscount').value),payments:payments.values(),notes:$('#editNotes').value})});modal.close();await load();restoreEditFocus();notice.textContent='Venda alterada com sucesso.';}finally{if(button)button.disabled=false;}
   });});
-  $('#closeModal').addEventListener('click',()=>modal.classList.remove('show'));
+  $('#closeModal').addEventListener('click',()=>modal.close());
   for(const id of ['searchSales','statusFilter','totalDateFilter'])$('#'+id).addEventListener(id==='searchSales'?'input':'change',()=>{offset=0;API.run(notice,load);});
   $('#previousPage').addEventListener('click',()=>{offset=Math.max(0,offset-50);API.run(notice,load);});$('#nextPage').addEventListener('click',()=>{offset+=50;API.run(notice,load);});
   API.run(notice,async()=>{await API.ready();API.header();await load();});

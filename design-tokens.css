@@ -1,0 +1,18 @@
+:root {
+  color-scheme: light;
+  --ds-bg: #f5f7f2; --ds-surface: #fff; --ds-subtle: #edf3ec;
+  --ds-primary: #2f6b45; --ds-primary-hover: #245538; --ds-text: #1f2a23;
+  --ds-muted: #526158; --ds-border: #c4cfc5; --ds-control-border: #758779;
+  --ds-success: #245538; --ds-success-bg: #e8f3e6;
+  --ds-danger: #a62424; --ds-danger-bg: #fff0f0;
+  --ds-warning: #775000; --ds-warning-bg: #fff6df;
+  --ds-info: #245b80; --ds-info-bg: #edf5fc; --ds-focus: #245b80;
+  --ds-brand-red: #d51620; --ds-brand-green: #279b24;
+  --ds-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ds-text-sm: .875rem; --ds-text-base: 1rem; --ds-text-lg: 1.25rem;
+  --ds-text-xl: 1.75rem; --ds-text-display: clamp(2rem, 4vw, 3rem);
+  --ds-space-1: 4px; --ds-space-2: 8px; --ds-space-3: 12px; --ds-space-4: 16px;
+  --ds-space-5: 24px; --ds-space-6: 32px; --ds-space-7: 48px;
+  --ds-radius-sm: 6px; --ds-radius-md: 12px; --ds-radius-lg: 20px;
+  --ds-shadow: 0 8px 24px #1f2a230c; --ds-duration: 140ms;
+}

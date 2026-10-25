@@ -24,7 +24,7 @@ echo "Versão anterior: $previous; candidata: $SHA"
 # Repair source files from older deployments that checked out under umask 077.
 # Docker COPY preserves modes; the API drops to uid 10001 before importing.
 chmod -R u=rwX,go=rX backend deployment
-chmod a+r -- *.html *.js *.css
+chmod a+r -- *.html *.js *.css garden-logo.jpg
 export HOMOL_SHA=$SHA
 export HOMOL_CADDY_TAG
 HOMOL_CADDY_TAG=$(sha256sum deployment/Dockerfile.caddy deployment/caddy-entrypoint.sh | sha256sum | cut -c1-16)

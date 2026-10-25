@@ -1,0 +1,65 @@
+{
+  "runId": "pagamento-popup-carrinho-pagamento-popup-carrinho-mvn4r1eq",
+  "feature": "pagamento-popup-carrinho",
+  "agent": "codex",
+  "modo": "sequencial",
+  "paralelizar": null,
+  "modeloForcado": "gpt-6.1-sol",
+  "esforcoForcado": "high",
+  "geradoEm": "2026-10-25 01:09",
+  "branchTrabalho": "spec/pagamento-popup-carrinho",
+  "baseDir": ".spec/features/pagamento-popup-carrinho",
+  "specDir": ".spec",
+  "repoName": "pagamento-popup-carrinho",
+  "logsDir": "../onp-worktrees/pagamento-popup-carrinho-pagamento-popup-carrinho-logs",
+  "ondas": [],
+  "faixas": [],
+  "sequenciais": [
+    {
+      "id": "T-033",
+      "titulo": "Validar critérios e regressões no navegador e auditar",
+      "modelo": "gpt-6.1-sol",
+      "esforco": "high",
+      "arquivos": [
+        "tests/pdv-payment-dialog.test.js",
+        "tests/pdv-navigation.test.js",
+        "tests/pdv-mobile.test.js",
+        "tests/redesign.test.js",
+        ".spec/features/layout-pdv-mobile/spec.md",
+        ".spec/features/redesign-telas-pdv/spec.md",
+        "docs/TESTING.md",
+        ".spec/features/pagamento-popup-carrinho/validacao.md",
+        ".spec/verification/pagamento-popup-carrinho.json"
+      ],
+      "refs": [
+        "US-015",
+        "US-016",
+        "US-017",
+        "US-018",
+        "AC-075",
+        "AC-076",
+        "AC-077",
+        "AC-078",
+        "AC-079",
+        "AC-080",
+        "AC-081",
+        "AC-082",
+        "AC-083",
+        "AC-084",
+        "AC-085",
+        "AC-086",
+        "AC-087",
+        "AC-088",
+        "AC-089",
+        "AC-090"
+      ]
+    }
+  ],
+  "concluidas": [
+    "T-029",
+    "T-030",
+    "T-031",
+    "T-032"
+  ],
+  "avisos": []
+}
