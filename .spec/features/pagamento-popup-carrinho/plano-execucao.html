@@ -38,13 +38,13 @@
 </style>
 <main>
   <h1>Plano de execução — pagamento-popup-carrinho</h1>
-  <p class="sub">gerado por <code>onp-spec plano</code> em 2026-10-25 00:49 · regenere após mudar tasks.md</p>
+  <p class="sub">gerado por <code>onp-spec plano</code> em 2026-10-25 01:09 · regenere após mudar tasks.md</p>
   <div class="resumo">
-    <div><b>5</b> tarefa(s), uma após a outra</div>
+    <div><b>1</b> tarefa(s), uma após a outra</div>
     <div>modo <b>sequencial</b> (escolha do usuário)</div>
     <div>branch <code>spec/pagamento-popup-carrinho</code></div>
   </div>
-  <div class="avisos"><div>⚠ T-029 está [em-andamento] — entrou no plano; se já houver trabalho local, commite antes de executar</div></div>
+
   <div class="executor">
     <h2>Como executar — via agente</h2>
     <p>Peça ao agente (Codex) para executar o plano. Ele roda:</p>
@@ -55,40 +55,16 @@
     (<code>onp-spec resumo pagamento-popup-carrinho --tabela</code>) e o
     <b>resumo geral de andamento</b> (<code>onp-spec resumo pagamento-popup-carrinho</code>).</p>
   </div>
-  
-  
+
+
     <section class="onda">
       <h3>Ordem de execução <small>uma tarefa após a outra, na árvore principal</small></h3>
       <div class="grade"><div class="faixa">
         <div class="tarefa">
-          <span class="tid">T-029</span>
-          <span class="ttitulo">Projetar layout e ciclo de vida da venda</span>
-          <span class="meta"><code>gpt-6.1-sol</code> · esforço <b>high</b></span>
-          <span class="arquivos"><code>.spec/features/pagamento-popup-carrinho/design.md</code></span>
-        </div>
-        <div class="tarefa">
-          <span class="tid">T-030</span>
-          <span class="ttitulo">Compor resumo fixo e cobrança em diálogo Garden</span>
-          <span class="meta"><code>gpt-6.1-sol</code> · esforço <b>high</b></span>
-          <span class="arquivos"><code>pdv.html</code> <code>pdv.js</code> <code>ui.css</code> <code>tests/pdv-payment-dialog.test.js</code></span>
-        </div>
-        <div class="tarefa">
-          <span class="tid">T-031</span>
-          <span class="ttitulo">Integrar saída da cobrança e proteção de fechamento</span>
-          <span class="meta"><code>gpt-6.1-sol</code> · esforço <b>high</b></span>
-          <span class="arquivos"><code>pdv.js</code> <code>tests/pdv-payment-dialog.test.js</code> <code>tests/pdv-payments.test.js</code> <code>test/leitura-automatica-codigo-barras.spec.test.js</code> <code>tests/helpers/pdv-harness.js</code></span>
-        </div>
-        <div class="tarefa">
-          <span class="tid">T-032</span>
-          <span class="ttitulo">Preservar produtos em navegação confirmada e limpar na recarga</span>
-          <span class="meta"><code>gpt-6.1-sol</code> · esforço <b>high</b></span>
-          <span class="arquivos"><code>pdv.js</code> <code>sale-navigation.js</code> <code>api.js</code> <code>pdv.html</code> <code>produtos.html</code> <code>vendas.html</code> <code>admin.html</code> <code>backend/pdv/app.py</code> <code>package.json</code> <code>tests/pdv-navigation.test.js</code> <code>tests/helpers/pdv-harness.js</code></span>
-        </div>
-        <div class="tarefa">
           <span class="tid">T-033</span>
           <span class="ttitulo">Validar critérios e regressões no navegador e auditar</span>
           <span class="meta"><code>gpt-6.1-sol</code> · esforço <b>high</b></span>
-          <span class="arquivos"><code>tests/pdv-payment-dialog.test.js</code> <code>tests/pdv-navigation.test.js</code> <code>docs/TESTING.md</code> <code>.spec/features/pagamento-popup-carrinho/validacao.md</code> <code>.spec/verification/pagamento-popup-carrinho.json</code></span>
+          <span class="arquivos"><code>tests/pdv-payment-dialog.test.js</code> <code>tests/pdv-navigation.test.js</code> <code>tests/pdv-mobile.test.js</code> <code>tests/redesign.test.js</code> <code>.spec/features/layout-pdv-mobile/spec.md</code> <code>.spec/features/redesign-telas-pdv/spec.md</code> <code>docs/TESTING.md</code> <code>.spec/features/pagamento-popup-carrinho/validacao.md</code> <code>.spec/verification/pagamento-popup-carrinho.json</code></span>
         </div></div></div>
     </section>
   <section class="onda">

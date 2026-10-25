@@ -54,3 +54,12 @@ test('snapshot corrompido, duplicado ou monetário inválido é descartado',asyn
 test('sem Web Locks recuperação não é prometida e pedido pendente é preservado',async()=>{
  const n=navigation({unsupported:true});n.session.set('pdv-pending-checkout','pedido');assert.equal(await n.api.identify('operator'),false);assert.equal(n.api.save([item]),false);assert.equal(n.session.get('pdv-pending-checkout'),'pedido');
 });
+test('retorno do histórico invalida conferência tardia sem reautorizar fechamento',async()=>{
+ let callback;const h=await pdv({navigation:{connect:async(_user,cb)=>{callback=cb;return [];},save:()=>true,available:true}});add(h);h.elements.get('togglePayment').dispatch('click');h.elements.get('quoteSale').dispatch('click');await flush();const old=h.api.requests.at(-1);callback([item]);old.deferred.resolve({total_cents:2468,discount_cents:0,quote_token:'quote-test-only',items:[{product_id:'p1',name:'Flor',quantity:2,unit_price_cents:1234}]});await flush();assert.equal(h.elements.get('paymentDialog').open,false);assert.equal(h.elements.get('finishSale').disabled,true);assert.equal(h.payments.totalCents,null);
+});
+test('histórico de pedido resolvido em outro documento não recupera venda concluída',async()=>{
+ const session=new Map([['pdv-pending-checkout',JSON.stringify({key:'same-key',userId:'operator',preview:[{product_id:'pending',name:'Pendente',unit_price_cents:100,quantity:1}],body:{items:[{product_id:'pending',quantity:1}],discount_cents:0,notes:'original',payments:[]}})]]);let callback;const h=await pdv({session,navigation:{connect:async(_user,cb)=>{callback=cb;return [];},save:()=>true,available:true}});session.delete('pdv-pending-checkout');callback([]);assert.match(h.elements.get('cartList').innerHTML,/Nenhum produto/);assert.equal(h.elements.get('paymentDialog').open,false);
+});
+test('sair pelo histórico cancela leituras em processamento e ignora respostas tardias',async()=>{
+ const h=await pdv();add(h);h.type('00042');h.clock.advanceBy(80);await flush();const lookup=h.api.requests.at(-1);h.windowEvent('pagehide');lookup.deferred.resolve({items:[{...item,id:'late',name:'Leitura tardia',active:true}]});await flush();assert.doesNotMatch(h.elements.get('cartList').innerHTML,/Leitura tardia/);assert.match(h.elements.get('cartList').innerHTML,/Flor/);
+});

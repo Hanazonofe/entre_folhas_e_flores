@@ -26,7 +26,7 @@ test('@spec:AC-090 composição usa tokens Garden e ações operacionais acessí
 });
 module.exports={boot,add,open,product};
 async function confer(h,total=1234) {
- h.elements.get('quoteSale').dispatch('click');await flush();h.api.requests.at(-1).deferred.resolve({total_cents:total,discount_cents:0,quote_token:'quote-new',items:[{product_id:'p1',name:'Flor',quantity:1,unit_price_cents:total}]});await flush();
+ h.elements.get('quoteSale').dispatch('click');await flush();h.api.requests.at(-1).deferred.resolve({total_cents:total,discount_cents:0,quote_token:'quote-test-only',items:[{product_id:'p1',name:'Flor',quantity:1,unit_price_cents:total}]});await flush();
 }
 test('@spec:AC-080 Fechar, Voltar e Escape descartam cobrança e mantêm produtos',async()=>{
  for(const action of ['closePayment','backToCart','cancel']) {
@@ -50,3 +50,8 @@ test('@spec:AC-083 pedido desconhecido bloqueia saída e repete corpo e chave',a
 test('@spec:AC-084 confirmação limpa produtos e cobrança e oferece comprovante',async()=>{
  const h=await boot();add(h);open(h);await confer(h);h.elements.get('finishSale').dispatch('click');await flush();h.api.requests.at(-1).deferred.resolve({id:'sale1',number:42,total_cents:1234});await flush();assert.equal(h.elements.get('paymentDialog').open,false);assert.match(h.elements.get('cartList').innerHTML,/Nenhum produto/);assert.match(h.elements.get('saleNotice').textContent,/Venda #42 confirmada/);assert.equal(h.elements.get('receiptLink').hidden,false);assert.equal(h.payments.totalCents,null);
 });
+test('scanner no valor aplicado e recebido não dispara redistribuição temporária',async()=>{
+ const h=await boot();add(h);open(h);
+ for(const dataset of [{applied:''},{received:''}]) { const field=h.createField('money-'+Object.keys(dataset)[0],dataset);field.value='12.34';let updates=0;field.addEventListener('input',()=>{updates++;});field.focus();h.type('00042',20,field);h.keydown('Enter');assert.equal(field.value,'12.34');assert.equal(updates,0);h.type('5',100,field);h.clock.advanceBy(80);assert.equal(field.value,'12.345');assert.equal(updates,1); }
+});
+test('inicialização pronta remove mensagem de carregamento',async()=>{const h=await boot();assert.equal(h.elements.get('saleNotice').textContent,'');});

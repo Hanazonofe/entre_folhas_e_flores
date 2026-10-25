@@ -1,11 +1,11 @@
 # Spec: Cobrança em popup e carrinho abaixo do total
 
 > feature: pagamento-popup-carrinho
-> status: pronta
+> status: auditada
 
 ## Contexto
 
-O operador precisa acompanhar o total sem percorrer a lista de produtos e abrir a cobrança somente ao fechar a compra. Requisitos refinados em `/grill` e confirmados em 24/10/2026. Esta entrega contém a especificação e tarefas propostas; a implementação e as provas permanecem pendentes. `pronta` refere-se ao refinamento dos requisitos.
+O operador precisa acompanhar o total sem percorrer a lista de produtos e abrir a cobrança somente ao fechar a compra. Requisitos refinados em `/grill` e confirmados em 24/10/2026. Implementação sequencial concluída em worktree isolado, com provas PASS por critério e auditoria global limpa. Evidências e limites estão em [validacao.md](validacao.md).
 
 ## Decisões confirmadas
 
@@ -155,6 +155,8 @@ Nenhuma suposição de produto adicional adotada. A estratégia técnica de recu
 
 Nenhuma decisão de produto pendente. Em 24/10/2026 o usuário confirmou aviso obrigatório nos links internos, sem garantia nos controles do navegador, fechamento de aba ou saída do site, mantendo recuperação pelo histórico. O projeto técnico deverá demonstrar a distinção entre navegação e recarga nos navegadores atendidos, incluindo histórico e restauração de página.
 
-## Definição de pronto e validação futura
+## Definição de pronto e validação
 
 Cada critério exige teste comportamental anotado com seu código de aceite. Validar no navegador real a rolagem, o foco e o ciclo link → outra página → retorno; comparar com recarga normal e forçada. Cobrir popup, leitor, cobrança inválida, falha de rede e recuperação do mesmo pedido enviado. Executar regressões de pagamentos e leitor, `npm test`, `npm run check`, verificação da feature e auditoria global sem enfraquecer gates. Não declarar esta feature implementada com base apenas na documentação.
+
+Validação executada: 16/16 critérios desta feature PASS; auditoria global exit 0 com 79/79 critérios provados e nenhum aviso. Consulte [validacao.md](validacao.md) para testes, ensaios no Chrome e limites da evidência.

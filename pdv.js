@@ -257,7 +257,8 @@
     if(saved){pending=JSON.parse(saved);paymentDialog.showModal();if(pending.preview){pending.preview.forEach(item=>cart.set(item.product_id,{...item,id:item.product_id,price_cents:item.unit_price_cents}));$('#discount').value=(pending.body.discount_cents/100).toFixed(2);$('#saleNotes').value=pending.body.notes;payments.set(pending.body.payments);}$('#quoteNotice').textContent='Pedido anterior aguardando confirmação. Os dados estão bloqueados para evitar duplicação.';}
     if (typeof SaleNavigation !== 'undefined') {
       const restored = await SaleNavigation.connect(API.user.id, recovered => {
-        if (pending) return;
+        if (pending && sessionStorage.getItem('pdv-pending-checkout')) return;
+        pending = null;
         quote = null; $('#discount').value = '0'; $('#saleNotes').value = '';
         payments = new PaymentEditor($('#paymentEditor'));
         invalidate(); resetModalCapture(); cancelPendingScans();
@@ -269,7 +270,8 @@
       navigationReady = true;
       if (!SaleNavigation.available && !pending) notice.textContent = 'Recuperação do carrinho indisponível nesta aba. Mantenha a venda aberta.';
     }
-    await search();renderCart();if(pending)notice.textContent='Tente novamente para resolver a venda pendente.';
+    await search();renderCart();
+    notice.textContent = pending ? 'Tente novamente para resolver a venda pendente.' : typeof SaleNavigation !== 'undefined' && !SaleNavigation.available ? 'Recuperação do carrinho indisponível nesta aba. Mantenha a venda aberta.' : '';
   });
   document.addEventListener('click', async event => {
     const link = event.target.closest?.('a[href]');
@@ -293,5 +295,9 @@
     } catch (error) { notice.textContent = $('#paymentNotice').textContent = error.message; }
     finally { navigationInProgress = false; }
   }, true);
+  window.addEventListener?.('pagehide', () => {
+    cancelPendingScans(); resetModalCapture();
+    if (!pending) invalidate();
+  });
   new MutationObserver(()=>{ if (dialogOpen()) cancelPendingScans(); }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['open','aria-modal']});
 })();

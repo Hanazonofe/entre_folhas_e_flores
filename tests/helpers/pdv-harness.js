@@ -178,7 +178,7 @@ function createPdvHarness(options = {}) {
   const ids = ['totalLabel', 'suggestions', 'togglePayment', 'paymentPanel', 'saleNotice', 'cartList', 'subtotal', 'finalTotal', 'finishSale', 'productSearch', 'catalogGrid', 'discount', 'paymentEditor', 'quoteNotice', 'quoteSale', 'addFirstResult', 'saleNotes', 'receiptLink', 'paymentDialog', 'closePayment', 'backToCart', 'summaryLabel', 'summaryTotal', 'emptyCartHelp', 'paymentNotice'];
   for (const id of ids) elements.set(id, new FakeElement(id, { value: id === 'discount' ? '0' : '' }));
   const mainControls = [...elements.values()].filter(element => !['saleNotice', 'cartList', 'subtotal', 'finalTotal', 'catalogGrid', 'quoteNotice', 'receiptLink'].includes(element.id));
-  const documentListeners = new Map();
+  const documentListeners = new Map(), windowListeners = new Map();
   const observers = [];
   const document = {
     activeElement: null,
@@ -217,7 +217,7 @@ function createPdvHarness(options = {}) {
   const context = {
     document,
     URL, location: options.location || {href:'http://garden.test/pdv.html',origin:'http://garden.test',pathname:'/pdv.html'},
-    window: { matchMedia: () => media },
+    window: { matchMedia: () => media, addEventListener(type,listener){windowListeners.set(type,listener);} },
     console,
     setTimeout: clock.setTimeout,
     clearTimeout: clock.clearTimeout,
@@ -237,7 +237,7 @@ function createPdvHarness(options = {}) {
       confirm: options.confirm || (async () => false),
       esc: value => String(value), money: cents => `R$ ${Number(cents) / 100}`,
       cents: value => Math.round(Number(value) * 100),
-      run: (_notice, action) => Promise.resolve().then(action).catch(error => { elements.get('saleNotice').textContent = error.message; }),
+      run: (notice, action) => { notice.textContent='Carregando…'; return Promise.resolve().then(action).catch(error => { notice.textContent = error.message; }); },
     },
   };
   if (options.navigation) context.SaleNavigation = options.navigation;
@@ -261,7 +261,7 @@ function createPdvHarness(options = {}) {
     return dialog;
   }
   function closeDialog() { elements.delete('dialog'); for (const observer of observers) observer.callback(); }
-  return { session, location:context.location, dispatchDocument: async (type,event) => { for(const listener of documentListeners.get(type)||[]) await listener(event); }, setMobile(value) { media.matches = value; mediaListeners.forEach(listener => listener(media)); }, api, clock, document, elements, payments, flush, keydown, type, openDialog, closeDialog, focus(id) { document.activeElement = elements.get(id) || null; return document.activeElement; } };
+  return { createField(id,dataset={}) { const field=new FakeElement(id,{dataset}); field.focus=()=>{document.activeElement=field;};elements.set(id,field);return field; }, session, windowEvent:(type,event={})=>windowListeners.get(type)?.(event), location:context.location, dispatchDocument: async (type,event) => { for(const listener of documentListeners.get(type)||[]) await listener(event); }, setMobile(value) { media.matches = value; mediaListeners.forEach(listener => listener(media)); }, api, clock, document, elements, payments, flush, keydown, type, openDialog, closeDialog, focus(id) { document.activeElement = elements.get(id) || null; return document.activeElement; } };
 }
 
 module.exports = { createClock, createDeferred, createControlledApi, createPdvHarness, flush };

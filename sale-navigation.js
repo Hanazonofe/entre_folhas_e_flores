@@ -11,11 +11,14 @@ const SaleNavigation = (() => {
   function rows(value) {
     if (!Array.isArray(value) || value.length > 1000) throw new Error('Carrinho salvo inválido.');
     const ids = new Set();
+    let total = 0;
     return value.map(row => {
       if (!row || typeof row.id !== 'string' || !row.id.length || row.id.length > 200 || ids.has(row.id) ||
           typeof row.name !== 'string' || row.name.length > 1000 || typeof row.code !== 'string' || row.code.length > 200 ||
           !Number.isSafeInteger(row.price_cents) || row.price_cents < 0 || !Number.isSafeInteger(row.quantity) || row.quantity < 1 ||
           !Number.isSafeInteger(row.quantity * row.price_cents)) throw new Error('Carrinho salvo inválido.');
+      total += row.quantity * row.price_cents;
+      if (!Number.isSafeInteger(total)) throw new Error('Carrinho salvo inválido.');
       ids.add(row.id);
       return {id:row.id,name:row.name,code:row.code,price_cents:row.price_cents,quantity:row.quantity};
     });

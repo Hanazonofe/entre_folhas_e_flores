@@ -1,27 +1,19 @@
 # Plano de execução — pagamento-popup-carrinho
 
-> gerado por `onp-spec plano` em 2026-10-25 00:49 — NÃO edite à mão;
+> gerado por `onp-spec plano` em 2026-10-25 01:09 — NÃO edite à mão;
 > mudou tasks.md ou a config? Regenere: `onp-spec plano pagamento-popup-carrinho --sequencial --modelo gpt-6.1-sol --esforco high`
 
 ## Resumo — o que vai acontecer
 
-- **modo SEQUENCIAL (escolha do usuário)**: 5 tarefa(s) pendente(s), UMA APÓS A OUTRA, na árvore principal
+- **modo SEQUENCIAL (escolha do usuário)**: 1 tarefa(s) pendente(s), UMA APÓS A OUTRA, na árvore principal (4 já concluída(s): T-029, T-030, T-031, T-032)
 - sem worktrees e sem paralelismo — cada tarefa roda numa janela de contexto limpa, na ordem do tasks.md
 - **custo travado pelo usuário**: modelo `gpt-6.1-sol` · esforço `high` em TODAS as tarefas (vence tasks.md e config)
 - tudo acontece na branch de trabalho `spec/pagamento-popup-carrinho`; levar para a main é decisão sua
-
-### Avisos
-
-- ⚠ T-029 está [em-andamento] — entrou no plano; se já houver trabalho local, commite antes de executar
 
 ## Ordem de execução (uma tarefa após a outra)
 
 | tarefa | título | modelo | esforço |
 |---|---|---|---|
-| T-029 | Projetar layout e ciclo de vida da venda | `gpt-6.1-sol` | high |
-| T-030 | Compor resumo fixo e cobrança em diálogo Garden | `gpt-6.1-sol` | high |
-| T-031 | Integrar saída da cobrança e proteção de fechamento | `gpt-6.1-sol` | high |
-| T-032 | Preservar produtos em navegação confirmada e limpar na recarga | `gpt-6.1-sol` | high |
 | T-033 | Validar critérios e regressões no navegador e auditar | `gpt-6.1-sol` | high |
 
 ## Gestão de branches e commits

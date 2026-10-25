@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# executar-tarefas.sh — gerado por `onp-spec plano pagamento-popup-carrinho` em 2026-10-25 00:49
+# executar-tarefas.sh — gerado por `onp-spec plano pagamento-popup-carrinho` em 2026-10-25 01:09
 # NÃO edite à mão: mudou tasks.md ou a config, regenere o plano.
 #
 # uso:
@@ -14,7 +14,7 @@
 set -u
 set -o pipefail
 
-RUN_ID='pagamento-popup-carrinho-pagamento-popup-carrinho-mvn41bts'
+RUN_ID='pagamento-popup-carrinho-pagamento-popup-carrinho-mvn4r1eq'
 FEATURE='pagamento-popup-carrinho'
 BASE_BRANCH='spec/pagamento-popup-carrinho'
 ENGINE='/tmp/entre-folhas-spec-popup-20261024/onp-spec.mjs'
@@ -168,134 +168,6 @@ iniciar_resumos() {
   trap 'parar_resumos; node "$ENGINE" resumo "$FEATURE" --gravar >/dev/null 2>&1 || true' EXIT
 }
 
-# ── sequencial T-029 (ordem do tasks.md) ──
-executar_seq_T_029() {
-  info 'sequencial T-029 — Projetar layout e ciclo de vida da venda'
-  if rodar_tarefa seq 'T-029' 'Você executa UMA tarefa da feature "pagamento-popup-carrinho" (fluxo onp-spec, spec-anchored).
-Leia primeiro: .spec/features/pagamento-popup-carrinho/spec.md, .spec/features/pagamento-popup-carrinho/tasks.md e .spec/constituicao.md.
-
-Sua tarefa (somente ela):
-T-029 — "Projetar layout e ciclo de vida da venda"
-  critérios/refs: AC-075 (Total sempre visível e carrinho abaixo), AC-080 (Sair do pagamento limpa somente a cobrança), AC-083 (Preservar pedido enviado sem confirmação), AC-086 (Recuperar produtos por navegação interna ou histórico), AC-087 (Recarregar limpa rascunho), AC-088 (Separar operadores e abas), AC-089 (Diálogo acessível no desktop e no celular)
-  arquivos permitidos (e seus testes): .spec/features/pagamento-popup-carrinho/design.md
-  mensagem de commit: "T-029 pagamento-popup-carrinho: Projetar layout e ciclo de vida da venda"
-
-Regras inegociáveis:
-- Todo critério de aceite referenciado vira teste com @spec:AC-xxx no título.
-- NUNCA enfraqueça, pule (skip/todo) ou apague um teste para passar — teste pulado não é prova e o audit acusa.
-- Rode os testes localmente com `./scripts/test-onp.sh` até passarem.
-- NÃO edite tasks.md, NÃO rode onp-spec verify/audit e NÃO toque em outras tarefas — o orquestrador cuida disso.
-- Ao final de CADA tarefa: `git add` só no que você tocou e um commit próprio.' 'gpt-6.1-sol' high >> "$LOG_DIR/seq.log" 2>&1; then
-    # commit de segurança se o agente esqueceu (rastreabilidade > perfeição)
-    if [ -n "$(git status --porcelain)" ]; then
-      git add -A && git commit -q -m 'T-029 pagamento-popup-carrinho: Projetar layout e ciclo de vida da venda (auto-commit do plano)'
-    fi
-    marcar_concluidas T-029
-    verde "✔ T-029 concluída"
-    return 0
-  fi
-  vermelho "✘ T-029 falhou (log: $LOG_DIR/seq.log)"
-  amarelo "  reexecute só ela: bash .spec/features/pagamento-popup-carrinho/executar-tarefas.sh --seq T-029"
-  FALHAS="$FALHAS T-029"
-  return 1
-}
-
-# ── sequencial T-030 (ordem do tasks.md) ──
-executar_seq_T_030() {
-  info 'sequencial T-030 — Compor resumo fixo e cobrança em diálogo Garden'
-  if rodar_tarefa seq 'T-030' 'Você executa UMA tarefa da feature "pagamento-popup-carrinho" (fluxo onp-spec, spec-anchored).
-Leia primeiro: .spec/features/pagamento-popup-carrinho/spec.md, .spec/features/pagamento-popup-carrinho/tasks.md e .spec/constituicao.md.
-
-Sua tarefa (somente ela):
-T-030 — "Compor resumo fixo e cobrança em diálogo Garden"
-  critérios/refs: AC-075 (Total sempre visível e carrinho abaixo), AC-076 (Cobrança recolhida e total atualizado), AC-077 (Total informado antes da conferência), AC-078 (Abrir cobrança completa), AC-079 (Impedir pagamento de carrinho vazio), AC-089 (Diálogo acessível no desktop e no celular), AC-090 (Aplicar linguagem visual Garden)
-  arquivos permitidos (e seus testes): pdv.html, pdv.js, ui.css, tests/pdv-payment-dialog.test.js
-  mensagem de commit: "T-030 pagamento-popup-carrinho: Compor resumo fixo e cobrança em diálogo Garden"
-
-Regras inegociáveis:
-- Todo critério de aceite referenciado vira teste com @spec:AC-xxx no título.
-- NUNCA enfraqueça, pule (skip/todo) ou apague um teste para passar — teste pulado não é prova e o audit acusa.
-- Rode os testes localmente com `./scripts/test-onp.sh` até passarem.
-- NÃO edite tasks.md, NÃO rode onp-spec verify/audit e NÃO toque em outras tarefas — o orquestrador cuida disso.
-- Ao final de CADA tarefa: `git add` só no que você tocou e um commit próprio.' 'gpt-6.1-sol' high >> "$LOG_DIR/seq.log" 2>&1; then
-    # commit de segurança se o agente esqueceu (rastreabilidade > perfeição)
-    if [ -n "$(git status --porcelain)" ]; then
-      git add -A && git commit -q -m 'T-030 pagamento-popup-carrinho: Compor resumo fixo e cobrança em diálogo Garden (auto-commit do plano)'
-    fi
-    marcar_concluidas T-030
-    verde "✔ T-030 concluída"
-    return 0
-  fi
-  vermelho "✘ T-030 falhou (log: $LOG_DIR/seq.log)"
-  amarelo "  reexecute só ela: bash .spec/features/pagamento-popup-carrinho/executar-tarefas.sh --seq T-030"
-  FALHAS="$FALHAS T-030"
-  return 1
-}
-
-# ── sequencial T-031 (ordem do tasks.md) ──
-executar_seq_T_031() {
-  info 'sequencial T-031 — Integrar saída da cobrança e proteção de fechamento'
-  if rodar_tarefa seq 'T-031' 'Você executa UMA tarefa da feature "pagamento-popup-carrinho" (fluxo onp-spec, spec-anchored).
-Leia primeiro: .spec/features/pagamento-popup-carrinho/spec.md, .spec/features/pagamento-popup-carrinho/tasks.md e .spec/constituicao.md.
-
-Sua tarefa (somente ela):
-T-031 — "Integrar saída da cobrança e proteção de fechamento"
-  critérios/refs: AC-080 (Sair do pagamento limpa somente a cobrança), AC-081 (Conferir antes de fechar), AC-082 (Suspender leituras com popup aberto), AC-083 (Preservar pedido enviado sem confirmação), AC-084 (Concluir e preparar próxima venda)
-  arquivos permitidos (e seus testes): pdv.js, tests/pdv-payment-dialog.test.js, tests/pdv-payments.test.js, test/leitura-automatica-codigo-barras.spec.test.js, tests/helpers/pdv-harness.js
-  mensagem de commit: "T-031 pagamento-popup-carrinho: Integrar saída da cobrança e proteção de fechamento"
-
-Regras inegociáveis:
-- Todo critério de aceite referenciado vira teste com @spec:AC-xxx no título.
-- NUNCA enfraqueça, pule (skip/todo) ou apague um teste para passar — teste pulado não é prova e o audit acusa.
-- Rode os testes localmente com `./scripts/test-onp.sh` até passarem.
-- NÃO edite tasks.md, NÃO rode onp-spec verify/audit e NÃO toque em outras tarefas — o orquestrador cuida disso.
-- Ao final de CADA tarefa: `git add` só no que você tocou e um commit próprio.' 'gpt-6.1-sol' high >> "$LOG_DIR/seq.log" 2>&1; then
-    # commit de segurança se o agente esqueceu (rastreabilidade > perfeição)
-    if [ -n "$(git status --porcelain)" ]; then
-      git add -A && git commit -q -m 'T-031 pagamento-popup-carrinho: Integrar saída da cobrança e proteção de fechamento (auto-commit do plano)'
-    fi
-    marcar_concluidas T-031
-    verde "✔ T-031 concluída"
-    return 0
-  fi
-  vermelho "✘ T-031 falhou (log: $LOG_DIR/seq.log)"
-  amarelo "  reexecute só ela: bash .spec/features/pagamento-popup-carrinho/executar-tarefas.sh --seq T-031"
-  FALHAS="$FALHAS T-031"
-  return 1
-}
-
-# ── sequencial T-032 (ordem do tasks.md) ──
-executar_seq_T_032() {
-  info 'sequencial T-032 — Preservar produtos em navegação confirmada e limpar na recarga'
-  if rodar_tarefa seq 'T-032' 'Você executa UMA tarefa da feature "pagamento-popup-carrinho" (fluxo onp-spec, spec-anchored).
-Leia primeiro: .spec/features/pagamento-popup-carrinho/spec.md, .spec/features/pagamento-popup-carrinho/tasks.md e .spec/constituicao.md.
-
-Sua tarefa (somente ela):
-T-032 — "Preservar produtos em navegação confirmada e limpar na recarga"
-  critérios/refs: AC-083 (Preservar pedido enviado sem confirmação), AC-084 (Concluir e preparar próxima venda), AC-085 (Cancelar navegação mantém a venda), AC-086 (Recuperar produtos por navegação interna ou histórico), AC-087 (Recarregar limpa rascunho), AC-088 (Separar operadores e abas)
-  arquivos permitidos (e seus testes): pdv.js, sale-navigation.js, api.js, pdv.html, produtos.html, vendas.html, admin.html, backend/pdv/app.py, package.json, tests/pdv-navigation.test.js, tests/helpers/pdv-harness.js
-  mensagem de commit: "T-032 pagamento-popup-carrinho: Preservar produtos em navegação confirmada e limpar na recarga"
-
-Regras inegociáveis:
-- Todo critério de aceite referenciado vira teste com @spec:AC-xxx no título.
-- NUNCA enfraqueça, pule (skip/todo) ou apague um teste para passar — teste pulado não é prova e o audit acusa.
-- Rode os testes localmente com `./scripts/test-onp.sh` até passarem.
-- NÃO edite tasks.md, NÃO rode onp-spec verify/audit e NÃO toque em outras tarefas — o orquestrador cuida disso.
-- Ao final de CADA tarefa: `git add` só no que você tocou e um commit próprio.' 'gpt-6.1-sol' high >> "$LOG_DIR/seq.log" 2>&1; then
-    # commit de segurança se o agente esqueceu (rastreabilidade > perfeição)
-    if [ -n "$(git status --porcelain)" ]; then
-      git add -A && git commit -q -m 'T-032 pagamento-popup-carrinho: Preservar produtos em navegação confirmada e limpar na recarga (auto-commit do plano)'
-    fi
-    marcar_concluidas T-032
-    verde "✔ T-032 concluída"
-    return 0
-  fi
-  vermelho "✘ T-032 falhou (log: $LOG_DIR/seq.log)"
-  amarelo "  reexecute só ela: bash .spec/features/pagamento-popup-carrinho/executar-tarefas.sh --seq T-032"
-  FALHAS="$FALHAS T-032"
-  return 1
-}
-
 # ── sequencial T-033 (ordem do tasks.md) ──
 executar_seq_T_033() {
   info 'sequencial T-033 — Validar critérios e regressões no navegador e auditar'
@@ -305,7 +177,7 @@ Leia primeiro: .spec/features/pagamento-popup-carrinho/spec.md, .spec/features/p
 Sua tarefa (somente ela):
 T-033 — "Validar critérios e regressões no navegador e auditar"
   critérios/refs: AC-075 (Total sempre visível e carrinho abaixo), AC-076 (Cobrança recolhida e total atualizado), AC-077 (Total informado antes da conferência), AC-078 (Abrir cobrança completa), AC-079 (Impedir pagamento de carrinho vazio), AC-080 (Sair do pagamento limpa somente a cobrança), AC-081 (Conferir antes de fechar), AC-082 (Suspender leituras com popup aberto), AC-083 (Preservar pedido enviado sem confirmação), AC-084 (Concluir e preparar próxima venda), AC-085 (Cancelar navegação mantém a venda), AC-086 (Recuperar produtos por navegação interna ou histórico), AC-087 (Recarregar limpa rascunho), AC-088 (Separar operadores e abas), AC-089 (Diálogo acessível no desktop e no celular), AC-090 (Aplicar linguagem visual Garden)
-  arquivos permitidos (e seus testes): tests/pdv-payment-dialog.test.js, tests/pdv-navigation.test.js, docs/TESTING.md, .spec/features/pagamento-popup-carrinho/validacao.md, .spec/verification/pagamento-popup-carrinho.json
+  arquivos permitidos (e seus testes): tests/pdv-payment-dialog.test.js, tests/pdv-navigation.test.js, tests/pdv-mobile.test.js, tests/redesign.test.js, .spec/features/layout-pdv-mobile/spec.md, .spec/features/redesign-telas-pdv/spec.md, docs/TESTING.md, .spec/features/pagamento-popup-carrinho/validacao.md, .spec/verification/pagamento-popup-carrinho.json
   mensagem de commit: "T-033 pagamento-popup-carrinho: Validar critérios e regressões no navegador e auditar"
 
 Regras inegociáveis:
@@ -381,20 +253,12 @@ executar_tudo() {
   iniciar_resumos
   info "logs em: $LOG_DIR"
   info "resumo geral de andamento: a cada 1 min aqui no terminal (e via: onp-spec resumo)"
-  executar_seq_T_029 || true
-  executar_seq_T_030 || true
-  executar_seq_T_031 || true
-  executar_seq_T_032 || true
   executar_seq_T_033 || true
   encerrar tudo
 }
 
 listar() {
   echo "execução: $RUN_ID (feature $FEATURE, branch $BASE_BRANCH)"
-  echo "  seq       T-029 (sequencial)"
-  echo "  seq       T-030 (sequencial)"
-  echo "  seq       T-031 (sequencial)"
-  echo "  seq       T-032 (sequencial)"
   echo "  seq       T-033 (sequencial)"
   echo
   echo "reexecutar uma faixa:    --faixa <id>"
@@ -430,10 +294,6 @@ case "$MODO" in
     esac ;;
   seq)
     case "$ALVO" in
-      T-029) evento --tipo inicio --escopo "seq:T-029"; iniciar_resumos; executar_seq_T_029 || true; encerrar "seq:T-029" ;;
-      T-030) evento --tipo inicio --escopo "seq:T-030"; iniciar_resumos; executar_seq_T_030 || true; encerrar "seq:T-030" ;;
-      T-031) evento --tipo inicio --escopo "seq:T-031"; iniciar_resumos; executar_seq_T_031 || true; encerrar "seq:T-031" ;;
-      T-032) evento --tipo inicio --escopo "seq:T-032"; iniciar_resumos; executar_seq_T_032 || true; encerrar "seq:T-032" ;;
       T-033) evento --tipo inicio --escopo "seq:T-033"; iniciar_resumos; executar_seq_T_033 || true; encerrar "seq:T-033" ;;
       *) falhar "tarefa sequencial desconhecida: '$ALVO' — veja as disponíveis com --listar" ;;
     esac ;;

@@ -27,7 +27,7 @@ Como operador, quero encontrar produtos e acompanhar o carrinho com clareza, par
 
 - **Dado** uma venda com itens no desktop ou celular
 - **Quando** busca, adiciona produtos e alterna a largura
-- **Então** mantém catálogo e resumo em duas colunas no desktop, catálogo sob demanda e pagamento expansível no mobile, preservando quantidades e valores
+- **Então** mantém catálogo e resumo em duas colunas no desktop, catálogo sob demanda no mobile e pagamento em diálogo em ambas as larguras conforme a decisão posterior de pagamento-popup-carrinho, preservando quantidades e valores ao alternar a largura
 
 #### AC-069 — Conclusão e falhas preservam o pedido
 

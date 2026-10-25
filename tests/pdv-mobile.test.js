@@ -48,29 +48,32 @@ test('@spec:AC-034 ambos os botões limpam a busca nos dois layouts', async () =
     assert.match(el(h, 'cartList').innerHTML, /<span>2<\/span>/);
   }
 });
-test('@spec:AC-035 desktop mantém catálogo e pagamento e alternar largura preserva a venda', async () => {
+test('@spec:AC-035 desktop mantém catálogo e alternar largura preserva a venda e o diálogo', async () => {
   const h = await boot(false); assert.equal(el(h, 'catalogGrid').hidden, false);
-  assert.equal(el(h, 'paymentPanel').hidden, false); assert.equal(el(h, 'togglePayment').hidden, true);
+  assert.equal(el(h, 'paymentDialog').open, false); assert.equal(el(h, 'togglePayment').hidden, false);
   await search(h, 'Rosa'); add(h); assert.match(el(h, 'catalogGrid').innerHTML, /Lírio/);
-  h.setMobile(true); assert.equal(el(h, 'catalogGrid').hidden, true); assert.equal(el(h, 'paymentPanel').hidden, true);
+  el(h, 'togglePayment').dispatch('click');
+  h.setMobile(true); assert.equal(el(h, 'catalogGrid').hidden, true); assert.equal(el(h, 'paymentDialog').open, true);
   assert.match(el(h, 'cartList').innerHTML, /Rosa/);
-  h.setMobile(false); assert.equal(el(h, 'paymentPanel').hidden, false); assert.equal(el(h, 'catalogGrid').hidden, false);
+  h.setMobile(false); assert.equal(el(h, 'paymentDialog').open, true); assert.equal(el(h, 'catalogGrid').hidden, false);
 });
-test('@spec:AC-036 pagamento começa recolhido com controle acessível', async () => {
-  const h = await boot(); assert.equal(el(h, 'paymentPanel').hidden, true); assert.equal(el(h, 'togglePayment').hidden, false);
-  assert.equal(el(h, 'togglePayment').getAttribute('aria-expanded'), 'false'); assert.equal(el(h, 'togglePayment').textContent, 'Ir para pagamento');
+test('@spec:AC-036 pagamento começa fechado com controle de diálogo acessível', async () => {
+  const h = await boot(); assert.equal(el(h, 'paymentDialog').open, false); assert.equal(el(h, 'togglePayment').hidden, false);
+  const html = require('node:fs').readFileSync(require.resolve('../pdv.html'), 'utf8');
+  assert.match(html, /id="togglePayment" aria-haspopup="dialog" aria-controls="paymentDialog"/);
 });
-test('@spec:AC-037 expandir e recolher preserva o carrinho e os dados de pagamento', async () => {
+test('@spec:AC-037 abrir pagamento mantém carrinho e sair limpa cobrança conforme decisão posterior', async () => {
   const h = await boot(); await payment(h);
-  assert.equal(el(h, 'paymentPanel').hidden, false); assert.equal(el(h, 'togglePayment').getAttribute('aria-expanded'), 'true');
+  assert.equal(el(h, 'paymentDialog').open, true);
   assert.match(el(h, 'cartList').innerHTML, /Rosa/); assert.equal(el(h, 'finalTotal').textContent, 'R$ 25');
-  const rows = JSON.stringify(h.payments.rows); el(h, 'togglePayment').dispatch('click'); el(h, 'togglePayment').dispatch('click');
-  assert.equal(JSON.stringify(h.payments.rows), rows); assert.equal(el(h, 'finishSale').disabled, false);
+  assert.equal(h.payments.rows.length, 1); el(h, 'closePayment').dispatch('click'); el(h, 'togglePayment').dispatch('click');
+  assert.equal(h.payments.rows.length, 0); assert.equal(el(h, 'finishSale').disabled, true);
+  assert.match(el(h, 'cartList').innerHTML, /Rosa/);
 });
 test('@spec:AC-038 venda confirmada recolhe pagamento, prepara busca e mantém comprovante', async () => {
   const h = await boot(); await payment(h); el(h, 'finishSale').dispatch('click'); await flush();
   h.api.requests.at(-1).deferred.resolve({ id: 'sale-1', number: 1, total_cents: 2500 }); await flush();
-  assert.equal(el(h, 'paymentPanel').hidden, true); assert.equal(el(h, 'productSearch').value, '');
+  assert.equal(el(h, 'paymentDialog').open, false); assert.equal(el(h, 'productSearch').value, '');
   assert.equal(h.document.activeElement, el(h, 'productSearch')); assert.equal(el(h, 'productSearch').disabled, false);
   assert.match(el(h, 'cartList').innerHTML, /Nenhum produto/); assert.equal(el(h, 'finalTotal').textContent, 'R$ 0');
   assert.equal(el(h, 'receiptLink').hidden, false); assert.equal(el(h, 'receiptLink').href, 'receipt.html?id=sale-1');
@@ -79,7 +82,7 @@ test('@spec:AC-039 erros de validação e rede mantêm carrinho e pagamento aber
   for (const status of [422, 503]) {
     const h = await boot(); await payment(h); el(h, 'finishSale').dispatch('click'); await flush();
     h.api.requests.at(-1).deferred.reject(Object.assign(new Error('Falha na venda'), { status })); await flush();
-    assert.equal(el(h, 'paymentPanel').hidden, false); assert.match(el(h, 'cartList').innerHTML, /Rosa/);
+    assert.equal(el(h, 'paymentDialog').open, true); assert.match(el(h, 'cartList').innerHTML, /Rosa/);
     assert.match(el(h, 'saleNotice').textContent, /Falha na venda/); assert.equal(h.payments.rows.length, 1);
   }
 });
@@ -93,12 +96,13 @@ test('busca em andamento não permite adicionar um resultado antigo', async () =
 
 test('pedido pendente no desktop permanece acessível ao mudar para mobile', async () => {
   const h = await boot(false); await search(h, 'Rosa'); add(h);
+  el(h, 'togglePayment').dispatch('click');
   el(h, 'quoteSale').dispatch('click'); await flush();
   h.api.requests.at(-1).deferred.resolve({ total_cents: 2500, discount_cents: 0, quote_token: 'test-only', items: [{ product_id: product.id, name: product.name, unit_price_cents: 2500 }] }); await flush();
   el(h, 'finishSale').dispatch('click'); await flush();
   h.api.requests.at(-1).deferred.reject(Object.assign(new Error('Rede indisponível'), { status: 503 })); await flush();
   h.setMobile(true);
-  assert.equal(el(h, 'paymentPanel').hidden, false);
+  assert.equal(el(h, 'paymentDialog').open, true);
   assert.equal(el(h, 'finishSale').disabled, false);
-  assert.equal(el(h, 'togglePayment').getAttribute('aria-expanded'), 'true');
+  el(h, 'closePayment').dispatch('click'); assert.equal(el(h, 'paymentDialog').open, true);
 });
