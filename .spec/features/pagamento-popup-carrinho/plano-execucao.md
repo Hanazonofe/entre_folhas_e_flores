@@ -1,6 +1,6 @@
 # Plano de execução — pagamento-popup-carrinho
 
-> gerado por `onp-spec plano` em 2026-10-25 00:48 — NÃO edite à mão;
+> gerado por `onp-spec plano` em 2026-10-25 00:49 — NÃO edite à mão;
 > mudou tasks.md ou a config? Regenere: `onp-spec plano pagamento-popup-carrinho --sequencial --modelo gpt-6.1-sol --esforco high`
 
 ## Resumo — o que vai acontecer
@@ -41,7 +41,7 @@ bash .spec/features/pagamento-popup-carrinho/executar-tarefas.sh
 Cada tarefa roda `codex exec` com **janela de contexto limpa**, na árvore principal,
 uma após a outra, com `--model` e `model_reasoning_effort` já definidos por tarefa e sandbox `workspace-write`.
 Os prompts exatos estão embutidos no script.
-Logs: `../onp-worktrees/projeto-pagamento-popup-carrinho-logs/`.
+Logs: `../onp-worktrees/pagamento-popup-carrinho-pagamento-popup-carrinho-logs/`.
 
 **Confirmação de custos — antes de executar**: os modelos e esforços por
 tarefa estão nas tabelas acima; o agente CONFIRMA com o usuário se estão

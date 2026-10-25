@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# executar-tarefas.sh — gerado por `onp-spec plano pagamento-popup-carrinho` em 2026-10-25 00:48
+# executar-tarefas.sh — gerado por `onp-spec plano pagamento-popup-carrinho` em 2026-10-25 00:49
 # NÃO edite à mão: mudou tasks.md ou a config, regenere o plano.
 #
 # uso:
@@ -14,7 +14,7 @@
 set -u
 set -o pipefail
 
-RUN_ID='projeto-pagamento-popup-carrinho-mvn3zujh'
+RUN_ID='pagamento-popup-carrinho-pagamento-popup-carrinho-mvn41bts'
 FEATURE='pagamento-popup-carrinho'
 BASE_BRANCH='spec/pagamento-popup-carrinho'
 ENGINE='/tmp/entre-folhas-spec-popup-20261024/onp-spec.mjs'
@@ -65,8 +65,8 @@ preparar_ambiente() {
     info "branch de trabalho: $BASE_BRANCH (a partir de $ATUAL)"
   fi
   git worktree prune
-  LOG_DIR="$(dirname "$TOPLEVEL")/onp-worktrees/projeto-pagamento-popup-carrinho-logs"
-  WT_BASE="$(dirname "$TOPLEVEL")/onp-worktrees/projeto-pagamento-popup-carrinho"
+  LOG_DIR="$(dirname "$TOPLEVEL")/onp-worktrees/pagamento-popup-carrinho-pagamento-popup-carrinho-logs"
+  WT_BASE="$(dirname "$TOPLEVEL")/onp-worktrees/pagamento-popup-carrinho-pagamento-popup-carrinho"
   STREAMS_DIR="${ONP_SPEC_HOME:-$HOME/.onp-spec}/painel/streams/$RUN_ID"
   mkdir -p "$LOG_DIR" "$STREAMS_DIR"
 }
