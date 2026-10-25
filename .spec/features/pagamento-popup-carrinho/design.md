@@ -1,7 +1,7 @@
 # Projeto técnico — Cobrança em popup e carrinho abaixo do total
 
 > feature: pagamento-popup-carrinho
-> etapa: projeto técnico; implementação pendente
+> etapa: implementação sequencial autorizada em 24/10/2026
 > referência: [spec.md](spec.md), decisões confirmadas em 24/10/2026
 
 ## Estrutura da tela e referência Garden
@@ -49,9 +49,9 @@ Adotar um módulo local `sale-navigation.js`, carregado nas páginas autenticada
 
 Contrato proposto para `pdv-cart-navigation-v1`: versão, usuário, identificador do contexto, identificador do rascunho, revisão, ticket de navegação e itens com id, código textual, nome, preço estimado em centavos e quantidade. Não guardar desconto, pagamentos, observações, quote, CSRF ou credenciais. Validar formato, limites e números inteiros seguros antes de montar o Map; renderizar texto com escape. A conferência no servidor decide preço/atividade/permissão; dados locais não autorizam fechar venda.
 
-O módulo mantém ticket de percurso e identidade de contexto para distinguir restauração autorizada de entrada nova. `sessionStorage` isoladamente é insuficiente: nova aba/duplicação pode receber uma cópia. O projeto não pode considerar AC-088 atendido apenas por usar esse armazenamento. Antes de implementar a recuperação, provar uma identidade por contexto com detecção de cópia entre documentos vivos (por exemplo, lease exclusiva via Web Locks e comunicação entre contextos), mais tickets ligados ao percurso. Uma cópia detectada recebe nova identidade e descarta o rascunho copiado. A troca de documento na aba original precisa ter transferência controlada, sem interpretar essa transferência como duplicação.
+O módulo usa uma lease exclusiva de Web Locks por identidade aleatória gravada no `sessionStorage`. Todas as páginas autenticadas adquirem a lease, liberam em `pagehide` (permitindo transferência para o próximo documento e BFCache) e readquirem em `pageshow`. Um documento copiado enquanto a aba original está ativa recebe outra identidade e descarta a cópia do snapshot. A aquisição usa `ifAvailable`: nunca espera uma aba diferente fechar. A revisão do armazenamento é relida ao retornar do BFCache, substituindo o Map e limpando cobrança. A conta é validada antes de restaurar. Sem Web Locks ou armazenamento acessível, a recuperação falha explicitamente; navegação confirmada não promete conservação sem snapshot escrito.
 
-A escolha final desse mecanismo depende de um ensaio curto nos navegadores usados no piloto. Não há suporte comprovado nesta etapa. Se não houver primitiva disponível para cumprir isolamento e transferência, manter recuperação desabilitada com aviso e tratar como bloqueio técnico para a conclusão, não como critério aprovado. Não introduzir serviço externo como alternativa silenciosa. Registrar o resultado em `validacao.md` antes de fechar o projeto da recuperação.
+A identidade pertence à sequência ativa de documentos autenticados da aba, não a uma propriedade global de usuário. `sessionStorage` transporta apenas produtos; o pedido enviado permanece no contrato existente. A primitiva existe no Chrome disponível no ambiente. O primeiro ensaio headless foi impedido pelo sandbox (`setsockopt: Operation not permitted`); a validação nativa será registrada em `validacao.md`, sem confundir mock com prova de navegador. Não há dependência nova nem serviço externo.
 
 ### Ciclo de navegação
 
@@ -97,4 +97,4 @@ Testes novos: `tests/pdv-payment-dialog.test.js` e `tests/pdv-navigation.test.js
 - Comprovar recuperação pelo histórico sem exigir aviso dos controles do navegador, conforme a exceção aprovada. Limpar cobrança também em `pageshow` ao restaurar uma página que saiu pelo histórico.
 - Confirmar no ensaio o encerramento de buffers do leitor em campos nativos dentro do diálogo.
 
-Nenhum código funcional foi alterado nesta etapa; nenhum desses ensaios foi executado. T-029 permanece em andamento até resolver os pontos de projeto que exigem prova; as demais tarefas permanecem pendentes.
+Projeto definido para implementação sequencial. As provas nativas e de regressão serão registradas na validação; critérios só serão fechados após testes PASS e auditoria.
