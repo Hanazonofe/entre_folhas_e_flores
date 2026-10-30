@@ -20,6 +20,11 @@ app = FastAPI(
     redoc_url=None,
 )
 SAFE_FILES = {
+    "camera-prototipo.html",
+    "camera-prototipo.js",
+    "camera-prototipo.css",
+    "camera-decoder.js",
+    "camera-decoder.LICENSE.txt",
     "pdv.html",
     "vendas.html",
     "produtos.html",

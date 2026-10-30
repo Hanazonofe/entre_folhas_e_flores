@@ -6,5 +6,6 @@ RUN pip install --no-cache-dir -r backend/requirements.lock && useradd --uid 100
 COPY backend /app/backend
 COPY deployment/grants.sql deployment/migrate.py deployment/start.py /app/deployment/
 COPY *.html *.js *.css garden-logo.jpg /app/web/
+COPY --chmod=644 camera-decoder.LICENSE.txt /app/web/
 ENV WEB_ROOT=/app/web
 CMD ["python", "/app/deployment/start.py"]
