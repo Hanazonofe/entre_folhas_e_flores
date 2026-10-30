@@ -76,7 +76,7 @@ test('@principle:P-002 tracked files contain no detected operational secrets', (
     if (fs.lstatSync(file).isFile()) hits.push(...findings(file, fs.readFileSync(file, 'utf8')));
   }
   for (const file of files) {
-    hits.push(...findings(file, execFileSync('git', ['show', `:${file}`], { encoding: 'utf8' })));
+    hits.push(...findings(file, execFileSync('git', ['show', `:${file}`], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 })));
     if (fs.existsSync(file) && fs.lstatSync(file).isFile()) hits.push(...findings(file, fs.readFileSync(file, 'utf8')));
   }
   assert.deepEqual([...new Set(hits)], [], 'Potential credentials require review (values redacted)');
