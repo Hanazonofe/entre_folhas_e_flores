@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teste Quagga2 — Entre Folhas e Flores</title>
+  <link rel="stylesheet" href="camera-prototipo.css?v=quagga1">
+  <link rel="stylesheet" href="camera-quagga.css?v=1">
+  <script defer src="quagga-decoder.js"></script>
+  <script defer src="camera-quagga.js?v=1"></script>
+</head>
+<body><main>
+  <a href="camera-prototipo.html?v=4">← Comparar com o leitor anterior</a>
+  <p class="eyebrow">Entre Folhas e Flores · Laboratório</p>
+  <h1>Teste com Quagga2</h1>
+  <p>Outro leitor e outro fluxo de captura. Aponte a câmera para um código de barras inteiro, com as margens claras dos dois lados. Este teste não consulta produtos nem altera vendas.</p>
+  <div class="actions">
+    <button id="q-start" type="button">Abrir câmera</button>
+    <button id="q-stop" type="button" disabled>Fechar câmera</button>
+  </div>
+  <p id="q-status" role="status" aria-live="polite">Câmera fechada.</p>
+  <label for="q-camera">Câmera usada no teste</label>
+  <select id="q-camera" disabled><option value="">Traseira automática</option></select>
+  <p id="q-diagnostics" class="note">Quagga2 1.13.0 · Teste 1 · Aguardando captura.</p>
+  <div id="q-viewport" class="quagga-viewport" aria-label="Prévia da câmera Quagga2"><video autoplay muted playsinline></video></div>
+  <section class="result">
+    <h2>Última leitura confirmada</h2>
+    <output id="q-code">Nenhum código lido</output>
+    <p id="q-format">EAN-13 e Code 128 · QR Code ignorado.</p>
+    <p id="q-stats">0 leituras · 0 repetições bloqueadas</p>
+    <button id="q-rearm" type="button" disabled>Retirei a etiqueta: liberar nova leitura</button>
+    <p class="note">Cada código precisa ser reconhecido em dois quadros seguidos para confirmar. A liberação de repetição é manual neste teste.</p>
+  </section>
+  <section><h2>Histórico desta sessão</h2><ol id="q-history"></ol></section>
+  <details><summary>Como comparar no S24</summary><p>Teste a mesma etiqueta e iluminação do leitor anterior. Se não focar, afaste um pouco o aparelho e experimente outra câmera da lista. Observe se o contador de quadros aumenta e se aparece “Candidato”. Uma região verde indica onde o leitor localizou barras.</p><p>As imagens são processadas no aparelho e não são enviadas nem salvas. O histórico fica apenas nesta página e é limpo ao abrir outra sessão.</p><a href="quagga-decoder.LICENSE.txt">Licenças do Quagga2 e componentes incluídos</a></details>
+</main></body></html>

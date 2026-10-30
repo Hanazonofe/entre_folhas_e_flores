@@ -20,6 +20,11 @@ app = FastAPI(
     redoc_url=None,
 )
 SAFE_FILES = {
+    "camera-quagga.html",
+    "camera-quagga.js",
+    "camera-quagga.css",
+    "quagga-decoder.js",
+    "quagga-decoder.LICENSE.txt",
     "camera-prototipo.html",
     "camera-prototipo.js",
     "camera-prototipo.css",
