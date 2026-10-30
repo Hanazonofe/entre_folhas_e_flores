@@ -1,7 +1,7 @@
 /* Protótipo isolado: sem consulta HTTP e sem mutação do carrinho. */
 (() => {
   'use strict';
-  const el = Object.fromEntries(['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result'].map(id => [id, document.getElementById(id)]));
+  const el = Object.fromEntries(['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera'].map(id => [id, document.getElementById(id)]));
   let generation = 0, stream = null, timer = null, audio = null;
   let blocked = new Set(), reads = 0, duplicates = 0;
   let attempts = 0, focus = 'automático do aparelho', photoGeneration = 0;
@@ -23,6 +23,7 @@
     el.start.disabled = false;
     el.stop.disabled = true;
     el.rearm.disabled = true;
+    el.camera.disabled = true;
     status(message);
   }
   function beep() {
@@ -51,7 +52,7 @@
         const ctx = el.frame.getContext('2d', { willReadFrequently: true });
         ctx.drawImage(el.video, 0, band ? el.video.videoHeight / 4 : 0, el.video.videoWidth, band ? el.video.videoHeight / 2 : el.video.videoHeight, 0, 0, width, el.frame.height);
         attempts++;
-        el.diagnostics.textContent = `Versão 2 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · ${attempts} quadros analisados`;
+        el.diagnostics.textContent = `Versão 3 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · ${attempts} quadros analisados`;
         const result = decodeCanvas(el.frame, reader, hints);
         const code = result.getText();
         if (blocked.has(code)) { duplicates++; stats(); }
@@ -79,6 +80,7 @@
     if (token === generation) timer = setTimeout(() => scan(token, reader, hints), 180);
   }
   el.start.addEventListener('click', async () => {
+    const selectedCamera = el.camera.value;
     close();
     if (!window.isSecureContext) return status('A câmera precisa de HTTPS confiável no celular. Abra o endereço HTTPS do PDV.');
     if (!navigator.mediaDevices?.getUserMedia) return status('Este navegador não disponibiliza a câmera. Tente Chrome no Android ou Safari no iPhone.');
@@ -95,7 +97,7 @@
       if (Audio) { audio = new Audio(); audio.resume().catch(() => {}); }
     } catch { audio = null; }
     try {
-      const incoming = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } });
+      const incoming = await navigator.mediaDevices.getUserMedia({ audio: false, video: { ...(selectedCamera ? { deviceId: { exact: selectedCamera } } : { facingMode: { ideal: 'environment' } }), width: { ideal: 1920 }, height: { ideal: 1080 } } });
       if (token !== generation) { incoming.getTracks().forEach(track => track.stop()); return; }
       stream = incoming;
       incoming.getVideoTracks().forEach(track => track.addEventListener('ended', () => { if (token === generation) close('A câmera foi interrompida. Abra novamente.'); }));
@@ -111,16 +113,40 @@
         }
       } catch { /* Unsupported focus must not prevent scanning. */ }
       if (token !== generation) return;
+      const activeTrack = incoming.getVideoTracks()[0];
+      try {
+        const actualFocus = activeTrack?.getSettings?.().focusMode;
+        if (actualFocus) focus = `${actualFocus} (informado pela câmera)`;
+      } catch { /* Settings may be unavailable. */ }
+      // Enumeration happens after permission so the browser can expose lens labels.
+      // Keep scanning if enumeration is unsupported or fails.
+      if (navigator.mediaDevices.enumerateDevices) {
+        navigator.mediaDevices.enumerateDevices().then(devices => {
+          if (token !== generation) return;
+          const cameras = devices.filter(device => device.kind === 'videoinput' && device.deviceId);
+          el.camera.replaceChildren();
+          const automatic = document.createElement('option'); automatic.value = ''; automatic.textContent = 'Traseira automática'; el.camera.append(automatic);
+          cameras.forEach((device, index) => {
+            const option = document.createElement('option'); option.value = device.deviceId;
+            option.textContent = device.label || `Câmera ${index + 1}`; el.camera.append(option);
+          });
+          const currentId = activeTrack?.getSettings?.().deviceId;
+          el.camera.value = cameras.some(camera => camera.deviceId === currentId) ? currentId : '';
+          el.camera.disabled = cameras.length < 2;
+        }).catch(() => {});
+      }
       const hints = hintsForBars();
       status('Câmera aberta. Aponte as barras para a faixa central.');
       scan(token, new ZXing.MultiFormatReader(), hints);
     } catch (error) {
       if (token !== generation) return;
-      const messages = { NotAllowedError: 'Permissão negada. Autorize a câmera nas configurações deste site e tente novamente.', NotFoundError: 'Nenhuma câmera disponível neste aparelho.', NotReadableError: 'Câmera ocupada ou indisponível. Feche outros aplicativos e tente novamente.' };
+      if (error.name === 'OverconstrainedError' || error.name === 'NotFoundError') el.camera.value = '';
+      const messages = { NotAllowedError: 'Permissão negada. Autorize a câmera nas configurações deste site e tente novamente.', NotFoundError: 'Nenhuma câmera disponível. Tente abrir novamente para usar a seleção automática.', OverconstrainedError: 'Essa câmera não está disponível. Tente abrir novamente para usar a seleção automática.', NotReadableError: 'Câmera ocupada ou indisponível. Feche outros aplicativos e tente novamente.' };
       close(messages[error.name] || 'Não foi possível iniciar a câmera. Confira a permissão e tente novamente.');
     }
   });
   el.stop.addEventListener('click', () => close());
+  el.camera.addEventListener('change', () => { if (stream) el.start.click(); });
   el.rearm.addEventListener('click', () => { blocked.clear(); el.rearm.disabled = true; status('Nova leitura liberada manualmente. Reapresente a etiqueta.'); });
   el.photo.addEventListener('change', async () => {
     const file = el.photo.files?.[0];

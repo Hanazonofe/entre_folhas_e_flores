@@ -42,3 +42,12 @@ limitado a 2560 pixels no lado maior, resultado separado do histórico ao vivo,
 URL temporária liberada após uso. A captura é fechada antes da análise. Recursos
 de controlador e CSS recebem parâmetro de versão para evitar cache antigo.
 Teste ao vivo no aparelho continua pendente.
+
+Relato refinado: Samsung Galaxy S24, Chrome, prévia normal e etiqueta fora de
+foco, sem mensagem de erro. Versão 3 acrescenta seleção das câmeras expostas
+pelo navegador após permissão e modo de foco informado em getSettings quando
+disponível. Nenhuma suposição de modelo/ID de lente. Troca encerra stream anterior
+e abre sessão nova; indisponibilidade permite voltar à seleção automática.
+O ajuste de foco segue os recursos anunciados em getCapabilities e a especificação
+https://www.w3.org/TR/image-capture/. Não comprova solução do foco no S24 sem
+novo teste do operador.

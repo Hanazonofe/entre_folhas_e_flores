@@ -6,12 +6,15 @@ const vm = require('node:vm');
 function harness(getUserMedia) {
   const nodes = {};
   const draws = [], urls = { created: 0, revoked: 0 };
-  for (const id of ['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result']) {
+  const media = { getUserMedia };
+  for (const id of ['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera']) {
     nodes[id] = { disabled: false, textContent: '', children: [], events: {}, style: {},
       addEventListener(event, fn) { this.events[event] = fn; },
       pause() {}, play: async () => {},
       replaceChildren() { this.children = []; },
       prepend(item) { this.children.unshift(item); },
+      append(item) { this.children.push(item); },
+      click() { return this.events.click?.(); },
       getContext() { return { drawImage(...args) { draws.push(args); } }; }
     };
   }
@@ -25,13 +28,14 @@ function harness(getUserMedia) {
   const window = { isSecureContext: true, events: {}, addEventListener(event, fn) { this.events[event] = fn; } };
   const ZXing = { MultiFormatReader: function () { return reader; }, HTMLCanvasElementLuminanceSource: function () {}, BinaryBitmap: function () {}, HybridBinarizer: function () {}, DecodeHintType: {}, BarcodeFormat: { 1: 'CODE_128' }, NotFoundException: NotFound, ChecksumException: class extends Error {}, FormatException: class extends Error {} };
   window.ZXing = ZXing;
+  media.getUserMedia ||= async () => stream;
   vm.runInNewContext(fs.readFileSync(require.resolve('../camera-prototipo.js'), 'utf8'), {
-    document, window, navigator: { mediaDevices: { getUserMedia: getUserMedia || (async () => stream) } }, ZXing,
+    document, window, navigator: { mediaDevices: media }, ZXing,
     URL: { createObjectURL() { urls.created++; return 'blob:local'; }, revokeObjectURL() { urls.revoked++; } },
     Image: class { naturalWidth = 960; naturalHeight = 1280; set src(value) { this.onload(); } },
     setTimeout(fn) { nextFrame = fn; return 1; }, clearTimeout() { nextFrame = null; }, Date, Map, Set
   });
-  return { nodes, tracks, stream, frames, window, document, draws, urls, tick() { const fn = nextFrame; nextFrame = null; if (fn) fn(); } };
+  return { nodes, tracks, stream, frames, window, document, draws, urls, media, tick() { const fn = nextFrame; nextFrame = null; if (fn) fn(); } };
 }
 
 test('código mantido e quadros sem leitura não liberam repetição; liberação manual permite nova leitura', async () => {
@@ -114,4 +118,18 @@ test('foto sem código informa falha sem sucesso e libera URL local', async () =
   await h.nodes.photo.events.change();
   assert.match(h.nodes['photo-result'].textContent, /Código não identificado/);
   assert.equal(h.urls.revoked, 1);
+});
+
+test('lista lentes após permissão e usa dispositivo escolhido ao reabrir', async () => {
+  const h = harness(); let chosen;
+  h.media.enumerateDevices = async () => [{ kind: 'videoinput', deviceId: 'main', label: 'Traseira principal' }, { kind: 'videoinput', deviceId: 'wide', label: 'Traseira ampla' }];
+  h.tracks.getSettings = () => ({ deviceId: 'main', focusMode: 'continuous' });
+  await h.nodes.start.events.click(); await Promise.resolve();
+  assert.equal(h.nodes.camera.disabled, false);
+  assert.equal(h.nodes.camera.value, 'main');
+  assert.match(h.nodes.diagnostics.textContent, /continuous/);
+  h.nodes.camera.value = 'wide';
+  h.media.getUserMedia = async constraints => { chosen = constraints.video.deviceId.exact; return h.stream; };
+  await h.nodes.start.events.click();
+  assert.equal(chosen, 'wide');
 });
