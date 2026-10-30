@@ -51,3 +51,24 @@ e abre sessão nova; indisponibilidade permite voltar à seleção automática.
 O ajuste de foco segue os recursos anunciados em getCapabilities e a especificação
 https://www.w3.org/TR/image-capture/. Não comprova solução do foco no S24 sem
 novo teste do operador.
+
+## Versão 4 — câmera abre sem reconhecer
+
+Novo relato do operador: captura abre, sem leitura; ainda sem informação sobre
+contador, nitidez ou resultado por foto. A causa no aparelho permanece não
+confirmada. Identificada dependência de inicialização: loop aguardava ajuste
+opcional de foco. Aplicação de foco agora assíncrona e não bloqueia o leitor;
+teste cobre driver que nunca resolve applyConstraints.
+
+API nativa BarcodeDetector é complemento opcional do ZXing: detecção de
+getSupportedFormats, somente ean_13/code_128, no máximo uma solicitação pendente
+por sessão, sem bloquear o loop JS. Falha, ausência de suporte ou chamada nativa
+pendente mantém ZXing disponível. Resultados após fechar/rearmar são ignorados;
+QR é filtrado tanto na configuração quanto na saída. Não é dependência para
+Android/iPhone nem confirmação de suporte real. Referência primária:
+https://wicg.github.io/shape-detection-api/.
+
+Diagnóstico mostra motor disponível e permite mostrar cópia do último quadro
+que o controlador desenhou para análise. Imagem fica só na memória da página.
+Nenhuma transmissão, persistência ou consulta de cadastro. Não alegar solução
+no aparelho antes de novo teste do operador.

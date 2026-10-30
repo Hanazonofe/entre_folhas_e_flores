@@ -1,10 +1,10 @@
 /* Protótipo isolado: sem consulta HTTP e sem mutação do carrinho. */
 (() => {
   'use strict';
-  const el = Object.fromEntries(['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera'].map(id => [id, document.getElementById(id)]));
+  const el = Object.fromEntries(['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption'].map(id => [id, document.getElementById(id)]));
   let generation = 0, stream = null, timer = null, audio = null;
   let blocked = new Set(), reads = 0, duplicates = 0;
-  let attempts = 0, focus = 'automático do aparelho', photoGeneration = 0;
+  let attempts = 0, focus = 'automático do aparelho', photoGeneration = 0, releaseGeneration = 0;
   const hintsForBars = () => new Map([[ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.CODE_128]], [ZXing.DecodeHintType.TRY_HARDER, true]]);
   const isUnreadable = error => error instanceof ZXing.NotFoundException || error instanceof ZXing.ChecksumException || error instanceof ZXing.FormatException;
   function decodeCanvas(canvas, reader, hints) {
@@ -14,6 +14,7 @@
   const stats = () => { el.stats.textContent = `${reads} leituras · ${duplicates} repetições bloqueadas`; };
   function close(message = 'Câmera fechada.') {
     generation++;
+    releaseGeneration++;
     clearTimeout(timer);
     if (stream) stream.getTracks().forEach(track => track.stop());
     stream = null;
@@ -24,6 +25,7 @@
     el.stop.disabled = true;
     el.rearm.disabled = true;
     el.camera.disabled = true;
+    el.capture.disabled = true;
     status(message);
   }
   function beep() {
@@ -38,7 +40,32 @@
       return true;
     } catch { return false; }
   }
-  function scan(token, reader, hints) {
+  function record(code, format, token) {
+    if (token !== generation || !stream || typeof code !== 'string' || !code) return;
+    if (blocked.has(code)) { duplicates++; stats(); return; }
+    blocked.add(code); reads++;
+    el.code.textContent = code;
+    el.format.textContent = format;
+    const item = document.createElement('li');
+    item.textContent = `${new Date().toLocaleTimeString('pt-BR')} · ${code} · ${format}`;
+    el.history.prepend(item);
+    while (el.history.children.length > 30) el.history.lastElementChild.remove();
+    el.rearm.disabled = false;
+    stats();
+    status(beep() ? 'Código lido. Retire a etiqueta antes de liberar outra leitura.' : 'Código lido (som indisponível). Retire a etiqueta antes de liberar outra leitura.');
+  }
+  function nativeReader(token) {
+    const engine = { detector: null, pending: false };
+    if (window.BarcodeDetector?.getSupportedFormats) {
+      Promise.resolve().then(() => window.BarcodeDetector.getSupportedFormats()).then(supported => {
+        if (token !== generation) return;
+        const formats = ['ean_13', 'code_128'].filter(format => supported.includes(format));
+        if (formats.length) engine.detector = new window.BarcodeDetector({ formats });
+      }).catch(() => {});
+    }
+    return engine;
+  }
+  function scan(token, reader, hints, engine) {
     if (token !== generation || !stream) return;
     try {
       if (el.video.readyState >= 2 && el.video.videoWidth) {
@@ -52,23 +79,25 @@
         const ctx = el.frame.getContext('2d', { willReadFrequently: true });
         ctx.drawImage(el.video, 0, band ? el.video.videoHeight / 4 : 0, el.video.videoWidth, band ? el.video.videoHeight / 2 : el.video.videoHeight, 0, 0, width, el.frame.height);
         attempts++;
-        el.diagnostics.textContent = `Versão 3 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · ${attempts} quadros analisados`;
-        const result = decodeCanvas(el.frame, reader, hints);
-        const code = result.getText();
-        if (blocked.has(code)) { duplicates++; stats(); }
-        else {
-          blocked.add(code); reads++;
-          el.code.textContent = code;
-          const format = ZXing.BarcodeFormat[result.getBarcodeFormat()];
-          el.format.textContent = format;
-          const item = document.createElement('li');
-          item.textContent = `${new Date().toLocaleTimeString('pt-BR')} · ${code} · ${format}`;
-          el.history.prepend(item);
-          while (el.history.children.length > 30) el.history.lastElementChild.remove();
-          el.rearm.disabled = false;
-          stats();
-          status(beep() ? 'Código lido. Retire a etiqueta antes de liberar outra leitura.' : 'Código lido (som indisponível). Retire a etiqueta antes de liberar outra leitura.');
+        el.capture.disabled = false;
+        el.diagnostics.textContent = `Versão 4 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
+        // Native detection is optional and never blocks the JS loop. At most one
+        // native request is outstanding; results from a closed session are ignored.
+        if (engine.detector && !engine.pending) {
+          engine.pending = true;
+          const detector = engine.detector;
+          const presentation = releaseGeneration;
+          Promise.resolve().then(() => {
+            if (token !== generation) return [];
+            return detector.detect(el.frame);
+          }).then(results => {
+            if (presentation !== releaseGeneration) return;
+            const found = results.find(result => ['ean_13', 'code_128'].includes(result.format) && typeof result.rawValue === 'string' && result.rawValue);
+            if (found) record(found.rawValue, found.format === 'ean_13' ? 'EAN_13' : 'CODE_128', token);
+          }).catch(() => { engine.detector = null; }).finally(() => { engine.pending = false; });
         }
+        const result = decodeCanvas(el.frame, reader, hints);
+        record(result.getText(), ZXing.BarcodeFormat[result.getBarcodeFormat()], token);
       }
     } catch (error) {
       if (!isUnreadable(error)) {
@@ -77,7 +106,7 @@
       }
       if (!reads && attempts === 20) status('Ainda sem leitura. Experimente afastar a etiqueta para focar, melhorar a luz ou comparar com uma foto abaixo.');
     }
-    if (token === generation) timer = setTimeout(() => scan(token, reader, hints), 180);
+    if (token === generation) timer = setTimeout(() => scan(token, reader, hints, engine), 180);
   }
   el.start.addEventListener('click', async () => {
     const selectedCamera = el.camera.value;
@@ -89,6 +118,8 @@
     el.start.disabled = true; el.stop.disabled = false;
     blocked = new Set(); reads = duplicates = attempts = 0; stats();
     focus = 'automático do aparelho';
+    el.snapshot.hidden = true; el['snapshot-caption'].textContent = '';
+    el.diagnostics.textContent = 'Versão 4 · Aguardando primeiro quadro da câmera…';
     el.history.replaceChildren(); el.code.textContent = 'Aguardando leitura';
     el.format.textContent = 'EAN-13 e Code 128 · QR Code ignorado';
     status('Solicitando acesso à câmera…');
@@ -107,9 +138,15 @@
       try {
         const track = incoming.getVideoTracks()[0];
         if (track?.getCapabilities?.().focusMode?.includes('continuous') && track.applyConstraints) {
-          await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
-          if (token !== generation) return;
-          focus = 'contínuo solicitado';
+          // Some camera drivers delay this promise. Focusing is optional and must
+          // not keep an already visible video from entering the decode loop.
+          Promise.resolve().then(() => {
+            if (token === generation) return track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+          }).then(() => {
+            if (token !== generation) return;
+            const actual = track.getSettings?.().focusMode;
+            focus = actual ? `${actual} (informado pela câmera)` : 'contínuo solicitado';
+          }).catch(() => {});
         }
       } catch { /* Unsupported focus must not prevent scanning. */ }
       if (token !== generation) return;
@@ -137,7 +174,7 @@
       }
       const hints = hintsForBars();
       status('Câmera aberta. Aponte as barras para a faixa central.');
-      scan(token, new ZXing.MultiFormatReader(), hints);
+      scan(token, new ZXing.MultiFormatReader(), hints, nativeReader(token));
     } catch (error) {
       if (token !== generation) return;
       if (error.name === 'OverconstrainedError' || error.name === 'NotFoundError') el.camera.value = '';
@@ -146,8 +183,15 @@
     }
   });
   el.stop.addEventListener('click', () => close());
+  el.capture.addEventListener('click', () => {
+    if (!stream || !attempts) return;
+    el.snapshot.width = el.frame.width; el.snapshot.height = el.frame.height;
+    el.snapshot.getContext('2d').drawImage(el.frame, 0, 0);
+    el.snapshot.hidden = false;
+    el['snapshot-caption'].textContent = `Quadro ${attempts}, ${el.frame.width} × ${el.frame.height}. Esta é a imagem enviada ao leitor, preservada apenas nesta página. Confira se todas as barras e as margens claras estão nítidas.`;
+  });
   el.camera.addEventListener('change', () => { if (stream) el.start.click(); });
-  el.rearm.addEventListener('click', () => { blocked.clear(); el.rearm.disabled = true; status('Nova leitura liberada manualmente. Reapresente a etiqueta.'); });
+  el.rearm.addEventListener('click', () => { releaseGeneration++; blocked.clear(); el.rearm.disabled = true; status('Nova leitura liberada manualmente. Reapresente a etiqueta.'); });
   el.photo.addEventListener('change', async () => {
     const file = el.photo.files?.[0];
     const request = ++photoGeneration;

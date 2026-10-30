@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Teste da câmera — Entre Folhas e Flores</title>
-  <link rel="stylesheet" href="camera-prototipo.css?v=3">
+  <link rel="stylesheet" href="camera-prototipo.css?v=4">
   <script defer src="camera-decoder.js"></script>
-  <script defer src="camera-prototipo.js?v=3"></script>
+  <script defer src="camera-prototipo.js?v=4"></script>
 </head>
 <body>
 <main>
@@ -19,7 +19,7 @@
     <button id="stop" type="button" disabled>Fechar câmera</button>
   </div>
   <p id="status" role="status" aria-live="polite">Câmera fechada.</p>
-  <p id="diagnostics" class="note">Versão 3 · Aguardando captura.</p>
+  <p id="diagnostics" class="note">Versão 4 · Aguardando captura.</p>
   <label for="camera">Câmera usada no teste</label>
   <select id="camera" disabled><option value="">Traseira automática</option></select>
   <p class="note">Se a etiqueta não focar, afaste um pouco o celular. Com a câmera aberta, experimente outra câmera da lista; prefira a traseira principal.</p>
@@ -29,6 +29,12 @@
     <span class="guide">Posicione um código de barras nesta faixa</span>
   </section>
   <canvas id="frame" hidden></canvas>
+  <section class="result">
+    <h2>Conferir a imagem do leitor</h2>
+    <button id="capture" type="button" disabled>Mostrar último quadro analisado</button>
+    <p id="snapshot-caption" class="note"></p>
+    <canvas id="snapshot" hidden aria-label="Último quadro analisado"></canvas>
+  </section>
   <section class="result">
     <h2>Comparar com uma foto</h2>
     <p>Escolha uma foto da etiqueta para testar a leitura sem a câmera ao vivo. A imagem fica no aparelho.</p>
