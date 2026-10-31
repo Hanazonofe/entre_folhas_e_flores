@@ -80,7 +80,7 @@
         ctx.drawImage(el.video, 0, band ? el.video.videoHeight / 4 : 0, el.video.videoWidth, band ? el.video.videoHeight / 2 : el.video.videoHeight, 0, 0, width, el.frame.height);
         attempts++;
         el.capture.disabled = false;
-        el.diagnostics.textContent = `Versão 4 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
+        el.diagnostics.textContent = `Versão 5 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
         // Native detection is optional and never blocks the JS loop. At most one
         // native request is outstanding; results from a closed session are ignored.
         if (engine.detector && !engine.pending) {
@@ -119,7 +119,7 @@
     blocked = new Set(); reads = duplicates = attempts = 0; stats();
     focus = 'automático do aparelho';
     el.snapshot.hidden = true; el['snapshot-caption'].textContent = '';
-    el.diagnostics.textContent = 'Versão 4 · Aguardando primeiro quadro da câmera…';
+    el.diagnostics.textContent = 'Versão 5 · Aguardando primeiro quadro da câmera…';
     el.history.replaceChildren(); el.code.textContent = 'Aguardando leitura';
     el.format.textContent = 'EAN-13 e Code 128 · QR Code ignorado';
     status('Solicitando acesso à câmera…');
@@ -200,8 +200,17 @@
     if (!window.ZXing) { el['photo-result'].textContent = 'O decodificador não carregou. Recarregue a página.'; return; }
     if (file.size > 20 * 1024 * 1024) { el['photo-result'].textContent = 'Escolha uma foto de até 20 MB.'; return; }
     el['photo-result'].textContent = 'Analisando foto no aparelho…';
-    const url = URL.createObjectURL(file);
     try {
+      // The server CSP permits data: images, but deliberately disallows blob:.
+      // FileReader keeps the photo local while using the existing image policy.
+      const url = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.onabort = () => reject(new Error('Leitura da foto cancelada'));
+        reader.readAsDataURL(file);
+      });
+      if (request !== photoGeneration) return;
       const img = new Image();
       await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = url; });
       if (request !== photoGeneration) return;
@@ -214,7 +223,7 @@
       el['photo-result'].textContent = `Foto: ${result.getText()} · ${ZXing.BarcodeFormat[result.getBarcodeFormat()]}`;
     } catch (error) {
       if (request === photoGeneration) el['photo-result'].textContent = isUnreadable(error) ? 'Código não identificado nesta foto. Tente uma foto mais nítida, com todas as barras e as margens claras visíveis.' : 'Não foi possível analisar essa imagem. Tente uma foto JPG ou PNG.';
-    } finally { URL.revokeObjectURL(url); }
+    }
   });
   window.addEventListener('pagehide', () => close());
   document.addEventListener('visibilitychange', () => { if (document.hidden) close('Câmera encerrada ao sair da página. Abra novamente para continuar.'); });

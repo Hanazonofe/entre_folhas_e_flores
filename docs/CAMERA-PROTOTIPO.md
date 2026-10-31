@@ -72,3 +72,15 @@ Diagnóstico mostra motor disponível e permite mostrar cópia do último quadro
 que o controlador desenhou para análise. Imagem fica só na memória da página.
 Nenhuma transmissão, persistência ou consulta de cadastro. Não alegar solução
 no aparelho antes de novo teste do operador.
+
+## Versão 5 — carregamento de foto compatível com CSP
+
+Arquivo 87993.jpg recebido do operador (960×1280) decodificado localmente pelo
+mesmo bundle e adaptador HTMLCanvasElementLuminanceSource sobre RGBA como
+7896004762098 / EAN_13. SHA-256 do JPEG:
+c4617ef281a270226eb352d5f0fbb7251dd336b8c061fcca9d6593de74159c5f.
+Encontrada incompatibilidade concreta: URL.createObjectURL produzia blob:,
+mas o middleware serve img-src 'self' data:, bloqueando a imagem antes do decode.
+Carregamento substituído por FileReader.readAsDataURL; política mantida intacta.
+Teste de upload agora rejeita blob: no carregamento da imagem simulada.
+A correção diz respeito à foto; não demonstra solução da câmera ao vivo.

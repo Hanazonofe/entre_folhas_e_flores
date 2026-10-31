@@ -32,7 +32,12 @@ function harness(getUserMedia) {
   vm.runInNewContext(fs.readFileSync(require.resolve('../camera-prototipo.js'), 'utf8'), {
     document, window, navigator: { mediaDevices: media }, ZXing,
     URL: { createObjectURL() { urls.created++; return 'blob:local'; }, revokeObjectURL() { urls.revoked++; } },
-    Image: class { naturalWidth = 960; naturalHeight = 1280; set src(value) { this.onload(); } },
+    FileReader: class { readAsDataURL() { this.result = 'data:image/jpeg;base64,fixture'; this.onload(); } },
+    Image: class { naturalWidth = 960; naturalHeight = 1280; set src(value) {
+      // Mirror img-src 'self' data: from the server: blob URLs must fail.
+      if (!value.startsWith('data:image/')) { this.onerror(new Error('CSP blocked')); return; }
+      this.onload();
+    } },
     setTimeout(fn) { nextFrame = fn; return 1; }, clearTimeout() { nextFrame = null; }, Date, Map, Set
   });
   return { nodes, tracks, stream, frames, window, document, draws, urls, media, tick() { const fn = nextFrame; nextFrame = null; if (fn) fn(); } };
@@ -103,21 +108,21 @@ test('foco contínuo quando disponível; erro no ajuste não encerra captura', a
   assert.match(h.nodes.diagnostics.textContent, /quadros analisados/);
 });
 
-test('análise de foto fecha captura, mantém resultado separado e libera URL local', async () => {
+test('análise de foto fecha captura, mantém resultado separado sem URL blob bloqueada pela CSP', async () => {
   const h = harness(); await h.nodes.start.events.click();
   h.nodes.photo.files = [{ size: 1000 }]; h.frames.push('7896004762098');
   await h.nodes.photo.events.change();
   assert.equal(h.tracks.stopped, 1);
   assert.equal(h.nodes['photo-result'].textContent, 'Foto: 7896004762098 · CODE_128');
   assert.equal(h.nodes.history.children.length, 0);
-  assert.equal(h.urls.created, 1); assert.equal(h.urls.revoked, 1);
+  assert.equal(h.urls.created, 0); assert.equal(h.urls.revoked, 0);
 });
 
-test('foto sem código informa falha sem sucesso e libera URL local', async () => {
+test('foto sem código informa falha sem sucesso sem URL blob bloqueada pela CSP', async () => {
   const h = harness(); h.nodes.photo.files = [{ size: 1000 }];
   await h.nodes.photo.events.change();
   assert.match(h.nodes['photo-result'].textContent, /Código não identificado/);
-  assert.equal(h.urls.revoked, 1);
+  assert.equal(h.urls.revoked, 0);
 });
 
 test('lista lentes após permissão e usa dispositivo escolhido ao reabrir', async () => {
