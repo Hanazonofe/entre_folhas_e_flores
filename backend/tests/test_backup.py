@@ -39,7 +39,10 @@ def test_offline_outbox_retry_and_retention(_spec, clean, tmp_path, monkeypatch)
         def upload(self, *args):
             raise RuntimeError("Google Drive: HTTP 401.")
 
-    t = datetime.now(timezone.utc)
+    # Retry behavior must stay within one scheduled day. Wall-clock times near
+    # 02:00 UTC otherwise create a second daily backup during the +14m check.
+    t = datetime(2026, 10, 30, 12, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(backup, "now", lambda: t)
     backup.tick(t, Offline, generate)
     with clean.connect() as db:
         row = db.execute(text("SELECT * FROM backup_runs")).mappings().one()
