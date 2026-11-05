@@ -1,10 +1,28 @@
 /* Protótipo isolado: sem consulta HTTP e sem mutação do carrinho. */
 (() => {
   'use strict';
-  const el = Object.fromEntries(['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption', 'save-frame', 'save-reader', 'save-diagnostics'].map(id => [id, document.getElementById(id)]));
+  const el = Object.fromEntries(['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption', 'save-frame', 'save-reader', 'save-diagnostics', 'camera-status'].map(id => [id, document.getElementById(id)]));
   let generation = 0, stream = null, timer = null, audio = null;
   let blocked = new Set(), reads = 0, duplicates = 0;
   let attempts = 0, focus = 'automático do aparelho', photoGeneration = 0, releaseGeneration = 0;
+  let cameraDiagnostic = {}, previousDeviceId = null;
+  const optionalInfo = (track, method) => {
+    try { return track?.[method]?.() || {}; } catch { return {}; }
+  };
+  function reportCamera(track) {
+    const settings = optionalInfo(track, 'getSettings');
+    const actual = settings.deviceId || null;
+    const requested = cameraDiagnostic.requestedDeviceId;
+    cameraDiagnostic.actualDeviceId = actual;
+    cameraDiagnostic.actualLabel = track?.label || cameraDiagnostic.devices?.find(device => device.deviceId === actual)?.label || '';
+    cameraDiagnostic.selectionResult = !requested ? 'automatic' : !actual ? 'unavailable' : actual === requested ? 'matched' : 'mismatch';
+    cameraDiagnostic.changedFromPrevious = actual && cameraDiagnostic.previousDeviceId ? actual !== cameraDiagnostic.previousDeviceId : null;
+    const requestedLabel = cameraDiagnostic.devices?.find(device => device.deviceId === requested)?.label || requested || 'Traseira automática';
+    const actualLabel = cameraDiagnostic.actualLabel || actual || 'não informada';
+    const verdict = { automatic: 'Seleção automática.', unavailable: 'O navegador não informou o identificador; não foi possível confirmar a seleção.', matched: 'Seleção confirmada pelo navegador.', mismatch: 'Atenção: o navegador informou uma câmera diferente da solicitada.' }[cameraDiagnostic.selectionResult];
+    const change = cameraDiagnostic.changedFromPrevious === false ? ' Mesmo identificador da sessão anterior.' : cameraDiagnostic.changedFromPrevious === true ? ' Identificador diferente da sessão anterior.' : '';
+    el['camera-status'].textContent = `Escolhida: ${requestedLabel}. Aberta: ${actualLabel}. ${verdict}${change} Isso identifica o dispositivo exposto pelo navegador, sem comprovar qual lente física está em uso.`;
+  }
   const hintsForBars = () => new Map([[ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.CODE_128]], [ZXing.DecodeHintType.TRY_HARDER, true]]);
   const isUnreadable = error => error instanceof ZXing.NotFoundException || error instanceof ZXing.ChecksumException || error instanceof ZXing.FormatException;
   function decodeCanvas(canvas, reader, hints) {
@@ -80,7 +98,7 @@
         ctx.drawImage(el.video, 0, band ? el.video.videoHeight / 4 : 0, el.video.videoWidth, band ? el.video.videoHeight / 2 : el.video.videoHeight, 0, 0, width, el.frame.height);
         attempts++;
         el.capture.disabled = false;
-        el.diagnostics.textContent = `Versão 6 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
+        el.diagnostics.textContent = `Versão 7 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
         // Native detection is optional and never blocks the JS loop. At most one
         // native request is outstanding; results from a closed session are ignored.
         if (engine.detector && !engine.pending) {
@@ -110,7 +128,10 @@
   }
   el.start.addEventListener('click', async () => {
     const selectedCamera = el.camera.value;
+    const previous = previousDeviceId;
     close();
+    cameraDiagnostic = { requestedDeviceId: selectedCamera || null, previousDeviceId: previous, devices: [], enumerationStatus: 'pending' };
+    el['camera-status'].textContent = 'Aguardando identificação da câmera…';
     if (!window.isSecureContext) return status('A câmera precisa de HTTPS confiável no celular. Abra o endereço HTTPS do PDV.');
     if (!navigator.mediaDevices?.getUserMedia) return status('Este navegador não disponibiliza a câmera. Tente Chrome no Android ou Safari no iPhone.');
     if (!window.ZXing) return status('O decodificador não carregou. Recarregue a página.');
@@ -119,7 +140,7 @@
     blocked = new Set(); reads = duplicates = attempts = 0; stats();
     focus = 'automático do aparelho';
     el.snapshot.hidden = true; el['snapshot-caption'].textContent = '';
-    el.diagnostics.textContent = 'Versão 6 · Aguardando primeiro quadro da câmera…';
+    el.diagnostics.textContent = 'Versão 7 · Aguardando primeiro quadro da câmera…';
     el.history.replaceChildren(); el.code.textContent = 'Aguardando leitura';
     el.format.textContent = 'EAN-13 e Code 128 · QR Code ignorado';
     status('Solicitando acesso à câmera…');
@@ -151,6 +172,8 @@
       } catch { /* Unsupported focus must not prevent scanning. */ }
       if (token !== generation) return;
       const activeTrack = incoming.getVideoTracks()[0];
+      reportCamera(activeTrack);
+      previousDeviceId = cameraDiagnostic.actualDeviceId;
       try {
         const actualFocus = activeTrack?.getSettings?.().focusMode;
         if (actualFocus) focus = `${actualFocus} (informado pela câmera)`;
@@ -161,6 +184,9 @@
         navigator.mediaDevices.enumerateDevices().then(devices => {
           if (token !== generation) return;
           const cameras = devices.filter(device => device.kind === 'videoinput' && device.deviceId);
+          cameraDiagnostic.devices = cameras.map(device => ({ deviceId: device.deviceId, groupId: device.groupId || '', label: device.label || '' }));
+          cameraDiagnostic.enumerationStatus = 'available';
+          reportCamera(activeTrack);
           el.camera.replaceChildren();
           const automatic = document.createElement('option'); automatic.value = ''; automatic.textContent = 'Traseira automática'; el.camera.append(automatic);
           cameras.forEach((device, index) => {
@@ -168,10 +194,10 @@
             option.textContent = device.label || `Câmera ${index + 1}`; el.camera.append(option);
           });
           const currentId = activeTrack?.getSettings?.().deviceId;
-          el.camera.value = cameras.some(camera => camera.deviceId === currentId) ? currentId : '';
+          el.camera.value = selectedCamera || (cameras.some(camera => camera.deviceId === currentId) ? currentId : '');
           el.camera.disabled = cameras.length < 2;
-        }).catch(() => {});
-      }
+        }).catch(() => { if (token === generation) cameraDiagnostic.enumerationStatus = 'failed'; });
+      } else { cameraDiagnostic.enumerationStatus = 'unsupported'; }
       const hints = hintsForBars();
       status('Câmera aberta. Aponte as barras para a faixa central.');
       scan(token, new ZXing.MultiFormatReader(), hints, nativeReader(token));
@@ -179,6 +205,7 @@
       if (token !== generation) return;
       if (error.name === 'OverconstrainedError' || error.name === 'NotFoundError') el.camera.value = '';
       const messages = { NotAllowedError: 'Permissão negada. Autorize a câmera nas configurações deste site e tente novamente.', NotFoundError: 'Nenhuma câmera disponível. Tente abrir novamente para usar a seleção automática.', OverconstrainedError: 'Essa câmera não está disponível. Tente abrir novamente para usar a seleção automática.', NotReadableError: 'Câmera ocupada ou indisponível. Feche outros aplicativos e tente novamente.' };
+      el['camera-status'].textContent = 'Abertura não concluída; seleção de câmera não confirmada.';
       close(messages[error.name] || 'Não foi possível iniciar a câmera. Confira a permissão e tente novamente.');
     }
   });
@@ -195,7 +222,11 @@
       original.width = el.video.videoWidth; original.height = el.video.videoHeight;
       original.getContext('2d').drawImage(el.video, 0, 0);
       const settings = stream.getVideoTracks()[0]?.getSettings?.() || {};
-      const metadata = { capturedAt, focus, settings,
+      reportCamera(stream.getVideoTracks()[0]);
+      const metadata = { version: 7, capturedAt, focus, settings,
+        camera: { ...cameraDiagnostic,
+          capabilities: optionalInfo(stream.getVideoTracks()[0], 'getCapabilities'),
+          constraints: optionalInfo(stream.getVideoTracks()[0], 'getConstraints') },
         original: { width: original.width, height: original.height },
         reader: { width: el.frame.width, height: el.frame.height, attempts },
         note: 'Quadro original capturado ao clicar; quadro do leitor da última análise, podendo ser de instante anterior.' };

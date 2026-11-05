@@ -96,3 +96,14 @@ Fechar a câmera preserva os links; recarregar a página os perde. Capture e sal
 antes de fechar a página. Se o navegador abrir a imagem, use salvar/compartilhar.
 Não há upload nem persistência no servidor. Downloads reais no celular precisam
 de validação pelo operador. Publicação isolada baseada na versão já em homologação.
+
+## Identificação da câmera — versão 7
+
+A tela compara a câmera escolhida e o dispositivo informado pelo navegador.
+Preserva a escolha no seletor mesmo em caso de divergência, informa seleção
+confirmada, divergente ou impossível de confirmar e compara com a sessão anterior.
+O JSON registra escolha, identificador e nome efetivos, dispositivo anterior,
+lista enumerada, capacidades e constraints disponíveis. Identificador igual ou
+diferente não comprova qual lente física de um dispositivo lógico está em uso.
+Teste no celular: selecionar cada opção, aguardar o aviso, capturar e salvar os
+três arquivos. Câmera automática não recebe confirmação de escolha explícita.

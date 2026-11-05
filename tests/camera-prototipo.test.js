@@ -7,7 +7,7 @@ function harness(getUserMedia) {
   const nodes = {};
   const draws = [], urls = { created: 0, revoked: 0 };
   const media = { getUserMedia };
-  for (const id of ['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption', 'save-frame', 'save-reader', 'save-diagnostics']) {
+  for (const id of ['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption', 'save-frame', 'save-reader', 'save-diagnostics', 'camera-status']) {
     nodes[id] = { disabled: false, textContent: '', children: [], events: {}, style: {},
       addEventListener(event, fn) { this.events[event] = fn; },
       pause() {}, play: async () => {},
@@ -240,4 +240,41 @@ test('ajuste de foco pendente não impede iniciar processamento dos quadros', as
   h.nodes.capture.click();
   for (const id of ['save-frame', 'save-reader', 'save-diagnostics']) assert.equal(h.nodes[id].hidden, true);
   assert.match(h.nodes['snapshot-caption'].textContent, /Não foi possível/);
+ });
+
+ test('diagnóstico distingue seleção confirmada, divergente e não informada e preserva a escolha', async () => {
+  for (const [actual, result] of [['wide', 'matched'], ['main', 'mismatch'], [null, 'unavailable']]) {
+    const h = harness();
+    h.tracks.label = 'Câmera aberta';
+    h.tracks.getSettings = () => ({ deviceId: actual });
+    h.tracks.getCapabilities = () => ({ zoom: { min: 1, max: 4 }, focusMode: ['continuous'] });
+    h.tracks.getConstraints = () => ({ deviceId: { exact: 'wide' } });
+    h.media.enumerateDevices = async () => [{ kind: 'videoinput', deviceId: 'main', label: 'Principal' }, { kind: 'videoinput', deviceId: 'wide', label: 'Ampla' }];
+    h.nodes.camera.value = 'wide';
+    await h.nodes.start.click(); await settle();
+    assert.equal(h.nodes.camera.value, 'wide');
+    h.nodes.capture.click();
+    const d = JSON.parse(decodeURIComponent(h.nodes['save-diagnostics'].href.split(',')[1]));
+    assert.equal(d.camera.requestedDeviceId, 'wide');
+    assert.equal(d.camera.actualDeviceId, actual);
+    assert.equal(d.camera.selectionResult, result);
+    assert.equal(d.camera.devices.length, 2);
+    assert.equal(d.camera.capabilities.zoom.max, 4);
+    assert.equal(d.camera.constraints.deviceId.exact, 'wide');
+    assert.match(h.nodes['camera-status'].textContent, result === 'matched' ? /Seleção confirmada/ : result === 'mismatch' ? /diferente da solicitada/ : /não foi possível confirmar/);
+  }
+ });
+ test('diagnóstico informa troca de dispositivo e tolera capacidades indisponíveis', async () => {
+   const h = harness(); let actual = 'main';
+   h.tracks.getSettings = () => ({ deviceId: actual });
+   h.tracks.getCapabilities = () => { throw new Error('unsupported'); };
+   await h.nodes.start.click();
+   actual = 'wide'; h.nodes.camera.value = 'wide';
+   await h.nodes.start.click();
+   h.nodes.capture.click();
+   const d = JSON.parse(decodeURIComponent(h.nodes['save-diagnostics'].href.split(',')[1]));
+   assert.equal(d.camera.previousDeviceId, 'main');
+   assert.equal(d.camera.changedFromPrevious, true);
+   assert.deepEqual(d.camera.capabilities, {});
+   assert.match(h.nodes['camera-status'].textContent, /Identificador diferente/);
  });
