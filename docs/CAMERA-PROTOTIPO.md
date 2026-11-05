@@ -84,3 +84,15 @@ mas o middleware serve img-src 'self' data:, bloqueando a imagem antes do decode
 Carregamento substituído por FileReader.readAsDataURL; política mantida intacta.
 Teste de upload agora rejeita blob: no carregamento da imagem simulada.
 A correção diz respeito à foto; não demonstra solução da câmera ao vivo.
+
+## Capturas para análise — versão 6
+
+Toque em “Capturar imagens para análise” e salve pelos três links: PNG original
+completo da câmera, PNG do último quadro analisado pelo leitor e diagnóstico JSON.
+Os downloads ficam no aparelho; envie os três arquivos juntos para análise.
+O original é capturado no clique e o quadro do leitor pode ser de instante anterior.
+O diagnóstico inclui data, dimensões, foco informado e configurações da câmera.
+Fechar a câmera preserva os links; recarregar a página os perde. Capture e salve
+antes de fechar a página. Se o navegador abrir a imagem, use salvar/compartilhar.
+Não há upload nem persistência no servidor. Downloads reais no celular precisam
+de validação pelo operador. Publicação isolada baseada na versão já em homologação.

@@ -1,7 +1,7 @@
 /* Protótipo isolado: sem consulta HTTP e sem mutação do carrinho. */
 (() => {
   'use strict';
-  const el = Object.fromEntries(['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption'].map(id => [id, document.getElementById(id)]));
+  const el = Object.fromEntries(['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption', 'save-frame', 'save-reader', 'save-diagnostics'].map(id => [id, document.getElementById(id)]));
   let generation = 0, stream = null, timer = null, audio = null;
   let blocked = new Set(), reads = 0, duplicates = 0;
   let attempts = 0, focus = 'automático do aparelho', photoGeneration = 0, releaseGeneration = 0;
@@ -80,7 +80,7 @@
         ctx.drawImage(el.video, 0, band ? el.video.videoHeight / 4 : 0, el.video.videoWidth, band ? el.video.videoHeight / 2 : el.video.videoHeight, 0, 0, width, el.frame.height);
         attempts++;
         el.capture.disabled = false;
-        el.diagnostics.textContent = `Versão 5 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
+        el.diagnostics.textContent = `Versão 6 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
         // Native detection is optional and never blocks the JS loop. At most one
         // native request is outstanding; results from a closed session are ignored.
         if (engine.detector && !engine.pending) {
@@ -119,7 +119,7 @@
     blocked = new Set(); reads = duplicates = attempts = 0; stats();
     focus = 'automático do aparelho';
     el.snapshot.hidden = true; el['snapshot-caption'].textContent = '';
-    el.diagnostics.textContent = 'Versão 5 · Aguardando primeiro quadro da câmera…';
+    el.diagnostics.textContent = 'Versão 6 · Aguardando primeiro quadro da câmera…';
     el.history.replaceChildren(); el.code.textContent = 'Aguardando leitura';
     el.format.textContent = 'EAN-13 e Code 128 · QR Code ignorado';
     status('Solicitando acesso à câmera…');
@@ -188,7 +188,31 @@
     el.snapshot.width = el.frame.width; el.snapshot.height = el.frame.height;
     el.snapshot.getContext('2d').drawImage(el.frame, 0, 0);
     el.snapshot.hidden = false;
-    el['snapshot-caption'].textContent = `Quadro ${attempts}, ${el.frame.width} × ${el.frame.height}. Esta é a imagem enviada ao leitor, preservada apenas nesta página. Confira se todas as barras e as margens claras estão nítidas.`;
+    try {
+      const capturedAt = new Date().toISOString();
+      const basename = `camera-${capturedAt.replace(/[:.]/g, '-')}`;
+      const original = document.createElement('canvas');
+      original.width = el.video.videoWidth; original.height = el.video.videoHeight;
+      original.getContext('2d').drawImage(el.video, 0, 0);
+      const settings = stream.getVideoTracks()[0]?.getSettings?.() || {};
+      const metadata = { capturedAt, focus, settings,
+        original: { width: original.width, height: original.height },
+        reader: { width: el.frame.width, height: el.frame.height, attempts },
+        note: 'Quadro original capturado ao clicar; quadro do leitor da última análise, podendo ser de instante anterior.' };
+      const downloads = [
+        [el['save-frame'], original.toDataURL('image/png'), `${basename}-original.png`],
+        [el['save-reader'], el.snapshot.toDataURL('image/png'), `${basename}-leitor.png`],
+        [el['save-diagnostics'], `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(metadata, null, 2))}`, `${basename}.json`]
+      ];
+      for (const [link, href, filename] of downloads) {
+        link.href = href; link.download = filename; link.hidden = false;
+      }
+    } catch {
+      for (const id of ['save-frame', 'save-reader', 'save-diagnostics']) el[id].hidden = true;
+      el['snapshot-caption'].textContent = 'Não foi possível preparar os arquivos. Capture novamente.';
+      return;
+    }
+    el['snapshot-caption'].textContent = `Quadro ${attempts}, ${el.frame.width} × ${el.frame.height}. Esta é a imagem enviada ao leitor. Use os links abaixo para salvar no aparelho antes de fechar a página. Confira se todas as barras e as margens claras estão nítidas.`;
   });
   el.camera.addEventListener('change', () => { if (stream) el.start.click(); });
   el.rearm.addEventListener('click', () => { releaseGeneration++; blocked.clear(); el.rearm.disabled = true; status('Nova leitura liberada manualmente. Reapresente a etiqueta.'); });

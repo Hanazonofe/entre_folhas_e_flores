@@ -6,7 +6,7 @@
   <title>Teste da câmera — Entre Folhas e Flores</title>
   <link rel="stylesheet" href="camera-prototipo.css?v=4">
   <script defer src="camera-decoder.js"></script>
-  <script defer src="camera-prototipo.js?v=5"></script>
+  <script defer src="camera-prototipo.js?v=6"></script>
 </head>
 <body>
 <main>
@@ -20,7 +20,7 @@
     <button id="stop" type="button" disabled>Fechar câmera</button>
   </div>
   <p id="status" role="status" aria-live="polite">Câmera fechada.</p>
-  <p id="diagnostics" class="note">Versão 5 · Aguardando captura.</p>
+  <p id="diagnostics" class="note">Versão 6 · Aguardando captura.</p>
   <label for="camera">Câmera usada no teste</label>
   <select id="camera" disabled><option value="">Traseira automática</option></select>
   <p class="note">Se a etiqueta não focar, afaste um pouco o celular. Com a câmera aberta, experimente outra câmera da lista; prefira a traseira principal.</p>
@@ -32,8 +32,12 @@
   <canvas id="frame" hidden></canvas>
   <section class="result">
     <h2>Conferir a imagem do leitor</h2>
-    <button id="capture" type="button" disabled>Mostrar último quadro analisado</button>
+    <button id="capture" type="button" disabled>Capturar imagens para análise</button>
     <p id="snapshot-caption" class="note"></p>
+    <p><a id="save-frame" hidden>Salvar quadro original (PNG)</a></p>
+    <p><a id="save-reader" hidden>Salvar imagem do leitor (PNG)</a></p>
+    <p><a id="save-diagnostics" hidden>Salvar diagnóstico (JSON)</a></p>
+    <p class="note">Após capturar, salve os três arquivos pelos links. Os arquivos ficam nos downloads do aparelho; nenhum é enviado ao servidor. Em navegadores que abrirem a imagem, use a opção de salvar ou compartilhar. O quadro original é completo, sem redução; a imagem do leitor pode ser recortada e reduzida.</p>
     <canvas id="snapshot" hidden aria-label="Último quadro analisado"></canvas>
   </section>
   <section class="result">
@@ -52,7 +56,7 @@
     <p class="note">A liberação é manual neste protótipo. Quadros sem leitura não liberam o mesmo código. A retirada automática ainda está em estudo.</p>
   </section>
   <section><h2>Histórico desta sessão</h2><ol id="history"></ol></section>
-  <details><summary>Como testar no celular</summary><p>Abra esta página no endereço HTTPS do PDV, autorize a câmera e teste distância, reflexos e inclinação. Mantenha a etiqueta parada para observar as repetições bloqueadas. Retire-a e use o botão de liberação antes de reapresentá-la. Teste também fechar e reabrir, negar permissão e alternar de aplicativo.</p><p>O som depende do volume e das permissões do navegador. As imagens são processadas no aparelho e não são enviadas nem salvas. O histórico desaparece ao iniciar outra sessão.</p><a href="camera-decoder.LICENSE.txt">Licença do decodificador ZXing JS 0.23.0</a></details>
+  <details><summary>Como testar no celular</summary><p>Abra esta página no endereço HTTPS do PDV, autorize a câmera e teste distância, reflexos e inclinação. Mantenha a etiqueta parada para observar as repetições bloqueadas. Retire-a e use o botão de liberação antes de reapresentá-la. Teste também fechar e reabrir, negar permissão e alternar de aplicativo.</p><p>O som depende do volume e das permissões do navegador. As imagens são processadas no aparelho e não são enviadas ao servidor. Use os links de download para salvar as capturas no aparelho. O histórico desaparece ao iniciar outra sessão.</p><a href="camera-decoder.LICENSE.txt">Licença do decodificador ZXing JS 0.23.0</a></details>
 </main>
 </body>
 </html>

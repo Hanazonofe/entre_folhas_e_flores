@@ -7,7 +7,7 @@ function harness(getUserMedia) {
   const nodes = {};
   const draws = [], urls = { created: 0, revoked: 0 };
   const media = { getUserMedia };
-  for (const id of ['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption']) {
+  for (const id of ['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption', 'save-frame', 'save-reader', 'save-diagnostics']) {
     nodes[id] = { disabled: false, textContent: '', children: [], events: {}, style: {},
       addEventListener(event, fn) { this.events[event] = fn; },
       pause() {}, play: async () => {},
@@ -15,6 +15,7 @@ function harness(getUserMedia) {
       prepend(item) { this.children.unshift(item); },
       append(item) { this.children.push(item); },
       click() { return this.events.click?.(); },
+      toDataURL() { return 'data:image/png;base64,snapshot'; },
       getContext() { return { drawImage(...args) { draws.push(args); } }; }
     };
   }
@@ -24,7 +25,7 @@ function harness(getUserMedia) {
   const frames = []; let nextFrame = null;
   class NotFound extends Error {}
   const reader = { decode() { const code = frames.shift(); if (!code) throw new NotFound(); return { getText: () => code, getBarcodeFormat: () => 1 }; } };
-  const document = { hidden: false, events: {}, getElementById: id => nodes[id], createElement: tag => tag === 'canvas' ? { getContext: () => ({ drawImage() {} }) } : {}, addEventListener(event, fn) { this.events[event] = fn; } };
+  const document = { hidden: false, events: {}, getElementById: id => nodes[id], createElement: tag => tag === 'canvas' ? { toDataURL: () => 'data:image/png;base64,original', getContext: () => ({ drawImage() {} }) } : {}, addEventListener(event, fn) { this.events[event] = fn; } };
   const window = { isSecureContext: true, events: {}, addEventListener(event, fn) { this.events[event] = fn; } };
   const ZXing = { MultiFormatReader: function () { return reader; }, HTMLCanvasElementLuminanceSource: function () {}, BinaryBitmap: function () {}, HybridBinarizer: function () {}, DecodeHintType: {}, BarcodeFormat: { 1: 'CODE_128' }, NotFoundException: NotFound, ChecksumException: class extends Error {}, FormatException: class extends Error {} };
   window.ZXing = ZXing;
@@ -214,3 +215,29 @@ test('ajuste de foco pendente não impede iniciar processamento dos quadros', as
   assert.match(h.nodes.diagnostics.textContent, /1 quadros analisados/);
   h.nodes.stop.events.click();
 });
+
+ test('captura oferece PNG original completo, imagem do leitor e diagnóstico persistíveis', async () => {
+  const h = harness();
+  await h.nodes.start.events.click();
+  h.nodes.capture.click();
+  assert.equal(h.nodes['save-frame'].href, 'data:image/png;base64,original');
+  assert.equal(h.nodes['save-reader'].href, 'data:image/png;base64,snapshot');
+  const metadata = JSON.parse(decodeURIComponent(h.nodes['save-diagnostics'].href.split(',')[1]));
+  assert.equal(metadata.original.width, 640);
+  assert.equal(metadata.original.height, 480);
+  assert.equal(metadata.reader.height, 240);
+  assert.match(h.nodes['save-frame'].download, /-original\.png$/);
+  assert.equal(h.nodes['save-frame'].hidden, false);
+  h.nodes.stop.click();
+  assert.equal(h.nodes['save-frame'].href, 'data:image/png;base64,original');
+ });
+
+ test('falha ao exportar captura informa erro e oculta downloads anteriores', async () => {
+  const h = harness();
+  await h.nodes.start.click();
+  h.nodes.capture.click();
+  h.nodes.snapshot.toDataURL = () => { throw new Error('export failed'); };
+  h.nodes.capture.click();
+  for (const id of ['save-frame', 'save-reader', 'save-diagnostics']) assert.equal(h.nodes[id].hidden, true);
+  assert.match(h.nodes['snapshot-caption'].textContent, /Não foi possível/);
+ });
