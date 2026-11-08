@@ -107,3 +107,15 @@ lista enumerada, capacidades e constraints disponíveis. Identificador igual ou
 diferente não comprova qual lente física de um dispositivo lógico está em uso.
 Teste no celular: selecionar cada opção, aguardar o aviso, capturar e salvar os
 três arquivos. Câmera automática não recebe confirmação de escolha explícita.
+
+## Versão 8 — troca efetiva
+
+Seleção chama diretamente a abertura em vez de clicar no botão desabilitado.
+Teste reproduz botão desabilitado e troca traseira/frontal, validando solicitação,
+stream anterior encerrado e diagnóstico da câmera aberta.
+
+## Versão 8 — troca efetiva
+
+Seleção chama diretamente a abertura em vez de clicar no botão desabilitado.
+Teste reproduz botão desabilitado e troca traseira/frontal, validando solicitação,
+stream anterior encerrado e diagnóstico da câmera aberta.

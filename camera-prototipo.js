@@ -98,7 +98,7 @@
         ctx.drawImage(el.video, 0, band ? el.video.videoHeight / 4 : 0, el.video.videoWidth, band ? el.video.videoHeight / 2 : el.video.videoHeight, 0, 0, width, el.frame.height);
         attempts++;
         el.capture.disabled = false;
-        el.diagnostics.textContent = `Versão 7 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
+        el.diagnostics.textContent = `Versão 8 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
         // Native detection is optional and never blocks the JS loop. At most one
         // native request is outstanding; results from a closed session are ignored.
         if (engine.detector && !engine.pending) {
@@ -126,7 +126,7 @@
     }
     if (token === generation) timer = setTimeout(() => scan(token, reader, hints, engine), 180);
   }
-  el.start.addEventListener('click', async () => {
+  async function openCamera() {
     const selectedCamera = el.camera.value;
     const previous = previousDeviceId;
     close();
@@ -140,7 +140,7 @@
     blocked = new Set(); reads = duplicates = attempts = 0; stats();
     focus = 'automático do aparelho';
     el.snapshot.hidden = true; el['snapshot-caption'].textContent = '';
-    el.diagnostics.textContent = 'Versão 7 · Aguardando primeiro quadro da câmera…';
+    el.diagnostics.textContent = 'Versão 8 · Aguardando primeiro quadro da câmera…';
     el.history.replaceChildren(); el.code.textContent = 'Aguardando leitura';
     el.format.textContent = 'EAN-13 e Code 128 · QR Code ignorado';
     status('Solicitando acesso à câmera…');
@@ -208,7 +208,8 @@
       el['camera-status'].textContent = 'Abertura não concluída; seleção de câmera não confirmada.';
       close(messages[error.name] || 'Não foi possível iniciar a câmera. Confira a permissão e tente novamente.');
     }
-  });
+  }
+  el.start.addEventListener('click', openCamera);
   el.stop.addEventListener('click', () => close());
   el.capture.addEventListener('click', () => {
     if (!stream || !attempts) return;
@@ -223,7 +224,7 @@
       original.getContext('2d').drawImage(el.video, 0, 0);
       const settings = stream.getVideoTracks()[0]?.getSettings?.() || {};
       reportCamera(stream.getVideoTracks()[0]);
-      const metadata = { version: 7, capturedAt, focus, settings,
+      const metadata = { version: 8, capturedAt, focus, settings,
         camera: { ...cameraDiagnostic,
           capabilities: optionalInfo(stream.getVideoTracks()[0], 'getCapabilities'),
           constraints: optionalInfo(stream.getVideoTracks()[0], 'getConstraints') },
@@ -245,7 +246,7 @@
     }
     el['snapshot-caption'].textContent = `Quadro ${attempts}, ${el.frame.width} × ${el.frame.height}. Esta é a imagem enviada ao leitor. Use os links abaixo para salvar no aparelho antes de fechar a página. Confira se todas as barras e as margens claras estão nítidas.`;
   });
-  el.camera.addEventListener('change', () => { if (stream) el.start.click(); });
+  el.camera.addEventListener('change', () => { if (stream) return openCamera(); });
   el.rearm.addEventListener('click', () => { releaseGeneration++; blocked.clear(); el.rearm.disabled = true; status('Nova leitura liberada manualmente. Reapresente a etiqueta.'); });
   el.photo.addEventListener('change', async () => {
     const file = el.photo.files?.[0];

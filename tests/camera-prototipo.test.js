@@ -14,7 +14,7 @@ function harness(getUserMedia) {
       replaceChildren() { this.children = []; },
       prepend(item) { this.children.unshift(item); },
       append(item) { this.children.push(item); },
-      click() { return this.events.click?.(); },
+      click() { if (!this.disabled) return this.events.click?.(); },
       toDataURL() { return 'data:image/png;base64,snapshot'; },
       getContext() { return { drawImage(...args) { draws.push(args); } }; }
     };
@@ -234,7 +234,7 @@ test('ajuste de foco pendente não impede iniciar processamento dos quadros', as
 
  test('falha ao exportar captura informa erro e oculta downloads anteriores', async () => {
   const h = harness();
-  await h.nodes.start.click();
+  await h.nodes.start.events.click();
   h.nodes.capture.click();
   h.nodes.snapshot.toDataURL = () => { throw new Error('export failed'); };
   h.nodes.capture.click();
@@ -251,7 +251,7 @@ test('ajuste de foco pendente não impede iniciar processamento dos quadros', as
     h.tracks.getConstraints = () => ({ deviceId: { exact: 'wide' } });
     h.media.enumerateDevices = async () => [{ kind: 'videoinput', deviceId: 'main', label: 'Principal' }, { kind: 'videoinput', deviceId: 'wide', label: 'Ampla' }];
     h.nodes.camera.value = 'wide';
-    await h.nodes.start.click(); await settle();
+    await h.nodes.start.events.click(); await settle();
     assert.equal(h.nodes.camera.value, 'wide');
     h.nodes.capture.click();
     const d = JSON.parse(decodeURIComponent(h.nodes['save-diagnostics'].href.split(',')[1]));
@@ -268,9 +268,9 @@ test('ajuste de foco pendente não impede iniciar processamento dos quadros', as
    const h = harness(); let actual = 'main';
    h.tracks.getSettings = () => ({ deviceId: actual });
    h.tracks.getCapabilities = () => { throw new Error('unsupported'); };
-   await h.nodes.start.click();
+   await h.nodes.start.events.click();
    actual = 'wide'; h.nodes.camera.value = 'wide';
-   await h.nodes.start.click();
+   await h.nodes.start.events.click();
    h.nodes.capture.click();
    const d = JSON.parse(decodeURIComponent(h.nodes['save-diagnostics'].href.split(',')[1]));
    assert.equal(d.camera.previousDeviceId, 'main');
@@ -278,3 +278,28 @@ test('ajuste de foco pendente não impede iniciar processamento dos quadros', as
    assert.deepEqual(d.camera.capabilities, {});
    assert.match(h.nodes['camera-status'].textContent, /Identificador diferente/);
  });
+
+test('trocar câmera com botão Abrir desabilitado reabre traseira e frontal pela seleção', async () => {
+ const h = harness(); const requested = [];
+ let actual = 'back';
+ h.tracks.getSettings = () => ({ deviceId: actual });
+ h.media.enumerateDevices = async () => ['back', 'front'].map(deviceId => ({ kind: 'videoinput', deviceId, label: deviceId }));
+ h.media.getUserMedia = async constraints => {
+   actual = constraints.video.deviceId?.exact || 'back'; requested.push(actual); return h.stream;
+ };
+ await h.nodes.start.events.click(); await settle();
+ assert.equal(h.nodes.start.disabled, true);
+ const stopped = h.tracks.stopped;
+ h.nodes.camera.value = 'front';
+ await h.nodes.camera.events.change(); await settle();
+ assert.deepEqual(requested, ['back', 'front']);
+ assert.ok(h.tracks.stopped > stopped);
+ assert.match(h.nodes['camera-status'].textContent, /Seleção confirmada/);
+ h.nodes.capture.click();
+ const d = JSON.parse(decodeURIComponent(h.nodes['save-diagnostics'].href.split(',')[1]));
+ assert.equal(d.camera.requestedDeviceId, 'front');
+ assert.equal(d.camera.actualDeviceId, 'front');
+ h.nodes.camera.value = 'back';
+ await h.nodes.camera.events.change(); await settle();
+ assert.deepEqual(requested, ['back', 'front', 'back']);
+});
