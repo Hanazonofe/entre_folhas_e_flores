@@ -9,7 +9,7 @@
   // is evidence of removal. Decoder errors never advance this gate.
   class EmptyAreaGate {
     constructor() { this.reset(); }
-    reset() { this.reference = null; this.count = 0; this.lastTime = null; this.lastError = null; }
+    reset() { this.reference = null; this.count = 0; this.lastTime = null; this.lastError = null; this.lastSample = null; }
     quality(pixels) {
       let mean = 0, edge = 0;
       for (let i = 0; i < pixels.length; i++) {
@@ -26,23 +26,29 @@
       this.count = 0; this.lastTime = null; return true;
     }
     observe(pixels, time, recognized = false) {
-      if (!this.reference || !pixels || pixels.length !== this.reference.length || !Number.isFinite(time)) { this.count = 0; return false; }
-      if (time === this.lastTime) return false;
+      if (!this.reference || !pixels || pixels.length !== this.reference.length || !Number.isFinite(time)) { this.lastError = { reason: 'unavailable' }; this.count = 0; return false; }
+      if (time === this.lastTime) { this.lastError = { reason: 'frozen' }; return false; }
       this.lastTime = time;
-      if (recognized) { this.count = 0; return false; }
+      this.lastSample = Array.from(pixels);
+      if (recognized) { this.lastError = { reason: 'barcode-present' }; this.count = 0; return false; }
       const q = this.quality(pixels);
-      if (q.mean < 30 || q.mean > 235 || q.edge < this.referenceQuality.edge * 0.85) { this.count = 0; return false; }
+      const offset = q.mean - this.referenceQuality.mean;
+      const quality = { current: q, reference: this.referenceQuality, brightnessOffset: offset };
+      if (q.mean < 30 || q.mean > 235) { this.lastError = { ...quality, reason: 'lighting' }; this.count = 0; return false; }
+      if (q.edge < this.referenceQuality.edge * 0.85) { this.lastError = { ...quality, reason: 'blur-or-detail-loss' }; this.count = 0; return false; }
+      if (Math.abs(offset) > 20) { this.lastError = { ...quality, reason: 'lighting-change' }; this.count = 0; return false; }
       let error = 0, maximumTile = 0;
       for (let y = 0; y < 160; y += 8) for (let x = 0; x < 96; x += 8) {
         let tile = 0;
         for (let dy = 0; dy < 8; dy++) for (let dx = 0; dx < 8; dx++) {
           const i = (y + dy) * 96 + x + dx;
-          tile += Math.abs(pixels[i] - this.reference[i]);
+          tile += Math.abs(pixels[i] - offset - this.reference[i]);
         }
         error += tile; maximumTile = Math.max(maximumTile, tile / 64);
       }
-      this.lastError = { mean: error / pixels.length, maximumTile };
-      if (this.lastError.mean > 2 || maximumTile > 6) { this.count = 0; return false; }
+      this.lastError = { ...quality, mean: error / pixels.length, maximumTile, reason: 'comparing' };
+      if (this.lastError.mean > 2 || maximumTile > 6) { this.lastError.reason = 'scene-changed'; this.count = 0; return false; }
+      this.lastError.reason = 'matching';
       return ++this.count >= 4;
     }
   }
@@ -174,7 +180,7 @@
         attempts++;
         el.capture.disabled = false;
         el['prepare-area'].disabled = reads > 0;
-        el.diagnostics.textContent = `Versão 10 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${presence.reference ? 'ZXing · área vazia preparada' : engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
+        el.diagnostics.textContent = `Versão 11 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${presence.reference ? 'ZXing · área vazia preparada' : engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
         // Native detection is optional and never blocks the JS loop. At most one
         // native request is outstanding; results from a closed session are ignored.
         if (!presence.reference && engine.detector && !engine.pending) {
@@ -203,7 +209,16 @@
     }
     if (blocked.size && presence.reference && el.video.readyState >= 2 && el.video.videoWidth) {
       const empty = presence.observe(presencePixels(), el.video.currentTime, recognized);
-      el['presence-status'].textContent = empty ? 'Área vazia reconhecida. Pode reapresentar a etiqueta.' : 'Aguardando retorno à área vazia preparada. Mantenha o celular apoiado.';
+      const messages = {
+        'barcode-present': 'Código ainda visível. Retire o produto completamente.',
+        'lighting': 'Imagem escura ou clara demais. Aguarde a exposição estabilizar.',
+        'lighting-change': 'A iluminação mudou muito. Reinicie e prepare a área novamente.',
+        'blur-or-detail-loss': 'O fundo ainda está desfocado ou perdeu detalhes. Aguarde o foco voltar ao fundo.',
+        'scene-changed': 'O fundo ainda difere da referência. Retire também a mão e mantenha o celular na posição inicial.',
+        'frozen': 'Aguardando um quadro novo da câmera.',
+        'unavailable': 'Não foi possível comparar a imagem com a referência.'
+      };
+      el['presence-status'].textContent = empty ? 'Área vazia reconhecida. Pode reapresentar a etiqueta.' : messages[presence.lastError?.reason] || `Confirmando área vazia: ${presence.count}/4 quadros.`;
       if (empty) { blocked.clear(); releaseGeneration++; presence.count = 0; }
     }
     if (token === generation) timer = setTimeout(() => scan(token, reader, hints, engine), 180);
@@ -224,7 +239,7 @@
     el['presence-status'].textContent = 'Antes da primeira etiqueta, prepare uma referência da área vazia com o celular apoiado.';
     focus = 'automático do aparelho';
     el.snapshot.hidden = true; el['snapshot-caption'].textContent = '';
-    el.diagnostics.textContent = 'Versão 10 · Aguardando primeiro quadro da câmera…';
+    el.diagnostics.textContent = 'Versão 11 · Aguardando primeiro quadro da câmera…';
     el.history.replaceChildren(); el.code.textContent = 'Aguardando leitura';
     el.format.textContent = 'EAN-13 e Code 128 · QR Code ignorado';
     status('Solicitando acesso à câmera…');
@@ -319,7 +334,7 @@
       original.getContext('2d').drawImage(el.video, 0, 0);
       const settings = stream.getVideoTracks()[0]?.getSettings?.() || {};
       reportCamera(stream.getVideoTracks()[0]);
-      const metadata = { version: 10, presence: { calibrated: !!presence.reference, matchingFrames: presence.count, comparison: presence.lastError, blockedCodes: Array.from(blocked) }, capturedAt, focus, settings,
+      const metadata = { version: 11, presence: { referenceSample: presence.reference, currentSample: presence.lastSample, sampleSize: { width: 96, height: 160 }, calibrated: !!presence.reference, matchingFrames: presence.count, comparison: presence.lastError, blockedCodes: Array.from(blocked) }, capturedAt, focus, settings,
         camera: { ...cameraDiagnostic,
           capabilities: optionalInfo(stream.getVideoTracks()[0], 'getCapabilities'),
           constraints: optionalInfo(stream.getVideoTracks()[0], 'getConstraints') },

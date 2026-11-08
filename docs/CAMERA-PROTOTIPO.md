@@ -163,3 +163,15 @@ Roteiro de piloto: manter A parado durante 10s, desfocar/escurecer sem retirar,
 apresentar A e B, retirar completamente e reapresentar A cinco vezes. Verificar
 contagem e sinal sonoro: uma leitura por apresentação e nenhuma durante permanência.
 Salvar capturas e JSON se houver repetição indevida ou retirada sem liberação.
+
+## Versão 11 — exposição e diagnóstico da retirada
+
+Operador relatou preparação e primeira leitura bem-sucedidas, mas sem retorno
+à área vazia. Sem amostra da falha: causa física ainda não confirmada.
+Comparação passa a compensar somente deslocamento global de brilho de até 20/255
+antes dos mesmos limites de erro médio/bloco; mantém bloqueio por perda de textura,
+quadros congelados, mudança local da cena e luminosidade extrema.
+Tela informa o motivo observado; JSON inclui amostras de luminância 96x160 da
+referência e do último quadro comparado, métricas e razão. Capturar com produto
+retirado se persistir bloqueio. Amostras são imagens reduzidas da cena, somente
+no arquivo baixado, sem envio ao servidor. Não é prova de viabilidade da abordagem.

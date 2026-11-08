@@ -372,3 +372,21 @@ test('controle contínuo mantém A e B bloqueados e libera após retirada para a
  assert.equal(h.nodes.history.children.length, 3);
  h.nodes.stop.click(); assert.equal(h.nodes['prepare-area'].disabled, true);
 });
+
+test('retorno ao fundo com mudança global moderada de exposição mantém reconhecimento', () => {
+ const Gate = harness().window.CameraEmptyAreaGate;
+ const gate = new Gate(); const background = Array.from({length: 96*160}, (_,i) => i%2 ? 80 : 140);
+ gate.prepare(background);
+ const brighter = background.map(v => v + 12);
+ for(let t=0;t<3;t++) assert.equal(gate.observe(brighter,t), false);
+ assert.equal(gate.observe(brighter,3), true);
+ assert.equal(gate.lastError.brightnessOffset,12);
+ assert.equal(gate.lastError.mean,0);
+ const product = brighter.slice(); for(let i=500;i<900;i++) product[i]=30;
+ assert.equal(gate.observe(product,4),false);
+ assert.equal(gate.lastError.reason,'scene-changed');
+ assert.equal(gate.observe(background.map(v => v+30),5),false);
+ assert.equal(gate.lastError.reason,'lighting-change');
+ assert.equal(gate.observe(background.map(() => 120),6),false);
+ assert.equal(gate.lastError.reason,'blur-or-detail-loss');
+});
