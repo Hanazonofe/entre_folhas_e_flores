@@ -132,3 +132,34 @@ Não abre câmera automaticamente. Seleção manual continua disponível.
 Preferência ausente retorna à traseira automática com aviso e limpeza do registro;
 permissão negada não dispara nova tentativa. Armazenamento indisponível não bloqueia
 a leitura. Limpar dados do site ou trocar navegador elimina a preferência.
+
+## Versão 10 — piloto de retirada por referência visual
+
+Sem carrinho ou consulta de produto. Apoiar o celular, abrir a câmera escolhida,
+retirar todas as etiquetas e tocar Preparar área vazia antes da primeira leitura.
+Usar fundo iluminado, nítido e com detalhes. Referência com barras decodificáveis,
+escura ou sem textura é recusada. Uma etiqueta indecodificável pode escapar da
+checagem: cabe ao operador garantir área vazia na preparação.
+
+Após leitura, retirar completamente o produto até a referência reaparecer.
+Quatro quadros com tempos de vídeo distintos devem corresponder ao fundo: erro
+médio absoluto <=2/255, máximo em blocos 8x8 <=6/255, textura horizontal >=85%
+da referência e luminosidade entre 30 e 235. Amostra 96x160 em luminância, quadro
+inteiro. Tempos repetidos de vídeo não contam. Falhas de decode nunca bastam
+para liberar; referência ausente ou observação incerta mantém bloqueio.
+
+Limiares experimentais, sem comprovação em vídeo real. Comparação com referência
+não é rastreamento universal de etiquetas; fundos repetidos, produtos muito pequenos
+e preparação incorreta podem comprometer evidência. Não integrar ao carrinho
+antes do piloto. Movimento, iluminação ou foco alterados podem impedir liberação.
+Nesses casos reiniciar sessão e preparar novamente; não há liberação por botão.
+
+Preserva bloqueio por código, permite B enquanto A bloqueado e libera todos apenas
+quando a cena inteira retorna à referência. No modo preparado usa ZXing, invalidando
+respostas nativas anteriores; encerrar/trocar câmera apaga referência e observações.
+Capturas JSON incluem preparação, quadros coincidentes, erro e códigos bloqueados.
+
+Roteiro de piloto: manter A parado durante 10s, desfocar/escurecer sem retirar,
+apresentar A e B, retirar completamente e reapresentar A cinco vezes. Verificar
+contagem e sinal sonoro: uma leitura por apresentação e nenhuma durante permanência.
+Salvar capturas e JSON se houver repetição indevida ou retirada sem liberação.

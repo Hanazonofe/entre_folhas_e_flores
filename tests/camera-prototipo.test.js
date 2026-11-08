@@ -5,9 +5,11 @@ const vm = require('node:vm');
 
 function harness(getUserMedia, storage) {
   const nodes = {};
+  let visualPixels = null;
+  const imageData = () => { if (!visualPixels) throw new Error("No pixels"); return { data: visualPixels.flatMap(v => [v,v,v,255]) }; };
   const draws = [], urls = { created: 0, revoked: 0 };
   const media = { getUserMedia };
-  for (const id of ['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption', 'save-frame', 'save-reader', 'save-diagnostics', 'camera-status']) {
+  for (const id of ['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption', 'save-frame', 'save-reader', 'save-diagnostics', 'camera-status', 'prepare-area', 'presence-status']) {
     nodes[id] = { disabled: false, textContent: '', children: [], events: {}, style: {},
       addEventListener(event, fn) { this.events[event] = fn; },
       pause() {}, play: async () => {},
@@ -19,13 +21,14 @@ function harness(getUserMedia, storage) {
       getContext() { return { drawImage(...args) { draws.push(args); } }; }
     };
   }
+  nodes.video.currentTime = 0;
   nodes.video.readyState = 2; nodes.video.videoWidth = 640; nodes.video.videoHeight = 480;
   const tracks = { stopped: 0, stop() { this.stopped++; }, addEventListener() {} };
   const stream = { getTracks: () => [tracks], getVideoTracks: () => [tracks] };
   const frames = []; let nextFrame = null;
   class NotFound extends Error {}
   const reader = { decode() { const code = frames.shift(); if (!code) throw new NotFound(); return { getText: () => code, getBarcodeFormat: () => 1 }; } };
-  const document = { hidden: false, events: {}, getElementById: id => nodes[id], createElement: tag => tag === 'canvas' ? { toDataURL: () => 'data:image/png;base64,original', getContext: () => ({ drawImage() {} }) } : {}, addEventListener(event, fn) { this.events[event] = fn; } };
+  const document = { hidden: false, events: {}, getElementById: id => nodes[id], createElement: tag => tag === 'canvas' ? { toDataURL: () => 'data:image/png;base64,original', getContext: () => ({ drawImage() {}, getImageData: imageData }) } : {}, addEventListener(event, fn) { this.events[event] = fn; } };
   const window = { isSecureContext: true, events: {}, addEventListener(event, fn) { this.events[event] = fn; } };
   const ZXing = { MultiFormatReader: function () { return reader; }, HTMLCanvasElementLuminanceSource: function () {}, BinaryBitmap: function () {}, HybridBinarizer: function () {}, DecodeHintType: {}, BarcodeFormat: { 1: 'CODE_128' }, NotFoundException: NotFound, ChecksumException: class extends Error {}, FormatException: class extends Error {} };
   window.localStorage = storage;
@@ -42,10 +45,10 @@ function harness(getUserMedia, storage) {
     } },
     setTimeout(fn) { nextFrame = fn; return 1; }, clearTimeout() { nextFrame = null; }, Date, Map, Set
   });
-  return { nodes, tracks, stream, frames, window, document, draws, urls, media, tick() { const fn = nextFrame; nextFrame = null; if (fn) fn(); } };
+  return { nodes, tracks, stream, frames, window, document, draws, urls, media, setPixels(pixels) { visualPixels = pixels; }, tick() { const fn = nextFrame; nextFrame = null; nodes.video.currentTime += 0.2; if (fn) fn(); } };
 }
 
-test('código mantido e quadros sem leitura não liberam repetição; liberação manual permite nova leitura', async () => {
+test('código mantido e quadros sem leitura não liberam repetição; botão antigo não ignora bloqueio', async () => {
   const h = harness(); h.frames.push('00042');
   await h.nodes.start.events.click();
   h.frames.push('00042', null, '00042'); h.tick(); h.tick(); h.tick();
@@ -53,7 +56,7 @@ test('código mantido e quadros sem leitura não liberam repetição; liberaçã
   assert.equal(h.nodes.code.textContent, '00042');
   assert.equal(h.nodes.stats.textContent, '1 leituras · 2 repetições bloqueadas');
   h.nodes.rearm.events.click(); h.frames.push('00042'); h.tick();
-  assert.equal(h.nodes.history.children.length, 2);
+  assert.equal(h.nodes.history.children.length, 1);
   h.nodes.stop.events.click(); assert.equal(h.tracks.stopped, 1);
 });
 
@@ -158,7 +161,7 @@ test('leitor nativo recebe só barras e ignora QR retornado junto ao EAN', async
 });
 
 test('resposta nativa após fechar ou liberar leitura não produz resultado tardio', async () => {
-  for (const cancel of ['stop', 'rearm']) {
+  for (const cancel of ['stop']) {
     const h = harness(); let resolve;
     h.window.BarcodeDetector = class {
       static async getSupportedFormats() { return ['ean_13']; }
@@ -330,4 +333,42 @@ test('falha de armazenamento não impede abertura nem confirmação', async () =
  const h = harness(undefined, storage); h.nodes.camera.value = 'back';
  h.tracks.getSettings = () => ({ deviceId: 'back' });
  await h.nodes.start.events.click(); assert.equal(h.nodes.capture.disabled, false);
+});
+
+test('área vazia: repetição só libera com evidência sustentada; desfoque, escuro e mudança não liberam', () => {
+ const Gate = harness().window.CameraEmptyAreaGate;
+ const gate = new Gate(); const empty = Array.from({length: 96 * 160}, (_, i) => i % 2 ? 90 : 150);
+ assert.equal(gate.prepare(empty), true);
+ for(let t=0;t<20;t++) assert.equal(gate.observe(empty.map(() => 120), t), false);
+ for(let t=20;t<30;t++) assert.equal(gate.observe(empty.map(() => 0), t), false);
+ const label = empty.slice(); for(let i=500;i<700;i++) label[i]=0;
+ for(let t=30;t<40;t++) assert.equal(gate.observe(label, t), false);
+ assert.equal(gate.observe(empty, 40, true), false);
+ assert.equal(gate.observe(empty, 41), false);
+ for(let i=0;i<20;i++) assert.equal(gate.observe(empty, 41), false);
+ assert.equal(gate.observe(empty, 42), false);
+ assert.equal(gate.observe(empty, 43), false);
+ assert.equal(gate.observe(empty, 44), true);
+ gate.reset(); assert.equal(gate.observe(empty, 45), false);
+});
+test('referência plana, escura ou ausente não é aceita como área vazia', () => {
+ const Gate = harness().window.CameraEmptyAreaGate;
+ for(const pixels of [null, Array(96*160).fill(0), Array(96*160).fill(120)]) assert.equal(new Gate().prepare(pixels), false);
+});
+
+test('controle contínuo mantém A e B bloqueados e libera após retirada para a referência', async () => {
+ const h = harness(); const empty = Array.from({length: 96*160}, (_,i) => i%2 ? 90 : 150);
+ h.setPixels(empty); await h.nodes.start.events.click(); h.nodes['prepare-area'].click();
+ assert.match(h.nodes['presence-status'].textContent, /Área preparada/);
+ const label = empty.slice(); for(let i=100;i<300;i++) label[i] = 0;
+ h.setPixels(label); h.frames.push('A'); h.tick();
+ h.frames.push('A', null, 'B', 'A'); for(let i=0;i<4;i++) h.tick();
+ assert.equal(h.nodes.history.children.length, 2);
+ for(let i=0;i<10;i++) h.tick();
+ h.frames.push('A'); h.tick(); assert.equal(h.nodes.history.children.length, 2);
+ h.setPixels(empty); for(let i=0;i<4;i++) h.tick();
+ assert.match(h.nodes['presence-status'].textContent, /Área vazia reconhecida/);
+ h.setPixels(label); h.frames.push('A'); h.tick();
+ assert.equal(h.nodes.history.children.length, 3);
+ h.nodes.stop.click(); assert.equal(h.nodes['prepare-area'].disabled, true);
 });
