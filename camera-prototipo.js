@@ -5,6 +5,21 @@
   let generation = 0, stream = null, timer = null, audio = null;
   let blocked = new Set(), reads = 0, duplicates = 0;
   let attempts = 0, focus = 'automático do aparelho', photoGeneration = 0, releaseGeneration = 0;
+  const preferenceKey = 'camera-mobile.preferred-device.v1';
+  let savedCamera = '';
+  try { savedCamera = window.localStorage?.getItem(preferenceKey) || ''; } catch { /* Storage is optional. */ }
+  if (savedCamera) {
+    const option = document.createElement('option'); option.value = savedCamera;
+    option.textContent = 'Câmera escolhida anteriormente'; el.camera.append(option); el.camera.value = savedCamera;
+    el['camera-status'].textContent = 'Sua câmera anterior será usada ao tocar em Abrir câmera.';
+  }
+  function rememberCamera(id) {
+    savedCamera = id;
+    try {
+      if (id) window.localStorage?.setItem(preferenceKey, id);
+      else window.localStorage?.removeItem(preferenceKey);
+    } catch { /* Camera operation must not depend on storage. */ }
+  }
   let cameraDiagnostic = {}, previousDeviceId = null;
   const optionalInfo = (track, method) => {
     try { return track?.[method]?.() || {}; } catch { return {}; }
@@ -21,7 +36,7 @@
     const actualLabel = cameraDiagnostic.actualLabel || actual || 'não informada';
     const verdict = { automatic: 'Seleção automática.', unavailable: 'O navegador não informou o identificador; não foi possível confirmar a seleção.', matched: 'Seleção confirmada pelo navegador.', mismatch: 'Atenção: o navegador informou uma câmera diferente da solicitada.' }[cameraDiagnostic.selectionResult];
     const change = cameraDiagnostic.changedFromPrevious === false ? ' Mesmo identificador da sessão anterior.' : cameraDiagnostic.changedFromPrevious === true ? ' Identificador diferente da sessão anterior.' : '';
-    el['camera-status'].textContent = `Escolhida: ${requestedLabel}. Aberta: ${actualLabel}. ${verdict}${change} Isso identifica o dispositivo exposto pelo navegador, sem comprovar qual lente física está em uso.`;
+    el['camera-status'].textContent = `Escolhida: ${requestedLabel}. Aberta: ${actualLabel}. ${verdict}${change} ${cameraDiagnostic.preferenceFallback || ''} Isso identifica o dispositivo exposto pelo navegador, sem comprovar qual lente física está em uso.`;
   }
   const hintsForBars = () => new Map([[ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.CODE_128]], [ZXing.DecodeHintType.TRY_HARDER, true]]);
   const isUnreadable = error => error instanceof ZXing.NotFoundException || error instanceof ZXing.ChecksumException || error instanceof ZXing.FormatException;
@@ -98,7 +113,7 @@
         ctx.drawImage(el.video, 0, band ? el.video.videoHeight / 4 : 0, el.video.videoWidth, band ? el.video.videoHeight / 2 : el.video.videoHeight, 0, 0, width, el.frame.height);
         attempts++;
         el.capture.disabled = false;
-        el.diagnostics.textContent = `Versão 8 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
+        el.diagnostics.textContent = `Versão 9 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
         // Native detection is optional and never blocks the JS loop. At most one
         // native request is outstanding; results from a closed session are ignored.
         if (engine.detector && !engine.pending) {
@@ -127,7 +142,8 @@
     if (token === generation) timer = setTimeout(() => scan(token, reader, hints, engine), 180);
   }
   async function openCamera() {
-    const selectedCamera = el.camera.value;
+    let selectedCamera = el.camera.value || '';
+    if (!selectedCamera) rememberCamera('');
     const previous = previousDeviceId;
     close();
     cameraDiagnostic = { requestedDeviceId: selectedCamera || null, previousDeviceId: previous, devices: [], enumerationStatus: 'pending' };
@@ -140,7 +156,7 @@
     blocked = new Set(); reads = duplicates = attempts = 0; stats();
     focus = 'automático do aparelho';
     el.snapshot.hidden = true; el['snapshot-caption'].textContent = '';
-    el.diagnostics.textContent = 'Versão 8 · Aguardando primeiro quadro da câmera…';
+    el.diagnostics.textContent = 'Versão 9 · Aguardando primeiro quadro da câmera…';
     el.history.replaceChildren(); el.code.textContent = 'Aguardando leitura';
     el.format.textContent = 'EAN-13 e Code 128 · QR Code ignorado';
     status('Solicitando acesso à câmera…');
@@ -149,7 +165,17 @@
       if (Audio) { audio = new Audio(); audio.resume().catch(() => {}); }
     } catch { audio = null; }
     try {
-      const incoming = await navigator.mediaDevices.getUserMedia({ audio: false, video: { ...(selectedCamera ? { deviceId: { exact: selectedCamera } } : { facingMode: { ideal: 'environment' } }), width: { ideal: 1920 }, height: { ideal: 1080 } } });
+      const requestCamera = () => navigator.mediaDevices.getUserMedia({ audio: false, video: { ...(selectedCamera ? { deviceId: { exact: selectedCamera } } : { facingMode: { ideal: 'environment' } }), width: { ideal: 1920 }, height: { ideal: 1080 } } });
+      let incoming;
+      try { incoming = await requestCamera(); }
+      catch (error) {
+        if (token !== generation) return;
+        if (!selectedCamera || selectedCamera !== savedCamera || !['NotFoundError', 'OverconstrainedError'].includes(error.name)) throw error;
+        rememberCamera(''); selectedCamera = ''; el.camera.value = '';
+        cameraDiagnostic.preferenceFallback = 'A câmera salva não está disponível; usando seleção automática.';
+        cameraDiagnostic.requestedDeviceId = null;
+        incoming = await requestCamera();
+      }
       if (token !== generation) { incoming.getTracks().forEach(track => track.stop()); return; }
       stream = incoming;
       incoming.getVideoTracks().forEach(track => track.addEventListener('ended', () => { if (token === generation) close('A câmera foi interrompida. Abra novamente.'); }));
@@ -173,6 +199,7 @@
       if (token !== generation) return;
       const activeTrack = incoming.getVideoTracks()[0];
       reportCamera(activeTrack);
+      if (cameraDiagnostic.selectionResult === 'matched') rememberCamera(selectedCamera);
       previousDeviceId = cameraDiagnostic.actualDeviceId;
       try {
         const actualFocus = activeTrack?.getSettings?.().focusMode;
@@ -224,7 +251,7 @@
       original.getContext('2d').drawImage(el.video, 0, 0);
       const settings = stream.getVideoTracks()[0]?.getSettings?.() || {};
       reportCamera(stream.getVideoTracks()[0]);
-      const metadata = { version: 8, capturedAt, focus, settings,
+      const metadata = { version: 9, capturedAt, focus, settings,
         camera: { ...cameraDiagnostic,
           capabilities: optionalInfo(stream.getVideoTracks()[0], 'getCapabilities'),
           constraints: optionalInfo(stream.getVideoTracks()[0], 'getConstraints') },

@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-function harness(getUserMedia) {
+function harness(getUserMedia, storage) {
   const nodes = {};
   const draws = [], urls = { created: 0, revoked: 0 };
   const media = { getUserMedia };
@@ -28,6 +28,7 @@ function harness(getUserMedia) {
   const document = { hidden: false, events: {}, getElementById: id => nodes[id], createElement: tag => tag === 'canvas' ? { toDataURL: () => 'data:image/png;base64,original', getContext: () => ({ drawImage() {} }) } : {}, addEventListener(event, fn) { this.events[event] = fn; } };
   const window = { isSecureContext: true, events: {}, addEventListener(event, fn) { this.events[event] = fn; } };
   const ZXing = { MultiFormatReader: function () { return reader; }, HTMLCanvasElementLuminanceSource: function () {}, BinaryBitmap: function () {}, HybridBinarizer: function () {}, DecodeHintType: {}, BarcodeFormat: { 1: 'CODE_128' }, NotFoundException: NotFound, ChecksumException: class extends Error {}, FormatException: class extends Error {} };
+  window.localStorage = storage;
   window.ZXing = ZXing;
   media.getUserMedia ||= async () => stream;
   vm.runInNewContext(fs.readFileSync(require.resolve('../camera-prototipo.js'), 'utf8'), {
@@ -302,4 +303,31 @@ test('trocar câmera com botão Abrir desabilitado reabre traseira e frontal pel
  h.nodes.camera.value = 'back';
  await h.nodes.camera.events.change(); await settle();
  assert.deepEqual(requested, ['back', 'front', 'back']);
+});
+
+test('lembra escolha confirmada e restaura em nova página sem abrir câmera automaticamente', async () => {
+ const values = new Map(); const storage = { getItem: k => values.get(k), setItem: (k,v) => values.set(k,v), removeItem: k => values.delete(k) };
+ const h = harness(undefined, storage);
+ h.tracks.getSettings = () => ({ deviceId: 'good-back' });
+ h.nodes.camera.value = 'good-back'; await h.nodes.start.events.click();
+ let requested;
+ const next = harness(async c => { requested = c.video.deviceId.exact; return h.stream; }, storage);
+ assert.equal(requested, undefined);
+ assert.equal(next.nodes.camera.value, 'good-back');
+ await next.nodes.start.events.click(); assert.equal(requested, 'good-back');
+});
+test('preferência indisponível retorna à automática e limpa câmera salva', async () => {
+ let saved = 'gone'; let calls = 0;
+ const storage = { getItem: () => saved, removeItem: () => { saved = ''; } };
+ const h = harness(undefined, storage);
+ h.media.getUserMedia = async c => { calls++; if(c.video.deviceId) throw Object.assign(new Error(), { name: 'OverconstrainedError' }); return h.stream; };
+ await h.nodes.start.events.click();
+ assert.equal(calls, 2); assert.equal(saved, '');
+ assert.match(h.nodes['camera-status'].textContent, /salva não está disponível/);
+});
+test('falha de armazenamento não impede abertura nem confirmação', async () => {
+ const storage = { getItem() { throw new Error(); }, setItem() { throw new Error(); } };
+ const h = harness(undefined, storage); h.nodes.camera.value = 'back';
+ h.tracks.getSettings = () => ({ deviceId: 'back' });
+ await h.nodes.start.events.click(); assert.equal(h.nodes.capture.disabled, false);
 });

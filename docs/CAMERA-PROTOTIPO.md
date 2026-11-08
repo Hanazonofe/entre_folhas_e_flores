@@ -119,3 +119,16 @@ stream anterior encerrado e diagnóstico da câmera aberta.
 Seleção chama diretamente a abertura em vez de clicar no botão desabilitado.
 Teste reproduz botão desabilitado e troca traseira/frontal, validando solicitação,
 stream anterior encerrado e diagnóstico da câmera aberta.
+
+## Versão 9 — lembrar câmera validada
+
+Operador confirmou em 08/11/2026 foco adequado e leitura bem-sucedida com
+“camera 0, facing back”, incluindo outras etiquetas. Evidência é relato de uso,
+sem presumir formatos, quantidade ou validação em iPhone.
+Seleção explícita confirmada é persistida por deviceId no localStorage deste
+navegador/origem. Não fixa o nome camera 0 para outros aparelhos. Na primeira
+visita, escolher a câmera validada; nas próximas, Abrir câmera usa a preferência.
+Não abre câmera automaticamente. Seleção manual continua disponível.
+Preferência ausente retorna à traseira automática com aviso e limpeza do registro;
+permissão negada não dispara nova tentativa. Armazenamento indisponível não bloqueia
+a leitura. Limpar dados do site ou trocar navegador elimina a preferência.
