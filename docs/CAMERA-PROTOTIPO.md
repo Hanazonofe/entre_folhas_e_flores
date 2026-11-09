@@ -175,3 +175,14 @@ Tela informa o motivo observado; JSON inclui amostras de luminância 96x160 da
 referência e do último quadro comparado, métricas e razão. Capturar com produto
 retirado se persistir bloqueio. Amostras são imagens reduzidas da cena, somente
 no arquivo baixado, sem envio ao servidor. Não é prova de viabilidade da abordagem.
+
+## Versão 12 — repetição explícita, decisão de 09/11/2026
+
+Operador aprovou substituir retirada automática por Ler novamente. Não há
+calibração ou comparação de fundo. Cada código é lido uma vez por ciclo, códigos
+diferentes seguem automaticamente. Ler novamente limpa o conjunto de bloqueios
+e invalida respostas nativas pendentes, sem gerar leitura sozinho. O código sob
+a câmera poderá ser lido novamente mesmo sem retirar a etiqueta, após gesto
+explícito. Fechamento e troca de câmera mantêm cancelamento por sessão.
+Histórico de testes da estratégia de área vazia foi substituído por regressões
+da regra aprovada; não alegar que retirada automática foi validada.

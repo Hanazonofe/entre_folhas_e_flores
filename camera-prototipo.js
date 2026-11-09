@@ -1,72 +1,10 @@
 /* Protótipo isolado: sem consulta HTTP e sem mutação do carrinho. */
 (() => {
   'use strict';
-  const el = Object.fromEntries(['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption', 'save-frame', 'save-reader', 'save-diagnostics', 'camera-status', 'prepare-area', 'presence-status'].map(id => [id, document.getElementById(id)]));
+  const el = Object.fromEntries(['start', 'stop', 'status', 'video', 'frame', 'code', 'format', 'stats', 'rearm', 'history', 'diagnostics', 'preview', 'photo', 'photo-result', 'camera', 'capture', 'snapshot', 'snapshot-caption', 'save-frame', 'save-reader', 'save-diagnostics', 'camera-status'].map(id => [id, document.getElementById(id)]));
   let generation = 0, stream = null, timer = null, audio = null;
   let blocked = new Set(), reads = 0, duplicates = 0;
   let attempts = 0, focus = 'automático do aparelho', photoGeneration = 0, releaseGeneration = 0;
-  // Experimental: only a return to an explicitly prepared, textured empty scene
-  // is evidence of removal. Decoder errors never advance this gate.
-  class EmptyAreaGate {
-    constructor() { this.reset(); }
-    reset() { this.reference = null; this.count = 0; this.lastTime = null; this.lastError = null; this.lastSample = null; }
-    quality(pixels) {
-      let mean = 0, edge = 0;
-      for (let i = 0; i < pixels.length; i++) {
-        mean += pixels[i];
-        if (i % 96) edge += Math.abs(pixels[i] - pixels[i - 1]);
-      }
-      return { mean: mean / pixels.length, edge: edge / pixels.length };
-    }
-    prepare(pixels) {
-      if (!pixels || pixels.length !== 96 * 160) return false;
-      const q = this.quality(pixels);
-      if (q.mean < 30 || q.mean > 235 || q.edge < 2) return false;
-      this.reference = Array.from(pixels); this.referenceQuality = q;
-      this.count = 0; this.lastTime = null; return true;
-    }
-    observe(pixels, time, recognized = false) {
-      if (!this.reference || !pixels || pixels.length !== this.reference.length || !Number.isFinite(time)) { this.lastError = { reason: 'unavailable' }; this.count = 0; return false; }
-      if (time === this.lastTime) { this.lastError = { reason: 'frozen' }; return false; }
-      this.lastTime = time;
-      this.lastSample = Array.from(pixels);
-      if (recognized) { this.lastError = { reason: 'barcode-present' }; this.count = 0; return false; }
-      const q = this.quality(pixels);
-      const offset = q.mean - this.referenceQuality.mean;
-      const quality = { current: q, reference: this.referenceQuality, brightnessOffset: offset };
-      if (q.mean < 30 || q.mean > 235) { this.lastError = { ...quality, reason: 'lighting' }; this.count = 0; return false; }
-      if (q.edge < this.referenceQuality.edge * 0.85) { this.lastError = { ...quality, reason: 'blur-or-detail-loss' }; this.count = 0; return false; }
-      if (Math.abs(offset) > 20) { this.lastError = { ...quality, reason: 'lighting-change' }; this.count = 0; return false; }
-      let error = 0, maximumTile = 0;
-      for (let y = 0; y < 160; y += 8) for (let x = 0; x < 96; x += 8) {
-        let tile = 0;
-        for (let dy = 0; dy < 8; dy++) for (let dx = 0; dx < 8; dx++) {
-          const i = (y + dy) * 96 + x + dx;
-          tile += Math.abs(pixels[i] - offset - this.reference[i]);
-        }
-        error += tile; maximumTile = Math.max(maximumTile, tile / 64);
-      }
-      this.lastError = { ...quality, mean: error / pixels.length, maximumTile, reason: 'comparing' };
-      if (this.lastError.mean > 2 || maximumTile > 6) { this.lastError.reason = 'scene-changed'; this.count = 0; return false; }
-      this.lastError.reason = 'matching';
-      return ++this.count >= 4;
-    }
-  }
-  window.CameraEmptyAreaGate = EmptyAreaGate;
-  const presence = new EmptyAreaGate();
-  const presenceCanvas = document.createElement('canvas');
-  presenceCanvas.width = 96; presenceCanvas.height = 160;
-  function presencePixels() {
-    try {
-      const ctx = presenceCanvas.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(el.video, 0, 0, 96, 160);
-      const rgba = ctx.getImageData(0, 0, 96, 160).data;
-      const pixels = new Uint8Array(96 * 160);
-      for (let i = 0; i < pixels.length; i++) pixels[i] = Math.round((rgba[i * 4] + rgba[i * 4 + 1] + rgba[i * 4 + 2]) / 3);
-      return pixels;
-    } catch { return null; }
-  }
-
   const preferenceKey = 'camera-mobile.preferred-device.v1';
   let savedCamera = '';
   try { savedCamera = window.localStorage?.getItem(preferenceKey) || ''; } catch { /* Storage is optional. */ }
@@ -108,8 +46,6 @@
   const status = text => { el.status.textContent = text; };
   const stats = () => { el.stats.textContent = `${reads} leituras · ${duplicates} repetições bloqueadas`; };
   function close(message = 'Câmera fechada.') {
-    presence.reset();
-    el['prepare-area'].disabled = true;
     generation++;
     releaseGeneration++;
     clearTimeout(timer);
@@ -147,10 +83,9 @@
     item.textContent = `${new Date().toLocaleTimeString('pt-BR')} · ${code} · ${format}`;
     el.history.prepend(item);
     while (el.history.children.length > 30) el.history.lastElementChild.remove();
-    el.rearm.disabled = true;
-    el['prepare-area'].disabled = true;
+    el.rearm.disabled = false;
     stats();
-    status(beep() ? 'Código lido. Retire a etiqueta da área para ler novamente.' : 'Código lido (som indisponível). Retire a etiqueta da área para ler novamente.');
+    status(beep() ? 'Código lido. Para repetir um produto, toque em Ler novamente.' : 'Código lido (som indisponível). Para repetir um produto, toque em Ler novamente.');
   }
   function nativeReader(token) {
     const engine = { detector: null, pending: false };
@@ -165,7 +100,6 @@
   }
   function scan(token, reader, hints, engine) {
     if (token !== generation || !stream) return;
-    let recognized = false;
     try {
       if (el.video.readyState >= 2 && el.video.videoWidth) {
         const width = Math.min(el.video.videoWidth, 1920);
@@ -179,11 +113,10 @@
         ctx.drawImage(el.video, 0, band ? el.video.videoHeight / 4 : 0, el.video.videoWidth, band ? el.video.videoHeight / 2 : el.video.videoHeight, 0, 0, width, el.frame.height);
         attempts++;
         el.capture.disabled = false;
-        el['prepare-area'].disabled = reads > 0;
-        el.diagnostics.textContent = `Versão 11 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${presence.reference ? 'ZXing · área vazia preparada' : engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
+        el.diagnostics.textContent = `Versão 12 · ${el.video.videoWidth} × ${el.video.videoHeight} · foco: ${focus} · leitor: ${engine.detector ? 'nativo + ZXing' : 'ZXing'} · ${attempts} quadros analisados`;
         // Native detection is optional and never blocks the JS loop. At most one
         // native request is outstanding; results from a closed session are ignored.
-        if (!presence.reference && engine.detector && !engine.pending) {
+        if (engine.detector && !engine.pending) {
           engine.pending = true;
           const detector = engine.detector;
           const presentation = releaseGeneration;
@@ -197,7 +130,6 @@
           }).catch(() => { engine.detector = null; }).finally(() => { engine.pending = false; });
         }
         const result = decodeCanvas(el.frame, reader, hints);
-        recognized = true;
         record(result.getText(), ZXing.BarcodeFormat[result.getBarcodeFormat()], token);
       }
     } catch (error) {
@@ -206,20 +138,6 @@
         return;
       }
       if (!reads && attempts === 20) status('Ainda sem leitura. Experimente afastar a etiqueta para focar, melhorar a luz ou comparar com uma foto abaixo.');
-    }
-    if (blocked.size && presence.reference && el.video.readyState >= 2 && el.video.videoWidth) {
-      const empty = presence.observe(presencePixels(), el.video.currentTime, recognized);
-      const messages = {
-        'barcode-present': 'Código ainda visível. Retire o produto completamente.',
-        'lighting': 'Imagem escura ou clara demais. Aguarde a exposição estabilizar.',
-        'lighting-change': 'A iluminação mudou muito. Reinicie e prepare a área novamente.',
-        'blur-or-detail-loss': 'O fundo ainda está desfocado ou perdeu detalhes. Aguarde o foco voltar ao fundo.',
-        'scene-changed': 'O fundo ainda difere da referência. Retire também a mão e mantenha o celular na posição inicial.',
-        'frozen': 'Aguardando um quadro novo da câmera.',
-        'unavailable': 'Não foi possível comparar a imagem com a referência.'
-      };
-      el['presence-status'].textContent = empty ? 'Área vazia reconhecida. Pode reapresentar a etiqueta.' : messages[presence.lastError?.reason] || `Confirmando área vazia: ${presence.count}/4 quadros.`;
-      if (empty) { blocked.clear(); releaseGeneration++; presence.count = 0; }
     }
     if (token === generation) timer = setTimeout(() => scan(token, reader, hints, engine), 180);
   }
@@ -236,10 +154,9 @@
     const token = generation;
     el.start.disabled = true; el.stop.disabled = false;
     blocked = new Set(); reads = duplicates = attempts = 0; stats();
-    el['presence-status'].textContent = 'Antes da primeira etiqueta, prepare uma referência da área vazia com o celular apoiado.';
     focus = 'automático do aparelho';
     el.snapshot.hidden = true; el['snapshot-caption'].textContent = '';
-    el.diagnostics.textContent = 'Versão 11 · Aguardando primeiro quadro da câmera…';
+    el.diagnostics.textContent = 'Versão 12 · Aguardando primeiro quadro da câmera…';
     el.history.replaceChildren(); el.code.textContent = 'Aguardando leitura';
     el.format.textContent = 'EAN-13 e Code 128 · QR Code ignorado';
     status('Solicitando acesso à câmera…');
@@ -334,7 +251,7 @@
       original.getContext('2d').drawImage(el.video, 0, 0);
       const settings = stream.getVideoTracks()[0]?.getSettings?.() || {};
       reportCamera(stream.getVideoTracks()[0]);
-      const metadata = { version: 11, presence: { referenceSample: presence.reference, currentSample: presence.lastSample, sampleSize: { width: 96, height: 160 }, calibrated: !!presence.reference, matchingFrames: presence.count, comparison: presence.lastError, blockedCodes: Array.from(blocked) }, capturedAt, focus, settings,
+      const metadata = { version: 12, repetition: { mode: 'manual-rearm', blockedCodes: Array.from(blocked) }, capturedAt, focus, settings,
         camera: { ...cameraDiagnostic,
           capabilities: optionalInfo(stream.getVideoTracks()[0], 'getCapabilities'),
           constraints: optionalInfo(stream.getVideoTracks()[0], 'getConstraints') },
@@ -357,20 +274,10 @@
     el['snapshot-caption'].textContent = `Quadro ${attempts}, ${el.frame.width} × ${el.frame.height}. Esta é a imagem enviada ao leitor. Use os links abaixo para salvar no aparelho antes de fechar a página. Confira se todas as barras e as margens claras estão nítidas.`;
   });
   el.camera.addEventListener('change', () => { if (stream) return openCamera(); });
-  el.rearm.addEventListener('click', () => {}); // No manual bypass of presentation blocking.
-  el['prepare-area'].addEventListener('click', () => {
-    if (!stream || !attempts || reads) return;
-    // Refuse a reference containing a barcode that the decoder can already read.
-    const full = document.createElement('canvas'); full.width = el.video.videoWidth; full.height = el.video.videoHeight;
-    full.getContext('2d').drawImage(el.video, 0, 0);
-    try {
-      decodeCanvas(full, new ZXing.MultiFormatReader(), hintsForBars());
-      el['presence-status'].textContent = 'Retire todas as etiquetas antes de preparar a área vazia.'; return;
-    } catch (error) { if (!isUnreadable(error)) { el['presence-status'].textContent = 'Não foi possível preparar a área.'; return; } }
-    if (presence.prepare(presencePixels())) {
-      releaseGeneration++;
-      el['presence-status'].textContent = 'Área preparada. Apresente a etiqueta e depois retire-a completamente. Mantenha o celular apoiado.';
-    } else el['presence-status'].textContent = 'Referência inconclusiva. Use fundo com detalhes, boa luz e imagem nítida, sem etiquetas.';
+  el.rearm.addEventListener('click', () => {
+    if (!stream || !blocked.size) return;
+    releaseGeneration++; blocked.clear(); el.rearm.disabled = true;
+    status('Nova leitura liberada. Aponte para o produto que deseja repetir.');
   });
   el.photo.addEventListener('change', async () => {
     const file = el.photo.files?.[0];

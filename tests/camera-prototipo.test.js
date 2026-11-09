@@ -48,15 +48,17 @@ function harness(getUserMedia, storage) {
   return { nodes, tracks, stream, frames, window, document, draws, urls, media, setPixels(pixels) { visualPixels = pixels; }, tick() { const fn = nextFrame; nextFrame = null; nodes.video.currentTime += 0.2; if (fn) fn(); } };
 }
 
-test('código mantido e quadros sem leitura não liberam repetição; botão antigo não ignora bloqueio', async () => {
+test('código mantido e quadros sem leitura não liberam repetição; liberação manual permite nova leitura', async () => {
   const h = harness(); h.frames.push('00042');
   await h.nodes.start.events.click();
   h.frames.push('00042', null, '00042'); h.tick(); h.tick(); h.tick();
   assert.equal(h.nodes.history.children.length, 1);
   assert.equal(h.nodes.code.textContent, '00042');
   assert.equal(h.nodes.stats.textContent, '1 leituras · 2 repetições bloqueadas');
-  h.nodes.rearm.events.click(); h.frames.push('00042'); h.tick();
+  h.nodes.rearm.events.click();
   assert.equal(h.nodes.history.children.length, 1);
+  h.frames.push('00042'); h.tick();
+  assert.equal(h.nodes.history.children.length, 2);
   h.nodes.stop.events.click(); assert.equal(h.tracks.stopped, 1);
 });
 
@@ -335,58 +337,26 @@ test('falha de armazenamento não impede abertura nem confirmação', async () =
  await h.nodes.start.events.click(); assert.equal(h.nodes.capture.disabled, false);
 });
 
-test('área vazia: repetição só libera com evidência sustentada; desfoque, escuro e mudança não liberam', () => {
- const Gate = harness().window.CameraEmptyAreaGate;
- const gate = new Gate(); const empty = Array.from({length: 96 * 160}, (_, i) => i % 2 ? 90 : 150);
- assert.equal(gate.prepare(empty), true);
- for(let t=0;t<20;t++) assert.equal(gate.observe(empty.map(() => 120), t), false);
- for(let t=20;t<30;t++) assert.equal(gate.observe(empty.map(() => 0), t), false);
- const label = empty.slice(); for(let i=500;i<700;i++) label[i]=0;
- for(let t=30;t<40;t++) assert.equal(gate.observe(label, t), false);
- assert.equal(gate.observe(empty, 40, true), false);
- assert.equal(gate.observe(empty, 41), false);
- for(let i=0;i<20;i++) assert.equal(gate.observe(empty, 41), false);
- assert.equal(gate.observe(empty, 42), false);
- assert.equal(gate.observe(empty, 43), false);
- assert.equal(gate.observe(empty, 44), true);
- gate.reset(); assert.equal(gate.observe(empty, 45), false);
-});
-test('referência plana, escura ou ausente não é aceita como área vazia', () => {
- const Gate = harness().window.CameraEmptyAreaGate;
- for(const pixels of [null, Array(96*160).fill(0), Array(96*160).fill(120)]) assert.equal(new Gate().prepare(pixels), false);
-});
 
-test('controle contínuo mantém A e B bloqueados e libera após retirada para a referência', async () => {
- const h = harness(); const empty = Array.from({length: 96*160}, (_,i) => i%2 ? 90 : 150);
- h.setPixels(empty); await h.nodes.start.events.click(); h.nodes['prepare-area'].click();
- assert.match(h.nodes['presence-status'].textContent, /Área preparada/);
- const label = empty.slice(); for(let i=100;i<300;i++) label[i] = 0;
- h.setPixels(label); h.frames.push('A'); h.tick();
- h.frames.push('A', null, 'B', 'A'); for(let i=0;i<4;i++) h.tick();
- assert.equal(h.nodes.history.children.length, 2);
- for(let i=0;i<10;i++) h.tick();
- h.frames.push('A'); h.tick(); assert.equal(h.nodes.history.children.length, 2);
- h.setPixels(empty); for(let i=0;i<4;i++) h.tick();
- assert.match(h.nodes['presence-status'].textContent, /Área vazia reconhecida/);
- h.setPixels(label); h.frames.push('A'); h.tick();
- assert.equal(h.nodes.history.children.length, 3);
- h.nodes.stop.click(); assert.equal(h.nodes['prepare-area'].disabled, true);
+test('A e B são lidos uma vez cada; botão só libera e nova decodificação registra repetição', async () => {
+ const h = harness(); h.frames.push('A'); await h.nodes.start.events.click();
+ h.frames.push('B','A','B',null); for(let i=0;i<4;i++) h.tick();
+ assert.equal(h.nodes.history.children.length,2);
+ assert.equal(h.nodes.rearm.disabled,false);
+ h.nodes.rearm.click(); assert.equal(h.nodes.history.children.length,2);
+ assert.equal(h.nodes.rearm.disabled,true);
+ h.frames.push(null,'A','A'); h.tick(); h.tick(); h.tick();
+ assert.equal(h.nodes.history.children.length,3);
 });
-
-test('retorno ao fundo com mudança global moderada de exposição mantém reconhecimento', () => {
- const Gate = harness().window.CameraEmptyAreaGate;
- const gate = new Gate(); const background = Array.from({length: 96*160}, (_,i) => i%2 ? 80 : 140);
- gate.prepare(background);
- const brighter = background.map(v => v + 12);
- for(let t=0;t<3;t++) assert.equal(gate.observe(brighter,t), false);
- assert.equal(gate.observe(brighter,3), true);
- assert.equal(gate.lastError.brightnessOffset,12);
- assert.equal(gate.lastError.mean,0);
- const product = brighter.slice(); for(let i=500;i<900;i++) product[i]=30;
- assert.equal(gate.observe(product,4),false);
- assert.equal(gate.lastError.reason,'scene-changed');
- assert.equal(gate.observe(background.map(v => v+30),5),false);
- assert.equal(gate.lastError.reason,'lighting-change');
- assert.equal(gate.observe(background.map(() => 120),6),false);
- assert.equal(gate.lastError.reason,'blur-or-detail-loss');
+test('liberação invalida leitura nativa pendente e não afeta sessão fechada', async () => {
+ const h = harness(); let resolve;
+ h.window.BarcodeDetector = class {
+  static async getSupportedFormats() { return ['ean_13']; }
+  detect() { return new Promise(r => { resolve=r; }); }
+ };
+ h.frames.push('A'); await h.nodes.start.events.click(); await settle(); h.tick(); await settle();
+ h.nodes.rearm.click(); resolve([{format:'ean_13',rawValue:'A'}]); await settle();
+ assert.equal(h.nodes.history.children.length,1);
+ h.frames.push('A'); h.tick(); assert.equal(h.nodes.history.children.length,2);
+ h.nodes.stop.click(); h.nodes.rearm.events.click(); assert.equal(h.nodes.history.children.length,2);
 });
