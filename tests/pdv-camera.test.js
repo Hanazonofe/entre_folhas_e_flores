@@ -65,3 +65,13 @@ test('quantidade inválida não consulta, setas respeitam mínimo e corrigir per
  quantity.value='1';h.elements.get('cameraQuantityDown').dispatch('click');assert.equal(quantity.value,'1');
  h.elements.get('cameraQuantityUp').dispatch('click');assert.equal(quantity.value,'2');camera.options.onScan('PLA0060');await flush();h.api.requests.at(-1).deferred.resolve({items:[product]});await flush();assert.match(h.elements.get('cameraNotice').textContent,/2 unidade/);
 });
+
+test('atalhos preenchem a quantidade escolhida, aplicada uma vez e resetada após leitura',async()=>{
+ const {h,camera}=await boot();const quantity=h.elements.get('cameraQuantity');
+ for(const q of [6,8,10,12,15,20]) {
+  h.elements.get('cameraQuantityPresets').dispatch('click',{target:{closest:()=>({dataset:{cameraQuantity:String(q)}})}});
+  assert.equal(quantity.value,String(q));
+ }
+ camera.options.onScan('PLA0060');assert.equal(quantity.value,'1');await flush();
+ h.api.requests.at(-1).deferred.resolve({items:[product]});await flush();assert.match(h.elements.get('cameraNotice').textContent,/20 unidade/);
+});

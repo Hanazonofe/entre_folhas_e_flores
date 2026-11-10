@@ -200,6 +200,11 @@
       const value = Number($('#cameraQuantity').value);
       $('#cameraQuantity').value = String(Math.min(1000000,Math.max(1,(Number.isSafeInteger(value) ? value : 1) + delta)));
     };
+    $('#cameraQuantityPresets').addEventListener('click',event => {
+      const button = event.target.closest?.('[data-camera-quantity]');
+      const quantity = Number(button?.dataset.cameraQuantity);
+      if ([6,8,10,12,15,20].includes(quantity)) $('#cameraQuantity').value = String(quantity);
+    });
     $('#cameraQuantityUp').addEventListener('click',() => changeCameraQuantity(1));
     $('#cameraQuantityDown').addEventListener('click',() => changeCameraQuantity(-1));
     $('#openCamera').addEventListener('click', () => {
