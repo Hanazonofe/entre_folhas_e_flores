@@ -79,14 +79,26 @@ const API = (() => {
     });
   }
   function header() {
-    const nav = document.querySelector('nav');
-    if (!nav || document.querySelector('#accountBar')) return;
-    const bar = document.createElement('span'); bar.id = 'accountBar';
-    bar.innerHTML = `<span>${esc(user.name)} (${user.role === 'admin' ? 'administrador' : 'operador'})</span> <a href="admin.html">Minha conta${user.role === 'admin' ? ' / Administração' : ''}</a> <button type="button" id="logout">Sair</button>`;
-    nav.querySelector('a[href="admin.html"]')?.remove();
+    const host = document.querySelector('.topbar') || document.querySelector('.receipt-toolbar');
+    if (!host || !user || document.querySelector('#accountBar')) return;
+    const bar = document.createElement('div'); bar.id = 'accountBar';
+    bar.innerHTML = `<button type="button" id="accountToggle" aria-label="Menu do usuário" aria-expanded="false" aria-controls="accountMenu"><svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></button><div id="accountMenu" hidden><span class="account-name">${esc(user.name)}</span><a href="admin.html">Minha conta</a><button type="button" id="logout">Sair</button></div>`;
+    host.querySelector('nav a[href="admin.html"]')?.remove();
     if (location.pathname.endsWith('/admin.html')) bar.querySelector('a').setAttribute('aria-current', 'page');
-    nav.append(bar);
-    bar.querySelector('button').addEventListener('click', async () => {
+    host.append(bar);
+    const toggle = bar.querySelector('#accountToggle'), menu = bar.querySelector('#accountMenu');
+    const close = () => { menu.hidden = true; toggle.setAttribute('aria-expanded', 'false'); };
+    toggle.addEventListener('click', () => {
+      menu.hidden = !menu.hidden;
+      toggle.setAttribute('aria-expanded', String(!menu.hidden));
+    });
+    document.addEventListener('click', event => { if (!bar.contains(event.target)) close(); });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !menu.hidden) { close(); toggle.focus(); }
+    });
+    bar.querySelector('a').addEventListener('click', close);
+    bar.querySelector('#logout').addEventListener('click', async () => {
+      close();
       if (sessionStorage.getItem('pdv-pending-checkout')) { if(await confirm('Há uma venda pendente. Para entrar na conta que iniciou esse pedido, confirme. A venda pendente será preservada.')){await authenticate();location.reload();}return; }
       try { await call('/auth/logout', {method:'POST', body:'{}'}); if (typeof SaleNavigation !== 'undefined') SaleNavigation.logout(); location.href = 'login.html'; }
       catch (error) { await confirm(error.message); }
