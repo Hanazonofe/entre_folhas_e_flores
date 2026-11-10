@@ -186,3 +186,15 @@ a câmera poderá ser lido novamente mesmo sem retirar a etiqueta, após gesto
 explícito. Fechamento e troca de câmera mantêm cancelamento por sessão.
 Histórico de testes da estratégia de área vazia foi substituído por regressões
 da regra aprovada; não alegar que retirada automática foi validada.
+
+## Integração na venda — 09/11/2026
+
+PDV mobile possui ícone de câmera. Abre diálogo nativo com prévia, seletor,
+Ler novamente, Fechar e confirmação de adição. Captura usa ZXing local, formatos
+EAN-13/Code 128, preferência do navegador e bloqueio por código com liberação
+explícita. Não há área vazia. Fila da venda consulta Product.code exato e confirma
+nome/quantidade e som somente após adição. Consultas de sessão encerrada ou câmera
+trocada são ignoradas. Busca e leitor físico permanecem disponíveis após fechar.
+Desktop não mostra acionamento. Produtos/consulta fora da venda ainda pendentes.
+Teste físico pendente: câmera lembrada, troca, etiquetas diferentes, repetição,
+desconhecido, permissão, fechar durante consulta, som e layout no celular.

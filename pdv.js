@@ -3,6 +3,9 @@
   const cart = new Map(); let products = [], quote = null, pending = null, busy = false, searchSequence = 0;
   let scanQueue = [], scanWorkerActive = false, scanGeneration = 0, noticeSequence = 0;
   let quoteGeneration = 0;
+  let cameraSession = 0;
+  const cameraDialog = $('#cameraDialog');
+  let cameraReader = null;
   let captureSnapshot = null, navigationReady = false, navigationInProgress = false;
   const mobileLayout = window.matchMedia('(max-width: 920px)');
   let catalogProducts = [];
@@ -14,6 +17,7 @@
   }
   function openPayment() {
     if (!cart.size || busy || pending || paymentDialog.open) return;
+    closeCamera();
     cancelPendingScans();
     resetBilling();
     paymentDialog.showModal();
@@ -93,6 +97,7 @@
     const row = cart.get(product.id) || {...product,quantity:0}; row.quantity++; cart.set(product.id,row);
     invalidate(); renderCart();
     if (!fromScanner) clearSearch();
+    return row.quantity;
   }
   function add(id) { addProduct(products.find(row=>row.id===id)); }
   $('#catalogGrid').addEventListener('click', event => { const button=event.target.closest('[data-add]'); if(button) add(button.dataset.add); });
@@ -115,7 +120,7 @@
     if (snapshot.field === $('#productSearch')) search();
     if (isFinancialField(snapshot.field)) { invalidate(); renderCart(); }
   }
-  function dialogOpen() { return !!document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]'); }
+  function dialogOpen() { return !!document.querySelector('dialog[open]:not(#cameraDialog), [role="dialog"][aria-modal="true"]:not(#cameraDialog)'); }
   function setScanNotice(message) { noticeSequence++; notice.textContent = message; }
   function cancelPendingScans() {
     const hadPendingScans = scanWorkerActive || scanQueue.length;
@@ -133,17 +138,25 @@
     const entry = scanQueue.shift(), generation = scanGeneration;
     scanWorkerActive = true;
     setScanNotice('Leituras em processamento…');
+    const cameraValid = () => entry.cameraSession === undefined || (cameraDialog?.open && entry.cameraSession === cameraSession);
+    const report = message => { if (entry.cameraSession !== undefined) { if (cameraValid()) $('#cameraNotice').textContent = message; } else setScanNotice(message); };
     renderCart();
     (async()=>{
       try {
         const result = await API.call('/products?code='+encodeURIComponent(entry.code));
         if (generation !== scanGeneration || dialogOpen() || pending || busy) return;
+        if (!cameraValid()) return;
         const product = result.items?.[0];
+        if (!product && entry.cameraSession !== undefined) { report('Produto não encontrado'); return; }
         if (!product) { setScanNotice('Produto não encontrado'); return; }
+        if (result.items.length !== 1 || product.code !== entry.code) { report('Resposta de produto inconsistente. Use a busca manual.'); return; }
+        if (!product.active && entry.cameraSession !== undefined) { report('Produto inativo'); return; }
         if (!product.active) { setScanNotice('Produto inativo'); return; }
-        addProduct(product, {fromScanner:true}); setScanNotice('');
+        const quantity = addProduct(product, {fromScanner:true});
+        if (quantity && entry.cameraSession !== undefined) { report(`${product.name} adicionado · ${quantity} unidade(s) no carrinho`); cameraReader?.confirm(); }
+        setScanNotice('');
       } catch (error) {
-        if (generation === scanGeneration) setScanNotice(error.message);
+        if (generation === scanGeneration && cameraValid()) report(entry.cameraSession !== undefined && !error.status ? 'Falha de comunicação. Use Ler novamente para tentar outra vez.' : error.message);
       } finally {
         if (generation !== scanGeneration) return;
         scanWorkerActive = false;
@@ -156,6 +169,31 @@
     if (dialogOpen() || pending || busy) return;
     scanQueue.push({code});
     processScanQueue();
+  }
+  function closeCamera() {
+    cameraSession++; cameraReader?.stop();
+    if (cameraDialog?.open) cameraDialog.close();
+    cancelPendingScans();
+    $('#openCamera')?.focus({preventScroll:true});
+  }
+  if (cameraDialog && typeof window.CameraScanner === 'function') {
+    cameraReader = new window.CameraScanner({video:$('#cameraVideo'),select:$('#cameraSelect'),rearm:$('#cameraRearm'),
+      onScan:code => {
+        if (!cameraDialog.open || pending || busy || dialogOpen()) return;
+        scanQueue.push({code,cameraSession}); processScanQueue();
+      }, onStatus:message => { $('#cameraNotice').textContent = message; },
+      onStop:() => { cameraSession++; cancelPendingScans(); }
+    });
+    $('#openCamera').addEventListener('click', () => {
+      if (!mobileLayout.matches || pending || busy || dialogOpen() || cameraDialog.open) return;
+      cancelPendingScans(); scanner.cancel(); captureSnapshot = null;
+      cameraSession++; cameraDialog.showModal(); $('#closeCamera').focus(); cameraReader.open();
+    });
+    $('#closeCamera').addEventListener('click',closeCamera);
+    cameraDialog.addEventListener('cancel',event => { event.preventDefault(); closeCamera(); });
+    cameraDialog.addEventListener('close', () => { cameraReader.stop(); cameraSession++; cancelPendingScans(); });
+    window.addEventListener('pagehide',closeCamera);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) closeCamera(); });
   }
   const scanner = new BarcodeScanner.TemporalBarcodeClassifier({
     onScan: enqueueScan,
@@ -191,6 +229,7 @@
   }, true);
   document.addEventListener('keydown', event => {
     if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey || event.isComposing) return;
+    if (cameraDialog?.open) { scanner.cancel(); captureSnapshot = null; return; }
     if (dialogOpen()) {
       cancelPendingScans(); scanner.cancel(); captureSnapshot = null;
       const field = document.activeElement;

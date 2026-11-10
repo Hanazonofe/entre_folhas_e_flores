@@ -175,9 +175,9 @@ function createPdvHarness(options = {}) {
   const clock = createClock();
   const api = createControlledApi();
   const elements = new Map();
-  const ids = ['totalLabel', 'suggestions', 'togglePayment', 'paymentPanel', 'saleNotice', 'cartList', 'subtotal', 'finalTotal', 'finishSale', 'productSearch', 'catalogGrid', 'discount', 'paymentEditor', 'quoteNotice', 'quoteSale', 'addFirstResult', 'saleNotes', 'receiptLink', 'paymentDialog', 'closePayment', 'backToCart', 'summaryLabel', 'summaryTotal', 'emptyCartHelp', 'paymentNotice'];
+  const ids = ['openCamera','cameraDialog','closeCamera','cameraVideo','cameraSelect','cameraRearm','cameraNotice','totalLabel', 'suggestions', 'togglePayment', 'paymentPanel', 'saleNotice', 'cartList', 'subtotal', 'finalTotal', 'finishSale', 'productSearch', 'catalogGrid', 'discount', 'paymentEditor', 'quoteNotice', 'quoteSale', 'addFirstResult', 'saleNotes', 'receiptLink', 'paymentDialog', 'closePayment', 'backToCart', 'summaryLabel', 'summaryTotal', 'emptyCartHelp', 'paymentNotice'];
   for (const id of ids) elements.set(id, new FakeElement(id, { value: id === 'discount' ? '0' : '' }));
-  const mainControls = [...elements.values()].filter(element => !['saleNotice', 'cartList', 'subtotal', 'finalTotal', 'catalogGrid', 'quoteNotice', 'receiptLink'].includes(element.id));
+  const mainControls = [...elements.values()].filter(element => !element.id.startsWith('camera') && element.id !== 'closeCamera' && !['saleNotice', 'cartList', 'subtotal', 'finalTotal', 'catalogGrid', 'quoteNotice', 'receiptLink'].includes(element.id));
   const documentListeners = new Map(), windowListeners = new Map();
   const observers = [];
   const document = {
@@ -185,7 +185,7 @@ function createPdvHarness(options = {}) {
     documentElement: {},
     querySelector(selector) {
       if (selector.startsWith('#')) return elements.get(selector.slice(1)) || null;
-      if (selector === 'dialog[open], [role="dialog"][aria-modal="true"]') return [...elements.values()].find(element => element.open || element.roleDialog) || null;
+      if (selector.includes('dialog[open]')) return [...elements.values()].find(element => (element.open || element.roleDialog) && (!selector.includes(':not(#cameraDialog)') || element.id !== 'cameraDialog')) || null;
       return null;
     },
     querySelectorAll(selector) {
@@ -240,6 +240,7 @@ function createPdvHarness(options = {}) {
       run: (notice, action) => { notice.textContent='Carregando…'; return Promise.resolve().then(action).catch(error => { notice.textContent = error.message; }); },
     },
   };
+  if (options.CameraScanner) context.window.CameraScanner = options.CameraScanner;
   if (options.navigation) context.SaleNavigation = options.navigation;
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../../pdv.js'), 'utf8'), context, { filename: 'pdv.js' });
 
