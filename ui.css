@@ -165,3 +165,18 @@ dialog.payment-dialog { width: min(760px,calc(100% - 32px)); max-height: calc(10
   .payment-dialog-actions button { width: 100%; }
   .sale-summary .total-final { font-size: 1.25rem; }
 }
+
+/* Shared account disclosure, anchored beside the brand on every screen. */
+.topbar { display: grid; grid-template-columns: minmax(0,1fr) auto; }
+.topbar > .brand { min-width: 0; }
+.topbar > nav { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+#accountBar { position: relative; grid-column: 2; grid-row: 1; display: block; width: auto; padding: 0; margin: 0; border: 0; }
+#accountBar #accountToggle { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 10px; color: var(--ds-text); }
+#accountMenu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 50; width: min(260px,calc(100vw - 32px)); padding: 8px; background: var(--ds-surface); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-sm); box-shadow: 0 8px 24px #0002; }
+#accountMenu[hidden] { display: none; }
+#accountMenu .account-name { display: block; padding: 12px; font-weight: 650; overflow-wrap: anywhere; border-bottom: 1px solid var(--ds-border); }
+#accountMenu > a, #accountMenu > button { display: flex; align-items: center; width: 100%; min-height: 44px; padding: 10px 12px; text-align: left; text-decoration: none; border: 0; color: var(--ds-text); border-radius: var(--ds-radius-sm); }
+#accountMenu > a:hover, #accountMenu > button:hover { background: var(--ds-subtle); }
+.receipt-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.receipt-toolbar > .garden-logo { min-width: 0; max-width: calc(100% - 60px); }
+@media print { #accountBar { display: none !important; } }
