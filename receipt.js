@@ -21,5 +21,5 @@ if (document.querySelector('#receipt')) {
     button.disabled=true;
     try { await refresh(); window.print(); } finally { button.disabled=false; }
   }));
-  API.run(notice,async()=>{await API.ready();await refresh();button.disabled=false;});
+  API.run(notice,async()=>{await API.ready();API.header();await refresh();button.disabled=false;});
 }
