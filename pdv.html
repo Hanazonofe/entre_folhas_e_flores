@@ -80,12 +80,12 @@
   </dialog>
 
   <dialog id="cameraDialog" class="camera-dialog" aria-labelledby="cameraTitle">
-    <header><h2 id="cameraTitle">Ler código de barras</h2><button id="closeCamera" type="button">Fechar</button></header>
+    <h2 id="cameraTitle" class="camera-title">Ler código de barras</h2>
+    <header class="camera-topbar"><label>Câmera<select id="cameraSelect" disabled><option value="">Traseira automática</option></select></label><button id="closeCamera" type="button" aria-label="Fechar câmera" title="Fechar câmera"><span aria-hidden="true">×</span></button></header>
     <div class="camera-preview"><video id="cameraVideo" autoplay muted playsinline aria-label="Prévia da câmera"></video></div>
-    <p>Enquadre todas as barras e as margens claras da etiqueta.</p>
-    <div class="camera-controls"><label>Câmera<select id="cameraSelect" disabled><option value="">Traseira automática</option></select></label><button id="cameraRearm" type="button" disabled>Ler novamente</button></div>
+    <button id="cameraRearm" type="button" disabled>Ler novamente</button>
     <p id="cameraNotice" role="status" aria-live="polite">Câmera fechada.</p>
-    <p>Produtos diferentes são lidos automaticamente. Use Ler novamente para repetir um produto. O botão sozinho não adiciona itens.</p>
+    <p class="camera-help">Enquadre todas as barras. Produtos diferentes seguem automaticamente; para repetir, toque em Ler novamente.</p>
   </dialog>
   <script src="camera-decoder.js"></script><script src="camera-scanner.js"></script>
   <script src="api.js"></script><script src="sale-navigation.js"></script>

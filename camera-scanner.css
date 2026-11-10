@@ -1,14 +1,19 @@
 .camera-trigger { display:none; }
-.camera-dialog { width:min(94vw,560px); max-height:92dvh; padding:20px; border:0; border-radius:18px; overflow:auto; color:var(--text,#18342b); background:var(--surface,#fff); }
+.camera-dialog { box-sizing:border-box; width:min(94vw,560px); height:min(90dvh,720px); max-height:90dvh; padding:16px; border:0; border-radius:18px; overflow:hidden; color:var(--text,#18342b); background:var(--surface,#fff); }
+.camera-dialog[open] { display:flex; flex-direction:column; gap:10px; }
 .camera-dialog::backdrop { background:rgba(12,30,24,.45); }
-.camera-dialog header { position:sticky; top:-20px; background:var(--surface,#fff); z-index:1; padding-block:8px; display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:12px; }
-.camera-dialog h2 { margin:0; font-size:1.25rem; }
-.camera-dialog video { display:block; width:100%; max-height:44dvh; object-fit:contain; background:#14241c; border-radius:12px; }
-.camera-controls { display:flex; gap:12px; align-items:end; margin-top:14px; }
-.camera-controls label { flex:1; min-width:0; }
-.camera-controls select { display:block; width:100%; margin-top:6px; }
-.camera-dialog [role=status] { min-height:3em; padding:12px; background:#edf5ef; border-radius:10px; }
-@media(max-width:920px) { .camera-trigger { display:inline-flex; align-items:center; justify-content:center; } .camera-controls { flex-direction:column; align-items:stretch; } }
-
-.camera-preview { position:relative; }
+.camera-dialog .camera-title { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.camera-dialog .camera-topbar { display:flex; flex:none; align-items:end; gap:12px; padding:0; margin:0; border:0; background:transparent; }
+.camera-topbar label { flex:1; min-width:0; font-size:.85rem; }
+.camera-topbar select { display:block; box-sizing:border-box; width:100%; min-width:0; margin-top:4px; text-overflow:ellipsis; }
+.camera-dialog #closeCamera { flex:0 0 44px; width:44px; height:44px; min-width:44px; min-height:44px; padding:0; margin:0; border:0; border-radius:10px; background:#b42318; color:#fff; font-size:28px; line-height:1; white-space:nowrap; }
+.camera-dialog #closeCamera:hover:enabled { background:#8f1c13; }
+.camera-preview { position:relative; flex:1 1 0; min-height:60px; overflow:hidden; border-radius:12px; background:#14241c; }
+.camera-dialog video { display:block; width:100%; height:100%; object-fit:contain; background:#14241c; }
 .camera-preview::after { content:""; position:absolute; inset:35% 10%; border:2px solid #b7e4c7; border-radius:8px; pointer-events:none; }
+.camera-dialog #cameraRearm { flex:none; width:100%; min-height:48px; white-space:nowrap; }
+.camera-dialog p { margin:0; }
+.camera-dialog [role=status] { flex:none; box-sizing:border-box; min-height:3em; max-height:4.5em; overflow:auto; padding:8px 10px; font-size:.95rem; line-height:1.4; background:#edf5ef; border-radius:10px; overflow-wrap:anywhere; }
+.camera-dialog .camera-help { flex:none; font-size:.8rem; line-height:1.35; }
+@media(max-width:920px) { .camera-trigger { display:inline-flex; align-items:center; justify-content:center; } }
+@media(max-height:480px) { .camera-dialog { height:94dvh; max-height:94dvh; padding:10px; } .camera-dialog[open] { gap:6px; } .camera-dialog .camera-help { display:none; } }

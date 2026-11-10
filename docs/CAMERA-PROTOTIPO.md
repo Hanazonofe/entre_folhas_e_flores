@@ -198,3 +198,12 @@ trocada são ignoradas. Busca e leitor físico permanecem disponíveis após fec
 Desktop não mostra acionamento. Produtos/consulta fora da venda ainda pendentes.
 Teste físico pendente: câmera lembrada, troca, etiquetas diferentes, repetição,
 desconhecido, permissão, fechar durante consulta, som e layout no celular.
+
+## Ajuste do pop-up de venda — 09/11/2026
+
+Seletor no topo à esquerda e botão vermelho 44x44 com × à direita, nome acessível
+Fechar câmera. Ler novamente imediatamente abaixo da prévia, largura completa.
+Diálogo em coluna com altura limitada pela viewport dinâmica; a prévia ocupa o
+espaço restante, sem empurrar os controles para fora da tela. Mensagem longa tem
+rolagem interna limitada; em telas baixas omitir apenas ajuda complementar.
+Fluxo de captura e carrinho inalterado. Validar conforto no celular.
