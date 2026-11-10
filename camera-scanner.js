@@ -68,7 +68,8 @@
               const result = reader.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(this.canvas))),hints);
               const code = result.getText(), format = result.getBarcodeFormat();
               if ([ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.CODE_128].includes(format) && typeof code === 'string' && code && !this.blocked.has(code)) {
-                this.blocked.add(code); this.rearm.disabled = false; this.onScan(code);
+                this.blocked.add(code); this.rearm.disabled = false;
+                if (this.onScan(code) === false) { this.blocked.delete(code); this.rearm.disabled = !this.blocked.size; }
               }
             }
           } catch (error) {

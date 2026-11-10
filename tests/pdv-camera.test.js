@@ -48,3 +48,20 @@ test('tela desktop e venda pendente não abrem captura',async()=>{
   const h=createPdvHarness({...options,CameraScanner:Camera});await flush();h.api.resolve(0,{items:[]});await flush();h.elements.get('openCamera').dispatch('click');assert.equal(opened,0);
  }
 });
+
+test('quantidade da câmera é capturada por leitura e volta para 1 antes da resposta',async()=>{
+ const {h,camera}=await boot();const quantity=h.elements.get('cameraQuantity');assert.equal(quantity.value,'1');
+ quantity.value='5';camera.options.onScan('PLA0060');assert.equal(quantity.value,'1');
+ quantity.value='3';camera.options.onScan('B');assert.equal(quantity.value,'1');await flush();
+ h.api.requests.at(-1).deferred.resolve({items:[product]});await flush();assert.match(h.elements.get('cameraNotice').textContent,/5 unidade/);
+ h.api.requests.at(-1).deferred.resolve({items:[{...product,code:'B',id:'p2',name:'Outra'}]});await flush();
+ assert.equal(h.elements.get('summaryTotal').textContent,'R$ 200');
+ camera.options.onScan('PLA0060');await flush();h.api.requests.at(-1).deferred.resolve({items:[product]});await flush();assert.match(h.elements.get('cameraNotice').textContent,/6 unidade/);
+});
+test('quantidade inválida não consulta, setas respeitam mínimo e corrigir permite ler',async()=>{
+ const {h,camera}=await boot();const quantity=h.elements.get('cameraQuantity');
+ for(const invalid of ['0','-2','1.5','','abc','1000001']) { quantity.value=invalid;assert.equal(camera.options.onScan('PLA0060'),false); }
+ assert.equal(h.api.requests.filter(r=>r.path.includes('?code=')).length,0);
+ quantity.value='1';h.elements.get('cameraQuantityDown').dispatch('click');assert.equal(quantity.value,'1');
+ h.elements.get('cameraQuantityUp').dispatch('click');assert.equal(quantity.value,'2');camera.options.onScan('PLA0060');await flush();h.api.requests.at(-1).deferred.resolve({items:[product]});await flush();assert.match(h.elements.get('cameraNotice').textContent,/2 unidade/);
+});

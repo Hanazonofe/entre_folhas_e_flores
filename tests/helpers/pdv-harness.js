@@ -175,7 +175,7 @@ function createPdvHarness(options = {}) {
   const clock = createClock();
   const api = createControlledApi();
   const elements = new Map();
-  const ids = ['openCamera','cameraDialog','closeCamera','cameraVideo','cameraSelect','cameraRearm','cameraNotice','totalLabel', 'suggestions', 'togglePayment', 'paymentPanel', 'saleNotice', 'cartList', 'subtotal', 'finalTotal', 'finishSale', 'productSearch', 'catalogGrid', 'discount', 'paymentEditor', 'quoteNotice', 'quoteSale', 'addFirstResult', 'saleNotes', 'receiptLink', 'paymentDialog', 'closePayment', 'backToCart', 'summaryLabel', 'summaryTotal', 'emptyCartHelp', 'paymentNotice'];
+  const ids = ['cameraQuantity','cameraQuantityUp','cameraQuantityDown','openCamera','cameraDialog','closeCamera','cameraVideo','cameraSelect','cameraRearm','cameraNotice','totalLabel', 'suggestions', 'togglePayment', 'paymentPanel', 'saleNotice', 'cartList', 'subtotal', 'finalTotal', 'finishSale', 'productSearch', 'catalogGrid', 'discount', 'paymentEditor', 'quoteNotice', 'quoteSale', 'addFirstResult', 'saleNotes', 'receiptLink', 'paymentDialog', 'closePayment', 'backToCart', 'summaryLabel', 'summaryTotal', 'emptyCartHelp', 'paymentNotice'];
   for (const id of ids) elements.set(id, new FakeElement(id, { value: id === 'discount' ? '0' : '' }));
   const mainControls = [...elements.values()].filter(element => !element.id.startsWith('camera') && element.id !== 'closeCamera' && !['saleNotice', 'cartList', 'subtotal', 'finalTotal', 'catalogGrid', 'quoteNotice', 'receiptLink'].includes(element.id));
   const documentListeners = new Map(), windowListeners = new Map();

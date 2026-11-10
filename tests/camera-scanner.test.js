@@ -27,3 +27,8 @@ test('troca de câmera chama getUserMedia e encerra stream anterior',async()=>{
 test('@spec:AC-093 permissão negada orienta sem emitir leitura',async()=>{
  const h=harness(async()=>{throw Object.assign(new Error(),{name:'NotAllowedError'});});await h.camera.open();assert.match(h.messages.at(-1),/Permissão negada/);assert.equal(h.calls.length,0);
 });
+
+test('quantidade recusada pelo chamador não bloqueia o código para correção',async()=>{
+ const h=harness();h.camera.onScan=()=>false;h.frames.push('A');await h.camera.open();assert.equal(h.camera.blocked.has('A'),false);
+ h.camera.onScan=code=>h.calls.push(code);h.frames.push('A');h.tick();assert.deepEqual(h.calls,['A']);
+});

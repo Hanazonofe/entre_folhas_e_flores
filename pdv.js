@@ -91,13 +91,18 @@
     renderProducts();
     lock(!!pending || busy);
   }
-  function addProduct(product, {fromScanner = false} = {}) {
+  function addProduct(product, {fromScanner = false, quantity = 1} = {}) {
     if (pending || busy || (scanWorkerActive && !fromScanner)) return;
     if (!product) return;
-    const row = cart.get(product.id) || {...product,quantity:0}; row.quantity++; cart.set(product.id,row);
+    if (!Number.isSafeInteger(quantity) || quantity < 1 || (cart.get(product.id)?.quantity || 0) + quantity > 1000000) return;
+    if (quantity === 1) {
+      const row = cart.get(product.id) || {...product,quantity:0}; row.quantity++; cart.set(product.id,row);
+    } else {
+      const row = cart.get(product.id) || {...product,quantity:0}; row.quantity += quantity; cart.set(product.id,row);
+    }
     invalidate(); renderCart();
     if (!fromScanner) clearSearch();
-    return row.quantity;
+    return cart.get(product.id).quantity;
   }
   function add(id) { addProduct(products.find(row=>row.id===id)); }
   $('#catalogGrid').addEventListener('click', event => { const button=event.target.closest('[data-add]'); if(button) add(button.dataset.add); });
@@ -152,7 +157,8 @@
         if (result.items.length !== 1 || product.code !== entry.code) { report('Resposta de produto inconsistente. Use a busca manual.'); return; }
         if (!product.active && entry.cameraSession !== undefined) { report('Produto inativo'); return; }
         if (!product.active) { setScanNotice('Produto inativo'); return; }
-        const quantity = addProduct(product, {fromScanner:true});
+        const quantity = entry.cameraSession !== undefined ? addProduct(product, {fromScanner:true,quantity:entry.quantity || 1}) : addProduct(product, {fromScanner:true});
+        if (!quantity && entry.cameraSession !== undefined) { report('Limite de quantidade atingido. Confira o carrinho.'); return; }
         if (quantity && entry.cameraSession !== undefined) { report(`${product.name} adicionado · ${quantity} unidade(s) no carrinho`); cameraReader?.confirm(); }
         setScanNotice('');
       } catch (error) {
@@ -180,14 +186,26 @@
     cameraReader = new window.CameraScanner({video:$('#cameraVideo'),select:$('#cameraSelect'),rearm:$('#cameraRearm'),
       onScan:code => {
         if (!cameraDialog.open || pending || busy || dialogOpen()) return;
-        scanQueue.push({code,cameraSession}); processScanQueue();
+        const rawQuantity = $('#cameraQuantity').value.trim();
+        const quantity = Number(rawQuantity);
+        if (!/^[1-9]\d*$/.test(rawQuantity) || !Number.isSafeInteger(quantity) || quantity > 1000000) {
+          $('#cameraNotice').textContent = 'Informe uma quantidade inteira entre 1 e 1000000.'; return false;
+        }
+        $('#cameraQuantity').value = '1';
+        scanQueue.push({code,cameraSession,quantity}); processScanQueue();
       }, onStatus:message => { $('#cameraNotice').textContent = message; },
       onStop:() => { cameraSession++; cancelPendingScans(); }
     });
+    const changeCameraQuantity = delta => {
+      const value = Number($('#cameraQuantity').value);
+      $('#cameraQuantity').value = String(Math.min(1000000,Math.max(1,(Number.isSafeInteger(value) ? value : 1) + delta)));
+    };
+    $('#cameraQuantityUp').addEventListener('click',() => changeCameraQuantity(1));
+    $('#cameraQuantityDown').addEventListener('click',() => changeCameraQuantity(-1));
     $('#openCamera').addEventListener('click', () => {
       if (!mobileLayout.matches || pending || busy || dialogOpen() || cameraDialog.open) return;
       cancelPendingScans(); scanner.cancel(); captureSnapshot = null;
-      cameraSession++; cameraDialog.showModal(); $('#closeCamera').focus(); cameraReader.open();
+      cameraSession++; $('#cameraQuantity').value = '1'; cameraDialog.showModal(); $('#closeCamera').focus(); cameraReader.open();
     });
     $('#closeCamera').addEventListener('click',closeCamera);
     cameraDialog.addEventListener('cancel',event => { event.preventDefault(); closeCamera(); });
